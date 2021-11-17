@@ -1,0 +1,10 @@
+{
+  "builtInLibrariesFolders": "",
+  "customBuildProperties": "build.extra_flags=-DTIMER0_PRESCALER=64 -DSINGLE_ENTRY_POINT",
+  "fqbn": "arduino:avr:uno",
+  "hardwareFolders": "/home/jovaska/arduino_project/hw",
+  "otherLibrariesFolders": "/home/jovaska/arduino_project/lib",
+  "runtime.ide.version": "10600",
+  "sketchLocation": "/home/jovaska/arduino_project/src/main.c",
+  "toolsFolders": "."
+}

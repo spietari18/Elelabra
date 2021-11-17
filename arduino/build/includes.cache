@@ -1,0 +1,27 @@
+[
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "/home/jovaska/arduino_project/hw/arduino/avr/cores/arduino"
+  },
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "/home/jovaska/arduino_project/hw/arduino/avr/variants/standard"
+  },
+  {
+    "Sourcefile": "/home/jovaska/arduino_project/build/sketch/main.c.cpp",
+    "Include": "LiquidCrystal.h",
+    "Includepath": "/home/jovaska/arduino_project/lib/LiquidCrystal/src"
+  },
+  {
+    "Sourcefile": "/home/jovaska/arduino_project/build/sketch/main.c.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/home/jovaska/arduino_project/lib/LiquidCrystal/src/LiquidCrystal.cpp",
+    "Include": "",
+    "Includepath": ""
+  }
+]
