@@ -1,1 +1,1 @@
-## BL10A9011 - Sähkötekniikan Laboratoriotyöt 2
+## BL50A0503 Elektroniikan laboratoriotyöt 1
