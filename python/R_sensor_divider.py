@@ -6,7 +6,7 @@ R_smin = 82
 R_smax = 134
 
 # expression for divider voltage
-U = lambda R_1, R_2, R_s: 5*(R_2)/(R_1 + R_2 + R_s)
+U = lambda R_1, R_2, R_s: 5*(R_2 + R_s)/(R_1 + R_2 + R_s)
 
 # expression for sensor power
 P = lambda R_1, R_2, R_s: ((5/(R_1 + R_2 + R_s))**2)*R_s

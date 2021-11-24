@@ -2,16 +2,15 @@
 
 import R
 
-# target voltage
-U_t = 0.01234
-
 # expression for divider voltage
 U = lambda R_1, R_2: 5*(R_2)/(R_1 + R_2)
+
+U_t = 1.3989524225229157
 
 # how many results to display
 n = 32
 
-R_vals = R.R(R.E12, {0, 1, 2, 3})
+R_vals = R.R(R.E12)
 
 V = []
 for R_1 in R_vals:

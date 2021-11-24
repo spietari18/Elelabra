@@ -1,3 +1,6 @@
+#include <Arduino.h>
+#line 1 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
+#line 1 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
 #include <setjmp.h>
 #include <LiquidCrystal.h>
 #include "macro.h"
@@ -14,6 +17,17 @@ struct data_point data[POINTS] = {
 	{79.76, 2496}
 };
 
+#line 17 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
+float pns_temp(uint16_t s);
+#line 37 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
+uint8_t spi_byte(uint8_t v);
+#line 63 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
+void inc();
+#line 77 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
+void dec();
+#line 121 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
+void entry_point();
+#line 17 "/home/jovaska/Desktop/ELATY-GIT/arduino/src/main.c"
 inline float pns_temp(uint16_t s)
 {
 	float A, B, Sx, Sy, Sxx, Sxy, Syy;
@@ -108,6 +122,10 @@ uint8_t buffer_pos;
 uint16_t old_S;
 float old_T;
 
+#define INTERVAL 1000
+uint32_t switch_time;
+bool state;
+
 /* Tässä ei muuta eroa normaaliin Arduino alustan pohjakoodiin kun että
  * setup() ja loop() on muutettu yhdeksi funktioksi entry_point() johon
  * pitää kirjoittaa oma while(1) silmukka. Tämä sen takia, että setjmp.h
@@ -145,6 +163,8 @@ void entry_point()
 #endif
 	/* taustavalo päälle */
 	digitalWrite(LCD_AN, HIGH);
+
+	digitalWrite(BUZZER, LOW);
 
 	/* SS pois päältä */
 	digitalWrite(SPI_SS, HIGH);
@@ -225,6 +245,17 @@ void entry_point()
 		}
 #endif
 
+		/*
+		uint32_t t = millis();
+		if ((t - switch_time) > INTERVAL) {
+			if (state)
+				tone(BUZZER, 1000);
+			else
+				noTone(BUZZER);
+			state = !state;
+			t = switch_time;
+		}
+		*/
 
 		/* loop() END */
 
@@ -237,4 +268,5 @@ void entry_point()
 #endif
 	}
 }
+
 
