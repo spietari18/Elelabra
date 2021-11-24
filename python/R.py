@@ -55,47 +55,36 @@ E192 = {100, 101, 102, 104, 105, 106, 107, 109, 110, 111,
 DEC = {-2, -1, 0, 1, 2, 3, 4, 5, 6, 7}
 
 # SI prefix (largest first)
-SI = [("G", 9), ("M", 6), ("k", 3), ("", 0), ("m", -3)]
+SI = [("G", 9), ("M", 6), ("k", 3), ("", 0), ("m", -3), ("u", -6), ("n", -9)]
 
-def prefix(n, s=2):
-    for pr, pw in SI:
+def prefix(n, p=3, exact=False):
+    s = n < 0
+    n = abs(n)
+
+    for i, si in enumerate(SI):
+        pr, pw = si
         tmp = n/(10**pw)
+        if tmp > 1:
+            break
+
+    # special case
+    if (tmp == 1000.0) and (i < (len(SI) - 1)):
+        pr, pw = SI[i + 1]
+        tmp = n/(10**pw)
+
+    if not exact:
         if tmp < 1:
-            continue
-        return "%.*g%s" % (s, tmp, pr)
+            return "%s<1%s" % ("-" if s else "", SI[-1][0])
+        elif tmp >= 1000:
+            return "%s>999%s" % ("-" if s else "", SI[0][0])
 
-    # too small
-    else:
-        return str(n)
+    return "%s%.*g%s" % ("-" if s else "", p, tmp, pr)
 
-# expression for divider voltage
-x = lambda R_1, R_2: 5*(R_1 + 82)/(R_1 + R_2 + 82)
-
-# target voltage
-y = 1.20967777
-
-# how many results to display
-n = 16
-
-R = set()
-for dec in DEC:
-    mul = float(10**dec)
-    for val in E24:
-        R.add(val*mul)
-
-V = []
-
-for R_1 in R:
-    for R_2 in R:
-        V.append((R_1, R_2, x(R_1, R_2)))
-
-# sort by how close results are to target
-V.sort(key=lambda x: abs(y - x[2]))
-
-i = 0
-while i < n:
-    R_1, R_2, V_t = V[i]
-    
-    print("{}, {} = {}".format(prefix(R_1, 3), prefix(R_2, 3), V_t))
-
-    i += 1
+# generate standard resistance values
+def R(s, d=DEC):
+    out = set()
+    for dec in d:
+        mul = float(10**dec)
+        for val in s:
+            out.add(val*mul)
+    return out
