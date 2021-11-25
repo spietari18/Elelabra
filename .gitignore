@@ -1,5 +1,4 @@
-# python cache
 **/__pycache__/
-
-# arduino build dir
+.*.swp
+.*.swo
 arduino/build
