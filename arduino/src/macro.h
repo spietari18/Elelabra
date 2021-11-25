@@ -39,6 +39,10 @@
 #define MODE(NAME, MODE) \
 	VAL(*(PIN_##NAME##_REG_DDR), PIN_##NAME##_REG_POS, (MODE))
 
+/* set PULLUP status for pin */
+#define PLUP(NAME, MODE) \
+	VAL(*(PIN_##NAME##_REG_PORT, PIN_##NAME##_REG_POS, (MODE)))
+
 /* direct port register digitalRead() */
 #define READ(NAME) \
 	((*(PIN_##NAME##_REG_PIN) >> PIN_##NAME##_REG_POS) & 1)
