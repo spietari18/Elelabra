@@ -183,11 +183,10 @@ void lcd_update()
 			(void)lcd.write(*src);
 			*dst = *src;
 
-			/* näytön kontrolleri on nyt tällä
-			 * rivillä ja sarakkeella
+			/* kursori siirtyy sarakkeen eteenpäin mutta
+			 * ei siirry itse seuraavalle riville.
 			 */
-			lcd_col = col;
-			lcd_row = row;
+			lcd_col++;
 		}
 	}
 }
