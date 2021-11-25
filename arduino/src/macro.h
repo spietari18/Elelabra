@@ -15,8 +15,8 @@
 	((NUM) &= ~(1 << (N)))
 #define TGL(NUM, N) \
 	((NUM) ^= 1 << (N))
-#define VAL(NUM, N, VAL) \
-	((NUM) = ((NUM) & ~(1 << (N))) | ((VAL) << (N)))
+#define VAL(NUM, N, V) \
+	((NUM) = ((NUM) & ~(1 << (N))) | ((V) << (N)))
 
 /* We use direct register access for IO instead of
  * the Arduino digitalRead/Write instructions for
@@ -30,9 +30,9 @@
  * (we hope that the compiler optimizes these)
  */
 #define DEFINE_PIN(NAME, WHICH, POS) \
-	uint8_t *const PIN_##NAME##_REG_PORT = &(PORT##WHICH); \
-	uint8_t *const PIN_##NAME##_REG_DDR = &(DDR##WHICH); \
-	const uint8_t *const PIN_##NAME##_REG_PIN = &(PIN##WHICH); \
+	volatile uint8_t *const PIN_##NAME##_REG_PORT = &(PORT##WHICH); \
+	volatile uint8_t *const PIN_##NAME##_REG_DDR = &(DDR##WHICH); \
+	const volatile uint8_t *const PIN_##NAME##_REG_PIN = &(PIN##WHICH); \
 	const uint8_t  PIN_##NAME##_REG_POS = (POS)
 
 /* direct port register pinMode() */
@@ -41,7 +41,7 @@
 
 /* set PULLUP status for pin */
 #define PLUP(NAME, MODE) \
-	VAL(*(PIN_##NAME##_REG_PORT, PIN_##NAME##_REG_POS, (MODE)))
+	VAL(*(PIN_##NAME##_REG_PORT), PIN_##NAME##_REG_POS, (MODE))
 
 /* direct port register digitalRead() */
 #define READ(NAME) \
@@ -49,6 +49,6 @@
 
 /* direct port register digitalWrite() */
 #define WRITE(NAME, VALUE) \
-	BIT(*(PIN_##NAME##_REG_PORT), PIN_##NAME##_REG_POS, (VALUE))
+	VAL(*(PIN_##NAME##_REG_PORT), PIN_##NAME##_REG_POS, (VALUE))
 
 #endif /* !MACRO_H */

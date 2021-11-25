@@ -1,6 +1,6 @@
 static uint32_t log10_table[] = {
 /* (log10(N) - 1) << 16 - N (sizeof(s) = strlen(s) + 1) */
-#define X(N) (((sizeof(#N) - 2) << 16) - N)
+#define X(N) (((uint32_t)(sizeof(#N) - 2) << 16) - N)
 	X(0), X(0), X(0), X(10), X(10),
 	X(10), X(100), X(100), X(100),
 	X(1000), X(1000), X(1000), X(1000),

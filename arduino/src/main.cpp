@@ -1,5 +1,7 @@
-#include <setjmp.h>
+#include <Arduino.h>
 #include <LiquidCrystal.h>
+
+#include <setjmp.h>
 #include "macro.h"
 
 /* SPI pinnit */
@@ -23,7 +25,7 @@ DEFINE_PIN(BTN_LT, D, 1); // PD1
 DEFINE_PIN(BTN_RT, D, 2); // PD2
 
 /* paluupiste pääsilmukkaan */
-static jmp_buf jmp_loop;
+jmp_buf jmp_loop;
 
 /* kuinka monta näytepistettä
  * voi olla maksimissaan muistissa
@@ -31,13 +33,13 @@ static jmp_buf jmp_loop;
 #define MAX_POINTS 32
 
 /* näytepisteet */
-static uint8_t num_points;
+uint8_t num_points;
 float points[MAX_POINTS][2];
 
 /* sisäänrakennetut kalibrointipisteet
  * (Laitettu ROM:iin koska säästää RAM muistia)
  */
-float points_builtin[][2] PROGMEM = {
+const float points_builtin[][2] PROGMEM = {
 	{-51.70,  684},
 	{ 79.76, 2496}
 };
@@ -56,22 +58,22 @@ float samples[MAX_SAMPLES];
 #define LCD_COLS 16 // näytön sarakkeet
 
 /* näytön puskuri (näyttö alkaa tyhjänä) */
-static char text_buffer[2*LCD_ROWS][LCD_COLS] = {
-	/* nykyinen teksti */
+char lcd_buffer[2*LCD_ROWS][LCD_COLS] = {
+	/* nykyinen tila */
 	{"                "},
 	{"                "},
-	/* edellinen teksti */
+	/* tila viimeisen lcd_update():en jälkeen */
 	{"                "},
 	{"                "}
-}
+};
 
 /* näyttö */
-static LiquidCrystal lcd(LCD_RS, LCD_CL, LCD_B4, LCD_B5, LCD_B6, LCD_B7);
+LiquidCrystal lcd(LCD_RS, LCD_CL, LCD_B4, LCD_B5, LCD_B6, LCD_B7);
 
 /* asteta sisäänrakennetut
  * oletusarvot pistejoukolle
  */
-void __attribute__((always_inline))
+void
 default_points()
 {
 	(void)memcpy_P(points, points_builtin,
@@ -100,14 +102,14 @@ compute_lss_coefs()
 /* muuta AD muuntimen näyte lämpötilaksi
  * lineaarisella PNS sovituksella
  */
-float __attribute__((always_inline))
+float
 compute_temp(float s)
 {
 	return lss_coefs[0] + lss_coefs[1]*s;
 }
 
 /* lue yksi tavu SPI:llä */
-uint8_t __attribute__((always_inline))
+uint8_t
 spi_byte(uint8_t v)
 {
 	/* kirjoitettava arvo */
@@ -124,7 +126,8 @@ spi_byte(uint8_t v)
 float
 temp_update()
 {
-	uint16_t tmp = 0, float res = 0;
+	uint16_t tmp = 0;
+	float res = 0.0;
 
 	/* lue näyte AD-muuntimelta */
 	WRITE(SPI_SS, LOW);
@@ -162,7 +165,7 @@ void lcd_update()
 		for (uint8_t col = 0; col < LCD_COLS; col++)
 		{
 		 	char *src, *dst;
-			src = &lcd_buffer[row][cold],
+			src = &lcd_buffer[row][col],
 			dst = &lcd_buffer[row + LCD_ROWS][col];
 
 			/* ei muutosta */
@@ -191,7 +194,6 @@ void lcd_update()
 	}
 }
 
-float T_now, T_old, S_now, S_old;
 uint32_t last_sample;
 
 void __attribute__((noreturn))
@@ -201,9 +203,9 @@ entry_point()
 
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
-	CLR(PRP, PRTIM0); /* TIMER0 päälle */
-	//CLR(PRP, PRTIM1); /* TIMER1 päälle */
-	CLR(PRP, PRSPI);  /* SPI päälle */
+	CLR(PRR, PRTIM0); /* TIMER0 päälle */
+	//CLR(PRR, PRTIM1); /* TIMER1 päälle */
+	CLR(PRR, PRSPI);  /* SPI päälle */
 
 	/* alusta kaikki IO pinnit INPUT PULLUP tilaan
 	 * jotta käyttämättömät pinnit eivät kellu.
@@ -249,7 +251,7 @@ entry_point()
 	(void)memcpy(&lcd_buffer[1][0], "S=", 2);
 
 	/* paluu keskeytyksistä tähän */
-	(void)setjmp(&jmp_loop);
+	(void)setjmp(jmp_loop);
 main_loop:
 	/* lue uusi näyte? */
 	tmp = millis();
@@ -259,13 +261,13 @@ main_loop:
 		/* päivitä lämpötila */
 		V = temp_update();
 		(void)sprintf_P(&lcd_buffer[0][2],
-			PSTR("%.1f"), T_now);
+			(const char *)PSTR("%.1f"), V);
 
 		/* päivitä näytearvo */
 		V = samples[(MAX_SAMPLES - 1
 			+ sample_pos) % MAX_SAMPLES];
 		(void)sprintf_P(&lcd_buffer[1][2],
-			PSTR("%u"), (unsigned int)S_now);
+			(const char *)PSTR("%u"), (unsigned int)V);
 
 		lcd_update();
 
