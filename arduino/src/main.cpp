@@ -437,10 +437,11 @@ button_test()
 #undef X
 	default:
 		if ((tmp - last_msg) > DISPLAY_FOR) {
-			(void)memset(&lcd_buffer[1][LCD_COLS - 9], ' ', 9);
+			(void)memset(&lcd_buffer[1][LCD_COLS - Z], ' ', Z);
 			last_msg = tmp;
 		}
 	}
+#undef Z
 }
 
 /* nollaa mikrokontrolleri watchdog ajastimella */
