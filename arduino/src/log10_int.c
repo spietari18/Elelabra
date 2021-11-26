@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 static uint32_t log10_table[] = {
 /* (log10(N) - 1) << 16 - N (sizeof(s) = strlen(s) + 1) */
 #define X(N) (((uint32_t)(sizeof(#N) - 2) << 16) - N)

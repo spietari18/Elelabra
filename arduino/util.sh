@@ -82,8 +82,9 @@ action_compile()
 		-warnings 'all' \
 		-verbose \
 		-prefs 'build.extra_flags=-DTIMER0_PRESCALER=64 -DSINGLE_ENTRY_POINT' \
+		-prefs 'compiler.ldflags=-Wl,-u,vfprintf -lm -lprintf_flt' \
 		-compile \
-		src/*.c src/*.cpp \
+		src/*.cpp src/*.c \
 		|| exit 1
 }
 
@@ -97,7 +98,7 @@ action_upload()
 		-c arduino \
 		-P "$1" \
 		-b 115200 \
-		-U flash:w:"$BUILD/main.c.hex":i \
+		-U flash:w:"$BUILD/main.cpp.hex":i \
 		-C "$HW/arduino/avr/avrdude.conf" \
 		|| exit 1
 }
