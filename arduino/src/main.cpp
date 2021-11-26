@@ -76,8 +76,8 @@ LiquidCrystal lcd(LCD_RS, LCD_CL, LCD_B4, LCD_B5, LCD_B6, LCD_B7);
 void
 default_points()
 {
-	(void)memcpy_P(points, points_builtin,
-		sizeof(points_builtin)/sizeof(points_builtin[0][0]));
+	num_points = sizeof(points_builtin)/sizeof(points_builtin[0][0]);
+	(void)memcpy_P(points, points_builtin, sizeof(points_builtin));
 }
 
 /* laske PNS kertoimet pistejoukolle */
@@ -152,7 +152,8 @@ temp_update()
 }
 
 /* päivitä näyttö vastaamaan puskurin sisältöä */
-void lcd_update()
+void
+lcd_update()
 {
 	/* näitä ei tiedetä ennenkun kutsutaan
 	 * lcd.setCursor():ia kerran
