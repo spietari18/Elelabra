@@ -50,8 +50,10 @@ const float points_builtin[][2] PROGMEM = {
 /* PNS kertoimet */
 float lss_coefs[2];
 
-#define MAX_SAMPLES 32 // monta näytettä muistissa kerralla
+#define MAX_SAMPLES 128 // monta näytettä muistissa kerralla
 #define SAMPLE_RATE 64 // näytteistystaajuus [Hz]
+
+#define SAMPLE_MAX_DELTA 4.0
 
 /* AD muuntimelta luetut näytteet */
 uint8_t sample_pos;
@@ -125,10 +127,17 @@ spi_byte(uint8_t v)
 	return SPDR;
 }
 
+int
+float_cmp(const void *a, const void *b)
+{
+	return *(float *)a - *(float *)b;
+}
+
 /* päivitä lämpötilalukema */
 float
 temp_update()
 {
+	float buffer[MAX_SAMPLES];
 	uint16_t tmp = 0;
 	float res = 0.0;
 
@@ -145,14 +154,42 @@ temp_update()
 	/* lisää kiertopuskuriin */
 	samples[sample_pos] = tmp;
 	sample_pos = (sample_pos + 1) % MAX_SAMPLES;
-	
-	/* laske puskurin keskiarvo */
-	for (uint8_t i = 0; i < MAX_SAMPLES; i++)
-		res += samples[i];
-	res /= MAX_SAMPLES;
+
+	(void)memcpy(buffer, samples, MAX_SAMPLES*sizeof(samples[0]));
+
+	/* järjestä puskuri numerojärkestykseen */
+	qsort(buffer, MAX_SAMPLES, sizeof(buffer[0]), float_cmp);
+
+	/* laske kiertopuskurin moodi */
+	float mode;
+#if (MAX_SAMPLES & 1)
+	mode = buffer[MAX_SAMPLES/2];
+#else
+	mode = (buffer[MAX_SAMPLES/2] + buffer[MAX_SAMPLES/2 + 1])/2;
+#endif
 
 	char buf[8];
-	uint8_t len = sprintf_P(buf, PSTR("%u"), (uint16_t)res);
+	uint8_t len;
+        len = sprintf_P(buf, PSTR("%.1f"), (float)mode);
+	(void)memset(&lcd_buffer[1][7], ' ', 8);
+	(void)memcpy(&lcd_buffer[1][LCD_COLS - len], buf, len);
+
+	/* suodata pois arvot, jotka ovat moodia SAMPLE_MAX_DELTA
+	 * suurempia tai pienempiä.
+	 */
+	uint8_t begin = 0;
+	uint8_t end = MAX_SAMPLES - 1;
+	while (abs(mode - buffer[begin]) > SAMPLE_MAX_DELTA)
+		begin++;
+	while (abs(mode - buffer[end]) > SAMPLE_MAX_DELTA)
+		end--;
+
+	/* laske puskurin keskiarvo */
+	for (uint8_t i = begin; i <= end; i++)
+		res += buffer[i];
+	res /= end - begin + 1;
+
+	len = sprintf_P(buf, PSTR("%u"), (uint16_t)res);
 	(void)memset(&lcd_buffer[0][7], ' ', 8);
 	(void)memcpy(&lcd_buffer[0][LCD_COLS - len], buf, len);
 
