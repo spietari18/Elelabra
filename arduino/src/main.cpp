@@ -240,36 +240,30 @@ lcd_update()
 	}
 }
 
-/* How long do we poll for the initial state. */
-#define BTN_POLL_TIME 250 /* [ms] */
+/* Kauan nappien tilaa luetaan ennekuin se lukitaan. */
+#define BTN_POLL_TIME 250 // [ms]
 
-/* How long can the state be something other than
- * the locked state before we reset.
+/* Kauan nappien tila voi poiketa lukitusta tilasta
+ * ennekuin tilan muutos rekisteröidään uutena tapahtumana.
  */
-#define BTN_JITTER_TIME 150 /* [ms] */
+#define BTN_JITTER_TIME 150 // [ms]
 
-/* How long should the locked state be held down
- * before we set the hold flag.
+/* Kauan nappeja täytyy pitää pohjassa, että
+ * HOLD tapahtuma aktivoituu. (ja HLUP UP:in sijasta)
  */
-#define BTN_HOLD_TIME 900 /* [ms] */
+#define BTN_HOLD_TIME 900 // [ms]
 
-/* How long do we treat the buttons as inactive
- * after we reset.
+/* Kuinka kauan odotetaan UP tai HLUP tapahtuman
+ * jälkeen ennenkuin nappien tilaa aletaan lukemaan
  */
-#define BTN_INACTIVE_TIME 200 /* [ms] */
+#define BTN_INACTIVE_TIME 200 // [ms]
 
-/* We could use some insane macro tricks to simplify
- * this, but it's probably just simpler to define
- * all of this shit manually.
- */
 #define BTN_RT_OFF 0
 #define BTN_LT_OFF 1
 
-/* use these with button_event() */
 #define RT (1 << BTN_RT_OFF)
 #define LT (1 << BTN_LT_OFF)
 
-/* event types for button_event() */
 #define DOWN (0 << NUM_KEYS)
 #define HOLD (1 << NUM_KEYS)
 #define UP   (2 << NUM_KEYS)
@@ -277,30 +271,24 @@ lcd_update()
 
 #define NUM_KEYS 2
 
-/* mask polled keys from state */
 #define KEY_MASK \
 	((1 << NUM_KEYS) - 1)
 
-/* mask locked keys from state */
 #define LOCK_MASK \
 	(KEY_MASK << NUM_KEYS)
 
-/* mask for the hold flag */
 #define HOLD_BIT \
 	(1 << (NUM_KEYS << 1))
 
-/* mask for everything but the state machine */
 #define RESET_MASK \
 	(KEY_MASK | LOCK_MASK | HOLD_BIT)
 
 #define STATE_OFF \
 	(1 + (NUM_KEYS << 1))
 
-/* mask for the state machine */
 #define STATE_MASK \
 	(3 << STATE_OFF)
 
-/* poll the key state */
 #define UPDATE_KEYS \
 	(button_state |= (!READ(BTN_RT) << BTN_RT_OFF) \
 		| (!READ(BTN_LT) << BTN_LT_OFF))
@@ -350,8 +338,30 @@ uint8_t button_state;
 uint32_t ts_1;
 uint32_t ts_2;
 
-
-/* päivitä nappien tila */
+/* Päivitä nappien tila ja palauta bittivektori joka kuvaa onko
+ * nappi/nappien yhdistelmä painettu alas (DOWN), sitä pidetään
+ * alhaalla (HOLD), se on vapautettu nopeasti (UP) tai se
+ * vapautetaan HOLD tapahtuman jälkeen (HLUP). Koodissa ei ole
+ * kommentteja, mutta alla pseudokoodi (englanniksi).
+ * 
+ * START:
+ * WAIT FOR INITIAL KEYPRESS
+ * WAIT BTN_POLL_TIME WHILE OR'ING THE POLLED STATE TO THE INITIAL STATE
+ * LOCK STATE
+ * DOWN EVENT
+ * IF POLLED STATE CHANGES FROM LOCKED STATE FOR LONGER THAN BTN_POLL_TIME
+ * 	UP EVENT
+ * 	GOTO END
+ * WAIT FOR BTN_HOLD_TIME
+ * SET HOLD FLAG
+ * HOLD EVENT
+ * IF POLLED STATE CHANGES FROM LOCKED STATE FOR LONGER THAN BTN_POLL_TIME
+ * 	HLUP EVENT
+ * END:
+ * WAIT FOR BTN_IACT_TIME
+ * RESET LOCKED STATE
+ * GOTO START
+ */
 uint8_t
 button_update()
 {
@@ -427,72 +437,57 @@ button_update()
 	return ret;
 }
 
+#define DISPLAY_FOR 1000
+uint32_t last_msg;
+
 void
 button_test()
 {
+	uint32_t tmp;
+
+	tmp = millis();
 	switch (button_update())
 	{
-	case RT|DOWN:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|DOWN", 7);
-		lcd_update();
-		break;
-	case RT|HOLD:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|HOLD", 7);
-		lcd_update();
-		break;
-	case RT|UP:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|UP", 5);
-		lcd_update();
-		break;
-	case RT|HLUP:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|HLUP", 7);
-		lcd_update();
-		break;
-	case LT|DOWN:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "LT|DOWN", 7);
-		lcd_update();
-		break;
-	case LT|HOLD:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "LT|HOLD", 7);
-		lcd_update();
-		break;
-	case LT|UP:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "LT|UP", 5);
-		lcd_update();
-		break;
-	case LT|HLUP:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "LT|HLUP", 7);
-		lcd_update();
-		break;
-	case RT|LT|DOWN:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|LT|DOWN", 10);
-		lcd_update();
-		break;
-	case RT|LT|HOLD:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|LT|HOLD", 10);
-		lcd_update();
-		break;
-	case RT|LT|UP:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|LT|UP", 8);
-		lcd_update();
-		break;
-	case RT|LT|HLUP:
-		(void)memset(&lcd_buffer[1][LCD_COLS - 10], ' ', 10);
-		(void)memcpy(&lcd_buffer[1][LCD_COLS - 10], "RT|LT|HLUP", 10);
-		lcd_update();
-		break;
+#define Z 9
+#define X(Y) \
+	case Y:\
+		(void)memset(&lcd_buffer[1][LCD_COLS - Z], ' ', Z); \
+		(void)memcpy_P(&lcd_buffer[1][LCD_COLS - Z], \
+			PSTR(#Y), sizeof(#Y) - 1); \
+		lcd_update(); \
+		last_msg = tmp; \
+		break
+#define BOTH RT|LT
+	X(RT|DOWN);
+	X(RT|HOLD);
+	X(RT|UP);
+	X(RT|HLUP);
+	X(LT|DOWN);
+	X(LT|HOLD);
+	X(LT|UP);
+	X(LT|HLUP);
+	X(BOTH|DOWN);
+	X(BOTH|HOLD);
+	X(BOTH|UP);
+	X(BOTH|HLUP);
+#undef BOTH
+#undef X
+	default:
+		if ((tmp - last_msg) > DISPLAY_FOR) {
+			(void)memset(&lcd_buffer[1][LCD_COLS - Z], ' ', Z);
+			last_msg = tmp;
+		}
 	}
+#undef Z
+}
+
+/* nollaa mikrokontrolleri watchdog ajastimella */
+void __attribute__((noreturn))
+reset()
+{
+	WDTCSR = 0;
+	SET(WDTCSR, WDE);
+	while (1);
 }
 
 void __attribute__((noreturn))
@@ -551,8 +546,8 @@ entry_point()
 	compute_lss_coefs();
 
 	/* näytön staattinen teksti */
-	(void)memcpy(&lcd_buffer[0][0], "T=", 2);
-	(void)memcpy(&lcd_buffer[1][0], "S=", 2);
+	(void)memcpy_P(&lcd_buffer[0][0], PSTR("T="), 2);
+	(void)memcpy_P(&lcd_buffer[1][0], PSTR("S="), 2);
 
 #if 0
 	len = sprintf_P(buf, PSTR("%u"), (unsigned int)num_points);
