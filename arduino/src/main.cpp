@@ -38,6 +38,9 @@ jmp_buf jmp_loop;
 uint8_t num_points;
 float points[MAX_POINTS][2];
 
+#define T_ABS_MIN -50.0
+#define T_ABS_MAX  80.0
+
 /* sisäänrakennetut kalibrointipisteet
  * (Laitettu ROM:iin koska säästää RAM muistia)
  */
@@ -51,7 +54,7 @@ const float points_builtin[][2] PROGMEM = {
 float lss_coefs[2];
 
 #define MAX_SAMPLES 128 // monta näytettä muistissa kerralla
-#define SAMPLE_RATE 64 // näytteistystaajuus [Hz]
+#define SAMPLE_RATE 64  // näytteistystaajuus [Hz]
 
 #define SAMPLE_MAX_DELTA 4.0
 
@@ -168,30 +171,36 @@ temp_update()
 	mode = (buffer[MAX_SAMPLES/2] + buffer[MAX_SAMPLES/2 + 1])/2;
 #endif
 
+#if 0
 	char buf[8];
 	uint8_t len;
         len = sprintf_P(buf, PSTR("%.1f"), (float)mode);
 	(void)memset(&lcd_buffer[1][7], ' ', 8);
 	(void)memcpy(&lcd_buffer[1][LCD_COLS - len], buf, len);
+#endif
 
 	/* suodata pois arvot, jotka ovat moodia SAMPLE_MAX_DELTA
-	 * suurempia tai pienempiä.
+	 * suurempia tai pienempiä. (poistaa äkilliset vaihtelut)
 	 */
-	uint8_t begin = 0;
+	uint8_t beg = 0;
 	uint8_t end = MAX_SAMPLES - 1;
-	while (abs(mode - buffer[begin]) > SAMPLE_MAX_DELTA)
-		begin++;
-	while (abs(mode - buffer[end]) > SAMPLE_MAX_DELTA)
+	while ((beg < MAX_SAMPLES/2) &&
+		(abs(mode - buffer[beg]) > SAMPLE_MAX_DELTA))
+		beg++;
+	while ((end > MAX_SAMPLES/2) &&
+		(abs(mode - buffer[end]) > SAMPLE_MAX_DELTA))
 		end--;
 
 	/* laske puskurin keskiarvo */
-	for (uint8_t i = begin; i <= end; i++)
+	for (uint8_t i = beg; i <= end; i++)
 		res += buffer[i];
-	res /= end - begin + 1;
+	res /= end - beg + 1;
 
+#if 0
 	len = sprintf_P(buf, PSTR("%u"), (uint16_t)res);
 	(void)memset(&lcd_buffer[0][7], ' ', 8);
 	(void)memcpy(&lcd_buffer[0][LCD_COLS - len], buf, len);
+#endif
 
 	return compute_temp(res);
 }
@@ -490,14 +499,61 @@ reset()
 	while (1);
 }
 
+/* käyttöliittymän tilat */
+#define UI_SPLASH  0 
+#define UI_DEFAULT 1
+#define UI_CONFIG  2
+#define UI_CALIBR  3
+#define UI_ERROR   4
+
+/* monta bittiä tilassa on */
+#define UI_BITS \
+	(8*sizeof(int) - __builtin_clz(UI_ERROR))
+
+#define UI_MASK_NOW \
+	((1 << UI_BITS) - 1)
+#define UI_MASK_OLD \
+	(((1 << UI_BITS) - 1) << UI_BITS)
+
+/* määrittää onko tila SETUP vai LOOP */
+#define UI_BIT (1 << (UI_BITS << 1))
+
+/* vaihda käyttöliittymän tilaa (UIT_BIT = 0) */
+#define UI_SET_STATE(state) \
+	(ui_state = ((ui_state & UI_MASK_OLD) << UI_BITS) | (UI_##state & UI_MASK_NOW))
+
+/* palauta käyttöliittymän tila */
+#define UI_GET_STATE \
+	(ui_state & (~UI_MASK_OLD))
+
+#define UI_SETUP_END \
+	(ui_state |= UI_BIT)
+
+#define UI_SETUP(state) \
+	(UI_##state & UI_MASK_NOW)
+
+#define UI_LOOP(state) \
+	(UI_BIT | (UI_##state & UI_MASK_NOW))
+
+#define SPLASH_WAIT 3000 // [ms]
+
+#define DISPLAY_WAIT 3000 // [ms]
+
 void __attribute__((noreturn))
 entry_point()
 {
 	uint32_t last_sample;
+	uint32_t init;
 	uint32_t tmp;
 	char buf[8];
 	uint8_t len;
 	float V;
+
+	uint8_t ui_state = 0;
+
+	float obs_min =  1.0/0.0;
+	float obs_max = -1.0/0.0;
+
 
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
@@ -541,15 +597,17 @@ entry_point()
 
 	//tone(BUZZER, 1000);
 
+	UI_SET_STATE(SPLASH);
+
 	/* alusta PNS malli */
 	default_points();
 	compute_lss_coefs();
 
+#if 0
 	/* näytön staattinen teksti */
 	(void)memcpy_P(&lcd_buffer[0][0], PSTR("T="), 2);
 	(void)memcpy_P(&lcd_buffer[1][0], PSTR("S="), 2);
 
-#if 0
 	len = sprintf_P(buf, PSTR("%u"), (unsigned int)num_points);
 	(void)memset(&lcd_buffer[1][7], ' ', 8);
 	(void)memcpy(&lcd_buffer[1][LCD_COLS - len], buf, len);
@@ -558,28 +616,122 @@ entry_point()
 	/* paluu keskeytyksistä tähän */
 	(void)setjmp(jmp_loop);
 main_loop:
-	/* lue uusi näyte? */
-	tmp = millis();
-	if ((tmp - last_sample) > 1000/SAMPLE_RATE) {
-		/* päivitä lämpötila */
-		V = temp_update();
-		len = sprintf_P(buf,
-			(const char *)PSTR("%+.1f"), V + 0.05);
-		(void)memcpy(&lcd_buffer[0][2], buf, len);
+	
+	switch (UI_GET_STATE) {
+	case UI_SETUP(SPLASH):
 
-		/* päivitä näytearvo */
-		V = samples[(MAX_SAMPLES - 1
-			+ sample_pos) % MAX_SAMPLES];
-		len = sprintf_P(buf,
-			(const char *)PSTR("%u"), (unsigned int)V);
-		(void)memcpy(&lcd_buffer[1][2], buf, len);
+#define SPLASH_1 "L\xE1mp\xEFmittari"
+#define SPLASH_2 "v. 1.0"
+
+		(void)memcpy_P(&lcd_buffer[0][(LCD_COLS - sizeof(SPLASH_1) + 2)/2],
+				PSTR(SPLASH_1), sizeof(SPLASH_1) - 1);
+		(void)memcpy_P(&lcd_buffer[1][(LCD_COLS - sizeof(SPLASH_2) + 2)/2],
+				PSTR(SPLASH_2), sizeof(SPLASH_2) - 1);
 
 		lcd_update();
 
-		last_sample = tmp;
-	}
+		UI_SETUP_END;     
+		break;
 
-	button_test();
+	case UI_LOOP(SPLASH):
+		if (SPLASH_WAIT < millis())
+			UI_SET_STATE(DEFAULT);
+		break;
+	
+	/* oletusnäkymä */
+	case UI_SETUP(DEFAULT):
+		/* tyhjennä näyttö */
+		(void)memset(lcd_buffer, ' ', LCD_ROWS*LCD_COLS);
+
+		/* näytön staattinen teksti */
+		(void)memcpy_P(&lcd_buffer[0][0], PSTR("MIN"), 3);
+		(void)memcpy_P(&lcd_buffer[0][13], PSTR("MAX"), 3);
+
+		init = millis();
+
+		UI_SETUP_END;
+		break;
+
+	case UI_LOOP(DEFAULT):
+		/* lue uusi näyte? */
+		tmp = millis();
+		if ((tmp - last_sample) > 1000/SAMPLE_RATE) {
+			/* päivitä lämpötila */
+			V = temp_update();
+
+			if ((millis() - init) > DISPLAY_WAIT) {
+				if (V > obs_max)
+					obs_max = V;
+				else if (V < obs_min)
+					obs_min = V;
+
+				len = sprintf_P(buf,
+					(const char *)PSTR("%+.1f"), obs_min);
+				(void)memcpy(&lcd_buffer[1][0], buf, len);
+
+				len = sprintf_P(buf,
+					(const char *)PSTR("%+.1f"), obs_max);
+				(void)memcpy(&lcd_buffer[1][LCD_COLS
+					- len], buf, len);
+
+			}
+
+			(void)memset(&lcd_buffer[0][5], ' ', 6);
+
+			char *val;
+			if (V < T_ABS_MIN) {
+				(void)memcpy_P(&lcd_buffer[0][5], 
+					PSTR("-LIMIT"), 6);
+			} else if (V > T_ABS_MAX) {
+				(void)memcpy_P(&lcd_buffer[0][5], 
+					PSTR("+LIMIT"), 6);
+			} else {
+				len = sprintf_P(buf,
+					(const char *)PSTR("%+.2f"), V);
+				(void)memcpy(&lcd_buffer[0][(LCD_COLS
+					- len)/2], buf, len);
+			}
+#if 0
+			/* päivitä näytearvo */
+			V = samples[(MAX_SAMPLES - 1
+				+ sample_pos) % MAX_SAMPLES];
+			len = sprintf_P(buf,
+				(const char *)PSTR("%u"), (unsigned int)V);
+			(void)memcpy(&lcd_buffer[1][2], buf, len);
+#endif
+
+			lcd_update();
+
+			last_sample = tmp;
+		}
+#if 0
+		len = sprintf_P(buf, PSTR("%lu"), millis());
+		(void)memset(&lcd_buffer[0][0], ' ', 8);
+		(void)memcpy(&lcd_buffer[0][0], buf, len);
+		lcd_update();
+#endif		
+		break;
+	
+	case UI_SETUP(CALIBR):
+		UI_SETUP_END;
+		break;
+
+	case UI_LOOP(CALIBR):
+		break;
+	
+	case UI_SETUP(CONFIG):
+		UI_SETUP_END;
+		break;
+
+	case UI_LOOP(CONFIG):
+		break;
+	
+	case UI_SETUP(ERROR):
+		// näytä virhe
+		reset();
+	default:
+		UI_SET_STATE(ERROR);
+	}
 
 	goto main_loop;
 }
