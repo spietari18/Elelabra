@@ -6,17 +6,25 @@
 #define likely(A)   __builtin_expect((A), 1)
 #define unlikely(A) __builtin_expect((A), 0)
 
+/* arduino stdlib defines these already */
+#if 0
+#define min(A, B) \
+	((A < B) ? (A) : (B))
+#define max(A, B) \
+	((A > B) ? (A) : (B))
+#endif
+
 /* bit manipulation */
 #define GET(NUM, N) \
-	(NUM & (1 << (N)))
+	(NUM & (1UL << (N)))
 #define SET(NUM, N) \
-	((NUM) |= 1 << (N))
+	((NUM) |= 1UL << (N))
 #define CLR(NUM, N) \
-	((NUM) &= ~(1 << (N)))
+	((NUM) &= ~(1UL << (N)))
 #define TGL(NUM, N) \
-	((NUM) ^= 1 << (N))
+	((NUM) ^= 1UL << (N))
 #define VAL(NUM, N, V) \
-	((NUM) = ((NUM) & ~(1 << (N))) | ((V) << (N)))
+	((NUM) = ((NUM) & ~(1UL << (N))) | ((V) << (N)))
 
 /* We use direct register access for IO instead of
  * the Arduino digitalRead/Write instructions for

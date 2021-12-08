@@ -2,6 +2,7 @@
 #include <LiquidCrystal.h>
 
 #include <setjmp.h>
+#include <math.h>
 #include "macro.h"
 
 /* SPI pinnit */
@@ -405,6 +406,7 @@ button_update()
 		case 0x6:
 		case 0x9:
 			ts_2 = now;
+			/* fallthrough */
 		case 0x4:
 			SET_HOLD_FLAG;
 			ret |= HOLD | GET_LOCKED;
@@ -518,13 +520,13 @@ menu_update()
 		break;
 	}
 
-	if (old == menu_entry)
+	if (likely(old == menu_entry))
 		return;
 
 render_menu:
 	for (uint8_t i = 0; i < 4; i++)
 	{
-		if (i == menu_entry)
+		if (unlikely(i == menu_entry))
 			dst[i] = 0xFF;
 		else
 			dst[i] = i + '1';
@@ -548,20 +550,196 @@ render_menu:
 	}
 }
 
-#define SPLASH_WAIT 1000 // [ms]
+#define ALIGN_L 0
+#define ALIGN_R 1
+#define ALIGN_C 2
+
+//#define NULLTERM ((uint8_t)~0)
+
+void
+__lcd_put(const char *msg, uint8_t len, uint8_t row,
+	uint8_t align, void *(*copy)(void *, const void *, uint16_t))
+{
+	void *dst;
+
+	//if (unlikely(len == NULLTERM))
+	//	len = strlen(msg);
+
+	switch (align) {
+	case ALIGN_L:
+		dst = &lcd_buffer[row][0];
+	break;
+	case ALIGN_R:
+		dst = &lcd_buffer[row][LCD_COLS - len];
+	break;
+	case ALIGN_C:
+		dst = &lcd_buffer[row][(LCD_COLS - len + 1)/2];
+	break;
+	}
+
+	(void)copy(dst, msg, len);
+}
+
+#define lcd_put_const(msg, row, align) \
+	__lcd_put((msg), sizeof(msg) - 1, (row), (align), &memcpy)
+
+#define lcd_put_P_const(msg, row, align) \
+	__lcd_put(PSTR(msg), sizeof(msg) - 1, (row), (align), &memcpy_P)
+
+#define lcd_put(msg, len, row, align) \
+	__lcd_put((msg), (len), (row), (align), &memcpy)
+
+#define lcd_put_P(msg, len, row, align) \
+	__lcd_put((msg), (len), (row), (align), &memcpy_P)
+
+const char itoa_chars[16] PROGMEM = {
+	'0', '1', '2', '3', 
+	'4', '5', '6', '7', 
+	'8', '9', 'A', 'B', 
+	'C', 'D', 'E', 'F' 
+};
+
+uint8_t
+itoa(char *dst, uint16_t val,
+	uint8_t lim, uint8_t base, bool trunc_low)
+{
+	uint8_t i = 0;
+	uint8_t j = 0;
+	uint8_t k;
+
+	while (val)
+	{
+		if (unlikely(i >= lim)) {
+			if (likely(trunc_low)) {
+				(void)memmove(&dst[0],
+					&dst[1], lim - 1);
+				i = lim - 1;
+			} else {
+				break;
+			}
+		}
+
+		dst[i++] = pgm_read_byte(&itoa_chars[val % base]);
+		val /= base;
+	}
+
+	k = min(i, lim)/2;
+	while (j < k)
+	{
+		char c = dst[j];
+		dst[j] = dst[i - j - 1];
+		dst[i - j - 1] = c;
+		j++;
+	}
+
+	return i;
+}
+
+void
+lcd_put_float(float V, uint8_t p, bool fill,
+	uint8_t lim, uint8_t row, uint8_t align)
+{
+	uint8_t i = 1;
+	uint8_t j;
+	int16_t v;
+	float rnd = 0.5;
+	char buf[lim];
+
+	/* erota kokonais ja desimaaliosa */
+	v = (int16_t)V;
+	V -= v;
+
+	const char sgn[2] = {'+', '-'};
+	if (!isfinite(V)) {
+		buf[0] = sgn[V < 0];
+#define X "INFINITY"
+		i = min(lim, sizeof(X));
+		(void)memcpy_P(&buf[1], PSTR(X), i - 1);
+#undef X
+		goto print;
+	} else {
+		buf[0] = sgn[v < 0];
+		CLR(*(uint32_t *)&V, 31); // V = abs(V)
+	}
+
+	/* kokonaisosa */
+	i += itoa(&buf[1], abs(v), lim - 1, 10, false);
+	if (unlikely(i == lim))
+		goto print;
+
+	/* desimaalipiste */
+	buf[i++] = '.';
+	if (unlikely(i == lim))
+		goto print;
+
+	/* pyöristä desimaaliosa */
+	j = p;
+	while (j--)
+		rnd *= 0.1;
+	V += rnd;	
+
+	/* muuta kokonaisluvuksi */
+	j = p;
+	while (j--)
+		V *= 10.0;
+
+	/* desimaaliosa */
+	j = itoa(&buf[i], (uint16_t)V, lim - i, 10, true);
+	i += j;
+	if (unlikely(i == lim))
+		goto print;
+	
+	/* lisää nollia, jotta numeron pituus on lim */
+	if (fill) {
+		i += (p - j);
+		while (j < p)
+			buf[i - j++] = '0';
+		if (likely(i == lim))
+			goto print;
+		j = lim - i + 1;
+		(void)memmove(&buf[j], &buf[1], i);
+		i = 1;
+		while (i < j)
+			buf[i++] = '0';
+		i = lim;
+	}
+print:
+	lcd_put(buf, i, row, align);
+}
+
+void
+lcd_put_uint(uint16_t val, uint8_t lim, uint8_t row, uint8_t align)
+{
+	uint8_t i;
+	char buf[6];
+
+	i = itoa(buf, val, lim, 10, false);
+	lcd_put(buf, i, row, align);
+}
+
+void
+lcd_put_temp(float T, uint8_t p, uint8_t lim, uint8_t row, uint8_t align)
+{
+	char lim_str[6];
+	(void)memcpy_P(lim_str, PSTR("xLIMIT"), 6);
+
+	if (unlikely(T < T_ABS_MIN)) {
+		lim_str[0] = '-';
+		lcd_put(lim_str, min(6, lim), row, align);
+	} else if (unlikely(T > T_ABS_MAX)) {
+		lim_str[0] = '+';
+		lcd_put(lim_str, min(6, lim), row, align);
+	} else {
+		lcd_put_float(T, p, true, lim, row, align);
+	}
+}
 
 void __attribute__((noreturn))
 entry_point()
 {
-	uint32_t last_sample;
-	uint32_t init;
+	uint32_t ts_now;
+	uint32_t ts_old;
 	uint32_t tmp;
-	uint32_t a;
-	uint32_t b;
-	uint16_t c;
-	char buf[8];
-	uint8_t len;
-	float V;
 
 	float obs_min =  1.0/0.0;
 	float obs_max = -1.0/0.0;
@@ -624,45 +802,55 @@ main_loop:
 
 #define SPLASH_1 "L\xE1mp\xEFmittari"
 #define SPLASH_2 "v. 1.0"
+#define SPLASH_WAIT 1000 // [ms]
 
-		(void)memcpy_P(&lcd_buffer[0][(LCD_COLS - sizeof(SPLASH_1) + 2)/2],
-				PSTR(SPLASH_1), sizeof(SPLASH_1) - 1);
-		(void)memcpy_P(&lcd_buffer[1][(LCD_COLS - sizeof(SPLASH_2) + 2)/2],
-				PSTR(SPLASH_2), sizeof(SPLASH_2) - 1);
-
+		/* splash */
+		lcd_put_P_const(SPLASH_1, 0, ALIGN_C);
+		lcd_put_P_const(SPLASH_2, 0, ALIGN_C);
 		lcd_update();
 
-		/* näytä splash alarivi */
-		while (SPLASH_WAIT > millis());
+#undef SPLASH_1
+#undef SPLASH_2
 
-		a = 0;
-		last_sample = 0;
+		/* näytä alarivi SPLASH_WAIT millisekuntia */
+		ts_old = millis();
+		while ((millis() - ts_old) < SPLASH_WAIT);
 
-		(void)memcpy_P(&lcd_buffer[1][1], PSTR("[            ]"), 14);
+		/* alusta SPLASH LOOP tila */
+		tmp = 0;
+		ts_old = 0;
+
+#define PROG_INIT "[            ]"
+#define PROG_CHARS \
+	(sizeof(PROG_INIT) - 3)
+		/* alusta edistymispalkki */
+		lcd_put_P_const(PROG_INIT, 1, ALIGN_C);
 
 		UI_SETUP_END;     
 		break;
 
 	case UI_LOOP(SPLASH):
-		
-		b = millis();
-		if ((b - last_sample) > (1000/SAMPLE_RATE)) {
+		/* alusta näytepuskuri täyteen */
+		ts_now = millis();
+		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
+			/* päivitä lämpötila */
 			(void)temp_update();
 
-			uint16_t x = (23*a + (MAX_SAMPLES - 1))/MAX_SAMPLES;
-
-			if (x & 1)
-				lcd_buffer[1][2 + x/2] = '=';
-			else
-				lcd_buffer[1][2 + x/2] = '-';
-
+			/* päivitä edistymispalkki */
+			uint16_t x = (PROG_CHARS*(PROG_CHARS - 1)*tmp
+				+ (MAX_SAMPLES - 1))/MAX_SAMPLES;
+			const char prg[2] = {'=', '-'};
+			lcd_buffer[1][2 + x/2] = prg[x & 1];
 			lcd_update();
 
-			a++;
-			last_sample = b;
+			tmp++;
+			ts_old = ts_now;
 		}
 
-		if (a >= MAX_SAMPLES)
+		/* menu_update() asettaa UI tilan DEFAULT
+		 * ensimmäisellä kutsuntakerralla
+		 */
+		if (tmp >= MAX_SAMPLES)
 			menu_update();
 
 		break;
@@ -673,65 +861,42 @@ main_loop:
 		LCD_CLEAR;
 
 		/* näytön staattinen teksti */
-		(void)memcpy_P(&lcd_buffer[0][0], PSTR("MIN"), 3);
-		(void)memcpy_P(&lcd_buffer[0][13], PSTR("MAX"), 3);
-
-		init = millis();
+		lcd_put_P_const("MIN", 0, ALIGN_L);
+		lcd_put_P_const("MAX", 0, ALIGN_R);
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(DEFAULT):
 		/* lue uusi näyte? */
-		tmp = millis();
-		if ((tmp - last_sample) > (1000/SAMPLE_RATE)) {
+		ts_now = millis();
+		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
 			/* päivitä lämpötila */
-			V = temp_update();
+			float T = temp_update();
 		
 			(void)memset(&lcd_buffer[0][5], ' ', 6);
 
-			if (V > obs_max)
-				obs_max = V;
-			else if (V < obs_min)
-				obs_min = V;
+			/* päivitä nähdyt maksimi ja minimi */
+			if (unlikely(T > obs_max))
+				obs_max = T;
+			else if (unlikely(T < obs_min))
+				obs_min = T;
 
-			char *val;
-			if (V < T_ABS_MIN) {
-				(void)memcpy_P(&lcd_buffer[0][5], 
-					PSTR("-LIMIT"), 6);
-			} else if (V > T_ABS_MAX) {
-				(void)memcpy_P(&lcd_buffer[0][5], 
-					PSTR("+LIMIT"), 6);
-			} else {
-				len = sprintf_P(buf,
-					(const char *)PSTR("%+.2f"), V);
-				(void)memcpy(&lcd_buffer[0][(LCD_COLS
-					- len)/2], buf, len);
-			}
-
-			len = sprintf_P(buf,
-				(const char *)PSTR("%+.1f"), obs_min);
-			(void)memcpy(&lcd_buffer[1][0], buf, len);
-
-			len = sprintf_P(buf,
-				(const char *)PSTR("%+.1f"), obs_max);
-			(void)memcpy(&lcd_buffer[1][LCD_COLS
-				- len], buf, len);
-
+			/* päivitä lämpötilat näytöllä */
+			lcd_put_temp(T, 2, 6, 0, ALIGN_C);
+			lcd_put_temp(obs_min, 1, 5, 1, ALIGN_L);
+			lcd_put_temp(obs_max, 1, 5, 1, ALIGN_R);
 			lcd_update();
 
-			last_sample = tmp;
+			ts_old = ts_now;
 		}
 
 		menu_update();
 		break;
 
-#define PRINT(WHAT) \
-		(void)memcpy_P(&lcd_buffer[0][0], PSTR(WHAT), sizeof(WHAT) - 1);
-
 	case UI_SETUP(CALIBR):
 		LCD_CLEAR;
-		PRINT("CALIBR");
+		lcd_put_P_const("CALIBR", 0, ALIGN_C);
 		lcd_update();
 		UI_SETUP_END;
 		break;
@@ -742,7 +907,7 @@ main_loop:
 	
 	case UI_SETUP(CONFIG1):
 		LCD_CLEAR;
-		PRINT("CONFIG1");
+		lcd_put_P_const("CONFIG1", 0, ALIGN_C);
 		lcd_update();
 		UI_SETUP_END;
 		break;
@@ -753,7 +918,7 @@ main_loop:
 	
 	case UI_SETUP(CONFIG2):
 		LCD_CLEAR;
-		PRINT("CONFIG2");
+		lcd_put_P_const("CONFIG2", 0, ALIGN_C);
 		lcd_update();
 		UI_SETUP_END;
 		break;

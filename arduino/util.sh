@@ -82,10 +82,12 @@ action_compile()
 		-warnings 'all' \
 		-verbose \
 		-prefs 'build.extra_flags=-DTIMER0_PRESCALER=64 -DSINGLE_ENTRY_POINT' \
-		-prefs 'compiler.ldflags=-Wl,-u,vfprintf -lm -lprintf_flt' \
 		-compile \
 		src/*.cpp src/*.c \
 		|| exit 1
+
+		# this enables a proper vfprintf()
+		#-prefs 'compiler.ldflags=-Wl,-u,vfprintf -lm -lprintf_flt' \
 }
 
 # $1 = serial device
