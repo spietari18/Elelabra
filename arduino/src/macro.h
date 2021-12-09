@@ -2,6 +2,9 @@
 #ifndef MACRO_H
 #define MACRO_H
 
+#include <avr/io.h>
+#include <stdint.h>
+
 /* for optimizing conditionals */
 #define likely(A)   __builtin_expect((A), 1)
 #define unlikely(A) __builtin_expect((A), 0)
@@ -14,6 +17,10 @@
 	((A > B) ? (A) : (B))
 #endif
 
+/* rounding integer division */
+#define int_div_rnd(A, B) \
+	((A) + (B) - 1)/(B)
+
 /* bit manipulation */
 #define GET(NUM, N) \
 	(NUM & (1UL << (N)))
@@ -24,7 +31,7 @@
 #define TGL(NUM, N) \
 	((NUM) ^= 1UL << (N))
 #define VAL(NUM, N, V) \
-	((NUM) = ((NUM) & ~(1UL << (N))) | ((V) << (N)))
+	((NUM) = ((NUM) & ~(1UL << (N))) | ((!!(V)) << (N)))
 
 /* We use direct register access for IO instead of
  * the Arduino digitalRead/Write instructions for
@@ -38,10 +45,13 @@
  * (we hope that the compiler optimizes these)
  */
 #define DEFINE_PIN(NAME, WHICH, POS) \
-	volatile uint8_t *const PIN_##NAME##_REG_PORT = &(PORT##WHICH); \
-	volatile uint8_t *const PIN_##NAME##_REG_DDR = &(DDR##WHICH); \
-	const volatile uint8_t *const PIN_##NAME##_REG_PIN = &(PIN##WHICH); \
-	const uint8_t  PIN_##NAME##_REG_POS = (POS)
+	static volatile uint8_t *const \
+		PIN_##NAME##_REG_PORT = &(PORT##WHICH); \
+	static volatile uint8_t *const \
+		PIN_##NAME##_REG_DDR = &(DDR##WHICH); \
+	static const volatile uint8_t *const \
+		PIN_##NAME##_REG_PIN = &(PIN##WHICH); \
+	static const uint8_t PIN_##NAME##_REG_POS = (POS)
 
 /* direct port register pinMode() */
 #define MODE(NAME, MODE) \
