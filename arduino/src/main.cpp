@@ -27,6 +27,29 @@ DEFINE_PIN(LCD_AN, D, 4); // PD4
 DEFINE_PIN(BTN_LT, D, 1); // PD1, (vasen)
 DEFINE_PIN(BTN_RT, D, 0); // PD1, (oikea)
 
+#define ERR_OK   0
+#define ERR_TEST 1
+
+#define ERROR_STR(A, B) \
+	const char ERROR_STR_##B[] PROGMEM = (A)
+
+#define ERROR_PTR(A) \
+	ERROR_STR_##A
+
+ERROR_STR("NO ERROR", 0);
+ERROR_STR("TEST ERROR", 1);
+
+const char *const errstr[] PROGMEM = {
+	ERROR_PTR(0),
+	ERROR_PTR(1)
+};
+
+#define ERROR(CODE) \
+	do { \
+		UI_SET_STATE(ERROR); \
+		longjmp(jmp_loop, (ERR_##CODE)); \
+	} while (0)
+
 /* paluupiste pääsilmukkaan */
 jmp_buf jmp_loop;
 
@@ -65,18 +88,6 @@ float samples[MAX_SAMPLES];
 
 #define LCD_ROWS 2  // näytön rivit
 #define LCD_COLS 16 // näytön sarakkeet
-
-/* tyhjennä kaikki paitsi valikko */
-#define LCD_CLEAR \
-	do { \
-		(void)memset(&lcd_buffer[0][0], ' ', LCD_COLS); \
-		(void)memset(&lcd_buffer[1][0], ' ', 6); \
-		(void)memset(&lcd_buffer[1][10], ' ', 6); \
-	} while (0)
-
-/* tyhjennä koko näyttö */
-#define LCD_CLEAR_ALL \
-	(void)memset(lcd_buffer, ' ', LCD_ROWS*LCD_COLS)
 
 /* näytön puskuri (näyttö alkaa tyhjänä) */
 char lcd_buffer[2*LCD_ROWS][LCD_COLS] = {
@@ -494,12 +505,20 @@ uint8_t ui_state;
 #define UI_LOOP(state) \
 	(UI_BIT | (UI_##state & UI_MASK_NOW))
 
+#define MENU_CHARS 4
+
+#if 0
+void (*menu_callback)(void)[MENU_CHARS] = {
+
+};
+#endif
+
 uint8_t menu_entry = ~0;
 
 void
 menu_update()
 {
-	char *dst = &lcd_buffer[1][6];
+	char *dst = &lcd_buffer[1][(LCD_COLS - MENU_CHARS)/2];
 
 	uint8_t old = menu_entry;
 
@@ -511,10 +530,10 @@ menu_update()
 
 	switch (button_update()) {
 	case RT|UP:
-		menu_entry = (menu_entry + 1) % 4;
+		menu_entry = (menu_entry + 1) % MENU_CHARS;
 		break;
 	case LT|UP:
-		menu_entry = (menu_entry + 3) % 4;
+		menu_entry = (menu_entry + MENU_CHARS - 1) % MENU_CHARS;
 		break;
 	case BOTH|UP:
 		break;
@@ -524,7 +543,7 @@ menu_update()
 		return;
 
 render_menu:
-	for (uint8_t i = 0; i < 4; i++)
+	for (uint8_t i = 0; i < MENU_CHARS; i++)
 	{
 		if (unlikely(i == menu_entry))
 			dst[i] = 0xFF;
@@ -534,6 +553,9 @@ render_menu:
 
 	lcd_update();
 
+#if 0
+	menu_callback[menu_entry]();
+#else
 	switch (menu_entry) {
 	case 0:
 		UI_SET_STATE(DEFAULT);
@@ -548,22 +570,38 @@ render_menu:
 		UI_SET_STATE(CONFIG2);
 		break;
 	}
+#endif
 }
+
+/* tyhjennä kaikki paitsi valikko */
+#define LCD_CLEAR \
+	do { \
+		(void)memset(&lcd_buffer[0][0], ' ', LCD_COLS); \
+		(void)memset(&lcd_buffer[1][0], \
+			' ', (LCD_COLS - MENU_CHARS)/2); \
+		(void)memset(&lcd_buffer[1][LCD_COLS - \
+			(LCD_COLS - MENU_CHARS)/2], \
+			' ', (LCD_COLS - MENU_CHARS)/2); \
+	} while (0)
+
+/* tyhjennä koko näyttö */
+#define LCD_CLEAR_ALL \
+	(void)memset(lcd_buffer, ' ', LCD_ROWS*LCD_COLS)
 
 #define ALIGN_L 0
 #define ALIGN_R 1
 #define ALIGN_C 2
 
-//#define NULLTERM ((uint8_t)~0)
+#define NULLTERM ((uint8_t)~0)
 
 void
-__lcd_put(const char *msg, uint8_t len, uint8_t row,
-	uint8_t align, void *(*copy)(void *, const void *, uint16_t))
+__lcd_put(const char *msg, uint8_t len, uint8_t row, uint8_t align,
+	void *(*copy)(void *, const void *, size_t), size_t (*length)(const char *))
 {
 	void *dst;
 
-	//if (unlikely(len == NULLTERM))
-	//	len = strlen(msg);
+	if (unlikely(len == NULLTERM))
+		len = length(msg);
 
 	switch (align) {
 	case ALIGN_L:
@@ -581,16 +619,16 @@ __lcd_put(const char *msg, uint8_t len, uint8_t row,
 }
 
 #define lcd_put_const(msg, row, align) \
-	__lcd_put((msg), sizeof(msg) - 1, (row), (align), &memcpy)
+	__lcd_put((msg), sizeof(msg) - 1, (row), (align), &memcpy, NULL)
 
 #define lcd_put_P_const(msg, row, align) \
-	__lcd_put(PSTR(msg), sizeof(msg) - 1, (row), (align), &memcpy_P)
+	__lcd_put(PSTR(msg), sizeof(msg) - 1, (row), (align), &memcpy_P, NULL)
 
 #define lcd_put(msg, len, row, align) \
-	__lcd_put((msg), (len), (row), (align), &memcpy)
+	__lcd_put((msg), (len), (row), (align), &memcpy, &strlen)
 
 #define lcd_put_P(msg, len, row, align) \
-	__lcd_put((msg), (len), (row), (align), &memcpy_P)
+	__lcd_put((msg), (len), (row), (align), &memcpy_P, &strlen_P)
 
 const char itoa_chars[16] PROGMEM = {
 	'0', '1', '2', '3', 
@@ -740,6 +778,7 @@ entry_point()
 	uint32_t ts_now;
 	uint32_t ts_old;
 	uint32_t tmp;
+	uint8_t code;
 
 	float obs_min =  1.0/0.0;
 	float obs_max = -1.0/0.0;
@@ -794,9 +833,9 @@ entry_point()
 	compute_lss_coefs();
 
 	/* paluu keskeytyksistä tähän */
-	(void)setjmp(jmp_loop);
+	code = setjmp(jmp_loop);
 main_loop:
-	
+
 	switch (UI_GET_STATE) {
 	case UI_SETUP(SPLASH):
 
@@ -809,9 +848,6 @@ main_loop:
 		lcd_put_P_const(SPLASH_2, 0, ALIGN_C);
 		lcd_update();
 
-#undef SPLASH_1
-#undef SPLASH_2
-
 		/* näytä alarivi SPLASH_WAIT millisekuntia */
 		ts_old = millis();
 		while ((millis() - ts_old) < SPLASH_WAIT);
@@ -823,6 +859,8 @@ main_loop:
 #define PROG_INIT "[            ]"
 #define PROG_CHARS \
 	(sizeof(PROG_INIT) - 3)
+#define PROG_START \
+	((LCD_COLS - PROG_CHARS)/2)
 		/* alusta edistymispalkki */
 		lcd_put_P_const(PROG_INIT, 1, ALIGN_C);
 
@@ -840,7 +878,7 @@ main_loop:
 			uint16_t x = (PROG_CHARS*(PROG_CHARS - 1)*tmp
 				+ (MAX_SAMPLES - 1))/MAX_SAMPLES;
 			const char prg[2] = {'=', '-'};
-			lcd_buffer[1][2 + x/2] = prg[x & 1];
+			lcd_buffer[1][PROG_START + x/2] = prg[x & 1];
 			lcd_update();
 
 			tmp++;
@@ -874,8 +912,6 @@ main_loop:
 			/* päivitä lämpötila */
 			float T = temp_update();
 		
-			(void)memset(&lcd_buffer[0][5], ' ', 6);
-
 			/* päivitä nähdyt maksimi ja minimi */
 			if (unlikely(T > obs_max))
 				obs_max = T;
@@ -928,8 +964,22 @@ main_loop:
 		break;
 	
 	case UI_SETUP(ERROR):
-		// näytä virhe
-		reset();
+#define ERROR_WAIT 2000
+		LCD_CLEAR_ALL;
+
+		lcd_put_P_const("ERROR", 0, ALIGN_C);
+		lcd_put_P(errstr[code], NULLTERM, 1, ALIGN_C);
+		ts_old = millis();
+
+		UI_SETUP_END;
+		break;
+
+	case UI_LOOP(ERROR):
+		ts_now = millis();
+		if ((ts_now - ts_old) > ERROR_WAIT)
+			reset();
+		break;
+
 	default:
 		UI_SET_STATE(ERROR);
 	}
