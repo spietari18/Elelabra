@@ -198,8 +198,7 @@ temp_update()
 	/* suodata pois arvot, jotka ovat moodia SAMPLE_MAX_DELTA
 	 * suurempia tai pienempiä. (poistaa äkilliset vaihtelut)
 	 */
-	uint8_t beg = 0;
-	uint8_t end = MAX_SAMPLES - 1;
+	uint8_t beg = 0, end = MAX_SAMPLES - 1;
 	while ((beg < MAX_SAMPLES/2) &&
 		(abs(mode - buffer[beg]) > SAMPLE_MAX_DELTA))
 		beg++;
@@ -354,8 +353,7 @@ lcd_update()
  */
 uint8_t button_state;
 
-uint32_t ts_1;
-uint32_t ts_2;
+uint32_t ts_1, ts_2;
 
 /* Päivitä nappien tila ja palauta bittivektori joka kuvaa onko
  * nappi/nappien yhdistelmä painettu alas (DOWN), sitä pidetään
@@ -384,9 +382,8 @@ uint32_t ts_2;
 uint8_t
 button_update()
 {
-	unsigned long now, td_1, td_2;
-
-	unsigned char ret = 0;
+	uint32_t now, td_1, td_2;
+	uint8_t ret = 0;
 
 	now = millis();
 	td_1 = now - ts_1;
@@ -490,7 +487,8 @@ uint8_t ui_state;
 
 /* vaihda käyttöliittymän tilaa (UIT_BIT = 0) */
 #define UI_SET_STATE(state) \
-	(ui_state = ((ui_state & UI_MASK_OLD) << UI_BITS) | (UI_##state & UI_MASK_NOW))
+	(ui_state = ((ui_state & UI_MASK_OLD) \
+		<< UI_BITS) | (UI_##state & UI_MASK_NOW))
 
 /* palauta käyttöliittymän tila */
 #define UI_GET_STATE \
@@ -519,7 +517,6 @@ void
 menu_update()
 {
 	char *dst = &lcd_buffer[1][(LCD_COLS - MENU_CHARS)/2];
-
 	uint8_t old = menu_entry;
 
 	/* alustus */
@@ -595,8 +592,8 @@ render_menu:
 #define NULLTERM ((uint8_t)~0)
 
 void
-__lcd_put(const char *msg, uint8_t len, uint8_t row, uint8_t align,
-	void *(*copy)(void *, const void *, size_t), size_t (*length)(const char *))
+__lcd_put(const char *msg, uint8_t len, uint8_t row, uint8_t align, void *
+	(*copy)(void *, const void *, size_t), size_t (*length)(const char *))
 {
 	void *dst;
 
@@ -641,9 +638,7 @@ uint8_t
 itoa(char *dst, uint16_t val,
 	uint8_t lim, uint8_t base, bool trunc_low)
 {
-	uint8_t i = 0;
-	uint8_t j = 0;
-	uint8_t k;
+	uint8_t i = 0, j = 0, k;
 
 	while (val)
 	{
@@ -677,8 +672,7 @@ void
 lcd_put_float(float V, uint8_t p, bool fill,
 	uint8_t lim, uint8_t row, uint8_t align)
 {
-	uint8_t i = 1;
-	uint8_t j;
+	uint8_t i = 1, j;
 	int16_t v;
 	float rnd = 0.5;
 	char buf[lim];
@@ -748,11 +742,9 @@ print:
 void
 lcd_put_uint(uint16_t val, uint8_t lim, uint8_t row, uint8_t align)
 {
-	uint8_t i;
 	char buf[6];
 
-	i = itoa(buf, val, lim, 10, false);
-	lcd_put(buf, i, row, align);
+	lcd_put(buf, itoa(buf, val, lim, 10, false), row, align);
 }
 
 void
@@ -775,19 +767,16 @@ lcd_put_temp(float T, uint8_t p, uint8_t lim, uint8_t row, uint8_t align)
 void __attribute__((noreturn))
 entry_point()
 {
-	uint32_t ts_now;
-	uint32_t ts_old;
-	uint32_t tmp;
+	uint32_t ts_now, ts_old, tmp;
 	uint8_t code;
 
-	float obs_min =  1.0/0.0;
-	float obs_max = -1.0/0.0;
-
+	/* lämpömittarin näkemä minimi- ja maksimilämpötila */
+	float obs_min =  1.0/0.0, obs_max = -1.0/0.0;
 
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
 	CLR(PRR, PRTIM0); // TIMER0 päälle
-	CLR(PRR, PRTIM2); // TIMER2 päälle
+	//CLR(PRR, PRTIM2); // TIMER2 päälle
 	CLR(PRR, PRSPI);  // SPI päälle
 
 	/* alusta kaikki IO pinnit INPUT PULLUP tilaan
