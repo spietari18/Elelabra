@@ -1,6 +1,7 @@
 #ifndef ERROR_H
 #define ERROR_H
 
+#include "ui.h"
 #include <setjmp.h>
 #include <avr/pgmspace.h>
 

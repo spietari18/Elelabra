@@ -13,11 +13,14 @@ jmp_buf main_loop;
 void __attribute__((noreturn))
 entry_point()
 {
+	struct button_state s = {0};
 	uint32_t ts_now, ts_old, tmp;
 	uint8_t code;
+	bool in_menu = true;
+	bool is_locked = false;
 
 	/* lämpömittarin näkemä minimi- ja maksimilämpötila */
-	float obs_min =  1.0/0.0, obs_max = -1.0/0.0;
+	float obs_min = INF, obs_max = -INF;
 
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
@@ -80,7 +83,7 @@ main_loop:
 
 		/* splash */
 		lcd_put_P_const(SPLASH_1, 0, ALIGN_C);
-		lcd_put_P_const(SPLASH_2, 0, ALIGN_C);
+		lcd_put_P_const(SPLASH_2, 1, ALIGN_C);
 		lcd_update();
 
 		/* näytä alarivi SPLASH_WAIT millisekuntia */
@@ -90,7 +93,7 @@ main_loop:
 		/* alusta SPLASH LOOP tila */
 		tmp = 0;
 		ts_old = 0;
-		prog_init(MAX_SAMPLES, 0);
+		prog_init(MAX_SAMPLES, 1);
 
 		UI_SETUP_END;     
 		break;
@@ -114,7 +117,7 @@ main_loop:
 		 * ensimmäisellä kutsuntakerralla
 		 */
 		if (tmp >= MAX_SAMPLES)
-			menu_update();
+			(void)menu_update();
 
 		break;
 	
@@ -152,7 +155,28 @@ main_loop:
 			ts_old = ts_now;
 		}
 
-		menu_update();
+		if (in_menu) {
+			if (menu_update())
+				in_menu = false;
+			lcd_update();
+		} else {
+			switch (button_update(&s)) {
+			case BOTH|HOLD:
+				is_locked = !is_locked;
+				if (is_locked)
+					lcd_put_P_const("LOCK", 1, ALIGN_C);
+				else
+					lcd_put_P_const("    ", 1, ALIGN_C);
+				lcd_update();
+				break;
+			case BOTH|UP:
+				if (is_locked)
+					break;
+				in_menu = true;
+				MENU_FORCE_UPDATE;
+				break;
+			}
+		}
 		break;
 
 	case UI_SETUP(CALIBR):
@@ -163,7 +187,23 @@ main_loop:
 		break;
 
 	case UI_LOOP(CALIBR):
-		menu_update();
+		if (in_menu) {
+			if (menu_update())
+				in_menu = false;
+			lcd_update();
+		} else {
+			switch (button_update(&s)) {
+			case BOTH|HOLD:
+				ERROR(OK);
+				break;
+			case BOTH|UP:
+				if (is_locked)
+					break;
+				in_menu = true;
+				MENU_FORCE_UPDATE;
+				break;
+			}
+		}
 		break;
 	
 	case UI_SETUP(CONFIG1):
@@ -174,7 +214,7 @@ main_loop:
 		break;
 
 	case UI_LOOP(CONFIG1):
-		menu_update();
+		(void)menu_update();
 		break;
 	
 	case UI_SETUP(CONFIG2):
@@ -185,24 +225,43 @@ main_loop:
 		break;
 	
 	case UI_LOOP(CONFIG2):
-		menu_update();
+		(void)menu_update();
 		break;
 	
 	case UI_SETUP(ERROR):
-#define ERROR_WAIT 2000
+#define ERROR_SHOW 2000
+#define ERROR_WAIT 1000
 		LCD_CLEAR_ALL;
 
-		lcd_put_P_const("ERROR", 0, ALIGN_C);
-		lcd_put_P(errstr[code], NULLTERM, 1, ALIGN_C);
-		ts_old = millis();
+		lcd_put_P_const("VIRHE:", 0, ALIGN_C);
+		lcd_put_P(pgm_read_ptr(&errstr[code]), NULLTERM, 1, ALIGN_C);
+		lcd_update();
+
+		tmp = millis();
+		while ((millis() - tmp) < ERROR_SHOW);
+
+		lcd_put_P_const("REBOOT", 0, ALIGN_C);
+		prog_init(200, 200);
+		lcd_update();
+
+		ts_old = 0;
+		tmp = millis();
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(ERROR):
 		ts_now = millis();
-		if ((ts_now - ts_old) > ERROR_WAIT)
+
+		if ((ts_now - ts_old) > ERROR_WAIT/225) {
+			prog_dec();
+			lcd_update();
+			ts_old = ts_now;
+		}
+
+		if ((ts_now - tmp) > ERROR_WAIT)
 			reset();
+
 		break;
 
 	default:

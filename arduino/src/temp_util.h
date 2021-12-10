@@ -14,7 +14,7 @@ extern "C" {
 #define MAX_SAMPLES 128
 
 /* AD muuntimen näytteistystaajuus. */
-#define SAMPLE_RATE 64  // [Hz]
+#define SAMPLE_RATE 64 // [Hz]
 
 /* Kuinka paljon näytteet saavat enintään
  * muuttua näytepuskurin moodista.

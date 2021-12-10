@@ -20,7 +20,7 @@
 	(3 << STATE_OFF)
 
 #define UPDATE_KEYS \
-	(s->state |= (BTN_POLL_LT << BTN_RT_OFF) \
+	(s->state |= (BTN_POLL_RT << BTN_RT_OFF) \
 		| (BTN_POLL_LT << BTN_LT_OFF))
 
 #define GET_KEYS \

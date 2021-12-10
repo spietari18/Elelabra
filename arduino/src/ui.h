@@ -52,6 +52,12 @@ extern "C" {
 /* Käyttöliittymän tilakone. */
 extern uint8_t ui_state;
 
+#define MENU_FORCE_UPDATE \
+	(menu_force_update = true)
+
+/* Pakota valikon päivitys. */
+extern bool menu_force_update;
+
 /* Päivitä valikko */
 bool menu_update();
 

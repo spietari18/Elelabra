@@ -7,6 +7,7 @@
  */
 
 #include "macro.h"
+#include <Arduino.h>
 
 /* SPI pinnit */
 DEFINE_PIN(SPI_SS,   B, 2); // PB2

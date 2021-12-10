@@ -83,7 +83,7 @@ action_compile()
 		-verbose \
 		-prefs 'build.extra_flags=-DTIMER0_PRESCALER=64 -DSINGLE_ENTRY_POINT' \
 		-compile \
-		src/*.cpp src/*.c \
+		src/main.c `find src/ -type f \( -name '*.cpp' -o -name '*.c' \) -a \( -! -name 'main.c' \)` \
 		|| exit 1
 
 		# this enables a proper vfprintf()
@@ -100,7 +100,7 @@ action_upload()
 		-c arduino \
 		-P "$1" \
 		-b 115200 \
-		-U flash:w:"$BUILD/main.cpp.hex":i \
+		-U flash:w:"$BUILD/main.c.hex":i \
 		-C "$HW/arduino/avr/avrdude.conf" \
 		|| exit 1
 }
