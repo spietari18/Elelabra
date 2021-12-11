@@ -76,7 +76,6 @@ uint16_t set_prescaler(uint8_t *reg, uint32_t freq, uint16_t max)
 		i++;
 	}
 	i--;
-_break:
 	*reg &= ~7;
 	*reg |= ((typeof(&prescalers[0]))
 		pgm_read_ptr(&prescalers[i]))->bits;
@@ -249,7 +248,7 @@ void beep_slow()
 }
 
 /* Aloita äänimerkkien toisto. */
-void beep_beg()
+void beep_begin()
 {
 	cli();
 
@@ -263,6 +262,7 @@ void beep_beg()
 	SET(state, BEEPCONT);
 	SET(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
+	SET(state, BEEPSTAT);
 	SET(TIMSK, ENABLE);
 
 	sei();
@@ -304,7 +304,7 @@ void blink()
 }
 
 /* Aloita taustavalon välkytys. */
-void blink_beg()
+void blink_begin()
 {
 	cli();
 

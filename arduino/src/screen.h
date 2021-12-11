@@ -1,7 +1,6 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include "ui.h"
 #include <stddef.h>
 #include <string.h>
 #include <avr/pgmspace.h>
@@ -13,19 +12,8 @@ extern "C" {
 #define LCD_ROWS 2  // näytön rivit
 #define LCD_COLS 16 // näytön sarakkeet
 
-/* tyhjennä kaikki paitsi valikko */
-#define LCD_CLEAR \
-	do { \
-		(void)memset(&lcd_buffer[0][0], ' ', LCD_COLS); \
-		(void)memset(&lcd_buffer[1][0], \
-			' ', (LCD_COLS - MENU_CHARS)/2); \
-		(void)memset(&lcd_buffer[1][LCD_COLS - \
-			(LCD_COLS - MENU_CHARS)/2], \
-			' ', (LCD_COLS - MENU_CHARS)/2); \
-	} while (0)
-
 /* tyhjennä koko näyttö */
-#define LCD_CLEAR_ALL \
+#define LCD_CLEAR \
 	(void)memset(lcd_buffer, ' ', LCD_ROWS*LCD_COLS)
 
 #define ALIGN_L 0 // kohdista vasemmalle

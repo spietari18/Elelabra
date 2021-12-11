@@ -23,13 +23,11 @@ DEFINE_PIN(SPI_MISO, B, 4); // PB4
 #define LCD_B6 A2 // PC2
 #define LCD_B7 A3 // PD3
 
-/* tone() ohjaa tätä */
-//#define BUZZER 3 // PD3
-
+/* Summeri. */
 #define BUZZER_TIMER 2
 DEFINE_PIN(BUZZER, D, 3); // PD3
 
-/* Muut pinnit */
+/* Muut pinnit. */
 DEFINE_PIN(LCD_AN, D, 4); // PD4
 DEFINE_PIN(BTN_LT, D, 1); // PD1, (vasen)
 DEFINE_PIN(BTN_RT, D, 0); // PD1, (oikea)

@@ -30,7 +30,7 @@ void beep_fast();
 void beep_slow();
 
 /* Aloita äänimerkkien toisto. */
-void beep_beg();
+void beep_begin();
 
 /* Lopeta äänimerkkien toisto. */
 void beep_end();
@@ -39,7 +39,7 @@ void beep_end();
 void blink();
 
 /* Aloita taustavalon välkytys. */
-void blink_beg();
+void blink_begin();
 
 /* Lopeta taustavalon välkytys. */
 void blink_end();

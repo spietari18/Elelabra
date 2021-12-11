@@ -9,15 +9,35 @@
 #include <Arduino.h>
 #include <setjmp.h>
 
-jmp_buf main_loop;
+#define DEFINE_NAV_CALLBACK(NAME) \
+	void callback_##NAME##_nav() {\
+		UI_SET_STATE(NAME); \
+	}\
+
+#define NAV_CALLBACK(NAME) \
+	(&callback_##NAME##_nav)
+
+/* Arduino.h määrittelee tämän jostain syystä. */
+#undef DEFAULT
+
+DEFINE_NAV_CALLBACK(DEFAULT);
+DEFINE_NAV_CALLBACK(CALIBR);
+DEFINE_NAV_CALLBACK(CONFIG1);
+DEFINE_NAV_CALLBACK(CONFIG2);
+
+/* Valikon takaisinkutsut. */
+MENU_CALLBACKS = {
+	MENU_CALLBACK(NAV_CALLBACK(DEFAULT), NULL),
+	MENU_CALLBACK(NAV_CALLBACK(CALIBR), NULL),
+	MENU_CALLBACK(NAV_CALLBACK(CONFIG1), NULL),
+	MENU_CALLBACK(NAV_CALLBACK(CONFIG2), NULL)
+};
 
 void __attribute__((noreturn))
 entry_point()
 {
-	struct button_state s = {0};
+	struct button_state s = {};
 	uint32_t ts_now, ts_old, tmp;
-	uint8_t code;
-	bool in_menu = true;
 	bool is_locked = false;
 
 	/* lämpömittarin näkemä minimi- ja maksimilämpötila */
@@ -48,8 +68,8 @@ entry_point()
 	/* käyttöliittymä alkaa splash näytöstä */
 	UI_SET_STATE(SPLASH);
 
-	/* paluu keskeytyksistä tähän */
-	code = setjmp(main_loop) - 1;
+	/* ERROR() palaa tähän mistä tahansa. */
+	ERROR_RETURN;
 main_loop:
 
 	switch (UI_GET_STATE) {
@@ -91,11 +111,12 @@ main_loop:
 			ts_old = ts_now;
 		}
 
-		/* menu_update() asettaa UI tilan DEFAULT
-		 * ensimmäisellä kutsuntakerralla
+		/* menu_enter() alustaa valikon ja siirtyy valikossa
+		 * kohtaan 0. (kutsuu MENU_CALLBACKS[0] navigaatio-
+		 * takaisinkutsua, joka asettaa tilan DEFAULT)
 		 */
 		if (tmp >= MAX_SAMPLES)
-			(void)menu_update();
+			menu_enter(0);
 
 		break;
 	
@@ -133,94 +154,133 @@ main_loop:
 			ts_old = ts_now;
 		}
 
-		if (in_menu) {
-			if (menu_update())
-				in_menu = false;
+		/* valikossa */
+		if (menu())
+			break;
+
+		/* pois valikosta */
+		switch (button_update(&s)) {
+		case BOTH|HOLD:
+			is_locked = !is_locked;
+			if (is_locked)
+				lcd_put_P_const("LOCK", 1, ALIGN_C);
+			else
+				lcd_put_P_const("    ", 1, ALIGN_C);
 			lcd_update();
-		} else {
-			switch (button_update(&s)) {
-			case BOTH|HOLD:
-				is_locked = !is_locked;
-				if (is_locked)
-					lcd_put_P_const("LOCK", 1, ALIGN_C);
-				else
-					lcd_put_P_const("    ", 1, ALIGN_C);
-				lcd_update();
+			break;
+		case BOTH|UP:
+			if (is_locked)
 				break;
-			case BOTH|UP:
-				if (is_locked)
-					break;
-				in_menu = true;
-				MENU_FORCE_UPDATE;
-				break;
-			}
+			menu_return();
+			break;
 		}
 		break;
 
+	/* kalibrointinäkymä */
 	case UI_SETUP(CALIBR):
-		LCD_CLEAR;
+		LCD_CLEAR;	/* Tässä sellainen vika, että jos käyttäjä
+	 * ehtii rämpyttää nappeja tarpeeksi nopeasti
+	 * valikko piirretään kaksi kertaa turhaan.
+	 */
+
 		lcd_put_P_const("CALIBR", 0, ALIGN_C);
-		lcd_update();
+
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(CALIBR):
-		if (in_menu) {
-			if (menu_update())
-				in_menu = false;
-			lcd_update();
-		} else {
-			switch (button_update(&s)) {
-			case BOTH|HOLD:
-				ERROR(TEST);
-				break;
-			case BOTH|UP:
-				if (is_locked)
-					break;
-				in_menu = true;
-				MENU_FORCE_UPDATE;
-				break;
-			}
+		/* valikossa */
+		if (menu())
+			break;
+
+		/* pois valikosta */
+		switch (button_update(&s)) {
+		case BOTH|HOLD:
+			ERROR(TEST);
+			break;
+		case BOTH|UP:
+			menu_return();
+			break;
 		}
 		break;
-	
+
+	/* asetusnäkymä 1 */
 	case UI_SETUP(CONFIG1):
 		LCD_CLEAR;
+
 		lcd_put_P_const("CONFIG1", 0, ALIGN_C);
-		lcd_update();
+
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(CONFIG1):
-		(void)menu_update();
+		/* valikossa */
+		if (menu())
+			break;
+
+		/* pois valikosta */
+		switch (button_update(&s)) {
+		case BOTH|HOLD:
+			ERROR(TEST);
+			break;
+		case BOTH|UP:
+			menu_return();
+			break;
+		}
 		break;
-	
+
+	/* asetusnäkymä 2 */
 	case UI_SETUP(CONFIG2):
 		LCD_CLEAR;
+
 		lcd_put_P_const("CONFIG2", 0, ALIGN_C);
-		lcd_update();
+
 		UI_SETUP_END;
 		break;
 	
 	case UI_LOOP(CONFIG2):
-		(void)menu_update();
+		/* valikossa */
+		if (menu())
+			break;
+
+		/* pois valikosta */
+		switch (button_update(&s)) {
+		case BOTH|HOLD:
+			ERROR(TEST);
+			break;
+		case BOTH|UP:
+			menu_return();
+			break;
+		}
 		break;
 	
 	case UI_SETUP(ERROR):
 #define ERROR_SHOW 2000
 #define ERROR_WAIT 1000
-		LCD_CLEAR_ALL;
+		LCD_CLEAR;
 
-		lcd_put_P_const("VIRHE:", 0, ALIGN_C);
-		lcd_put_P(pgm_read_ptr(&errstr[code]), NULLTERM, 1, ALIGN_C);
+		/* tulosta virhe */
+		lcd_put_P_const("VIRHE:", 0, ALIGN_L);
+		lcd_put_uint(ERROR_CODE, 2, 0, ALIGN_R);
+		lcd_put_P(ERROR_MSG, NULLTERM, 1, ALIGN_C);
 		lcd_update();
 
+		beep_begin();
+
+		/* näytä virhe ERROR_SHOW millisekuntia */
 		tmp = millis();
 		while ((millis() - tmp) < ERROR_SHOW);
 
+		beep_end();
+
+		LCD_CLEAR;
+
+		/* tulosta uudelleenkäynnistysviesti */
 		lcd_put_P_const("REBOOT", 0, ALIGN_C);
 		prog_init(200, 200);
 		lcd_update();
+
+		blink();
 
 		ts_old = 0;
 		tmp = millis();
@@ -231,19 +291,18 @@ main_loop:
 	case UI_LOOP(ERROR):
 		ts_now = millis();
 
+		/* edistymispalkki */
 		if ((ts_now - ts_old) > (ERROR_WAIT/225)) {
 			prog_dec();
 			lcd_update();
 			ts_old = ts_now;
 		}
 
+		/* uudelleenkäynnistys */
 		if ((ts_now - tmp) > ERROR_WAIT)
 			reset();
 
 		break;
-
-	default:
-		ERROR(OK);
 	}
 
 	goto main_loop;

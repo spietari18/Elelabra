@@ -13,3 +13,6 @@ const char *const errstr[N_ERR] PROGMEM = {
 	ERROR_PTR(0),
 	ERROR_PTR(1)
 };
+
+jmp_buf error_return;
+uint8_t error_code;

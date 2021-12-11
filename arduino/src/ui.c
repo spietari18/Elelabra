@@ -2,78 +2,126 @@
 #include "screen.h"
 #include "button.h"
 
-/* valikko tarvitsee oman nappitilansa
- * jotta kutsut button_update():lle muualla
- * eivät vaikuta nappien tilaan täällä.
- */
-static struct button_state s;
-static uint8_t menu_entry = ~0;
-
-/* valikon tilakone */
+/* Käyttöliittymän tilakone. */
 uint8_t ui_state;
 
-bool menu_force_update;
+/* Valikon tila. */
+static struct button_state s;
+static uint8_t entry_now;
+static uint8_t entry_old = ~0;
+static bool in_menu;
+static bool redraw;
+
+#define MENU_EXIT 0
+#define MENU_NOCH 1
+#define MENU_MOVE 2
+
+/* Piirrä valikko. */
+static void menu_draw(bool clear)
+{
+	char menu_str[MENU_ENTRIES];
+
+	if (unlikely(clear)) {
+		(void)memset(menu_str, ' ', MENU_ENTRIES);
+	} else {
+		for (uint8_t i = 0; i < MENU_ENTRIES; i++)
+		{
+			if (unlikely(i == entry_now))
+				menu_str[i] = 0xFF;
+			else
+				menu_str[i] = i + '1';
+		}
+	}
+
+	lcd_put(menu_str, MENU_ENTRIES, MENU_ROW, MENU_ALIGN);	
+	lcd_update();
+}
 
 /* päivitä valikko */
-bool menu_update()
+static uint8_t menu_update(bool force)
 {
-	char *dst = &lcd_buffer[1][(LCD_COLS - MENU_CHARS)/2];
-	uint8_t old = menu_entry;
-
-	/* alustus */
-	if (unlikely(menu_entry == (uint8_t)~0)) {
-		menu_entry = 0;
-		goto render_menu;
-	}
+	/* ohita napit */
+	if (force)
+		goto skip_buttons;
 
 	switch (button_update(&s)) {
 	case RT|UP:
-		menu_entry = (menu_entry + 1) % MENU_CHARS;
+		entry_now = (entry_now + 1) % MENU_ENTRIES;
 		break;
 	case LT|UP:
-		menu_entry = (menu_entry + MENU_CHARS - 1) % MENU_CHARS;
+		entry_now = (entry_now + MENU_ENTRIES - 1) % MENU_ENTRIES;
 		break;
 	case BOTH|UP:
-		(void)memset(dst, ' ', MENU_CHARS);
-		return true;
-		break;
+		/* poistumisen takaisinkutsu */
+		callback_t callback = pgm_read_ptr(
+			&menu_callbacks[entry_now][1]);
+		if (callback)
+			callback();
+
+		return MENU_EXIT;
 	}
 
-	/* pakotettu valikon päivitys */
-	if (unlikely(menu_force_update))
-		menu_force_update = false;
+	/* jos mikään ei muutu tai päivitystä
+	 * ei pakoteta, älä päivitä
+	 */
+	if (likely(entry_old == entry_now))
+		return MENU_NOCH;
 
-	/* jos mikään ei muutu, älä päivitä */
-	else if (likely(old == menu_entry))
-		return false;
+skip_buttons:
+	/* navigaation takaisinkutsu */
+	callback_t callback = pgm_read_ptr(
+		&menu_callbacks[entry_now][0]);
+	if (callback)
+		callback();
 
-render_menu:
-	for (uint8_t i = 0; i < MENU_CHARS; i++)
-	{
-		if (unlikely(i == menu_entry))
-			dst[i] = 0xFF;
-		else
-			dst[i] = i + '1';
-	}
+	entry_old = entry_now;
 
-	lcd_update();
+	return MENU_MOVE;
+}
 
-	switch (menu_entry) {
-	case 0:
-		UI_SET_STATE(DEFAULT);
-		break;
-	case 1:
-		UI_SET_STATE(CALIBR);
-		break;
-	case 2:
-		UI_SET_STATE(CONFIG1);
-		break;
-	case 3:
-		UI_SET_STATE(CONFIG2);
-		break;
-	}
-
+/* Valikon tila. */
+bool menu()
+{
+	if (in_menu) {
+		switch (menu_update(false)) {
+		case MENU_EXIT:
+			/* tyhjennä valikko */
+			menu_draw(true);
+			in_menu = false;
+			return false;
+		case MENU_NOCH:
+			/* piirrä valikko */
+			if (redraw) {
+				menu_draw(false);
+				redraw = false;
+			}
+			return true;
+		case MENU_MOVE:
+			/* piirrä valikko seuraavalla
+			 * menu() kutsulla
+			 */
+			redraw = true;
+			return true;
+		}
+	} 
+	
 	return false;
+}
+
+/* Siirry valikkoon. */
+void menu_enter(uint8_t entry)
+{
+	in_menu = true;
+	redraw = false;
+	entry_now = entry;
+	(void)menu_update(true);
+}
+
+/* Palaa valikkoon. */
+void menu_return()
+{
+	in_menu = redraw = true;
+	(void)menu_update(true);
 }
 
 #define PROG_CHARS \

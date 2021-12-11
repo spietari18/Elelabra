@@ -47,19 +47,35 @@ extern "C" {
 #define UI_LOOP(state) \
 	(UI_BIT | (UI_##state & UI_MASK_NOW))
 
-#define MENU_CHARS 4
+/* Valikon asetukset. */
+#define MENU_ALIGN ALIGN_C
+#define MENU_ROW 1
+#define MENU_ENTRIES 4
 
 /* Käyttöliittymän tilakone. */
 extern uint8_t ui_state;
 
-#define MENU_FORCE_UPDATE \
-	(menu_force_update = true)
+typedef void (*callback_t)();
 
-/* Pakota valikon päivitys. */
-extern bool menu_force_update;
+#define MENU_CALLBACKS \
+	const callback_t menu_callbacks[MENU_ENTRIES][2]
 
-/* Päivitä valikko */
-bool menu_update();
+#define MENU_CALLBACK(ENTER, EXIT) \
+	{(ENTER), (EXIT)}
+
+/* Tämä tulee määritellä pääohjelmassa. */
+extern MENU_CALLBACKS;
+
+/* Valikon tila. (päivittää valikon ja palauttaa
+ * true kun käyttäjä poistuu valikosta)
+ */
+bool menu();
+
+/* Siirry valikkoon. */
+void menu_enter(uint8_t);
+
+/* Palaa valikkoon. */
+void menu_return();
 
 /* Mille riville edistymispalkki piirretään. */
 #define PROG_ROW 1
