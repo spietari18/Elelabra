@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "util.h"
+#include "alarm.h"
 #include "error.h"
 #include "screen.h"
 #include "button.h"
@@ -25,7 +26,7 @@ entry_point()
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
 	CLR(PRR, PRTIM0); // TIMER0 päälle
-	//CLR(PRR, PRTIM2); // TIMER2 päälle
+	CLR(PRR, PRTIM2); // TIMER2 päälle
 	CLR(PRR, PRSPI);  // SPI päälle
 
 	/* alusta kaikki IO pinnit INPUT PULLUP tilaan
@@ -36,42 +37,19 @@ entry_point()
 	PORTB = PORTC = PORTD = ~0; // PULLUP
 	PINB  = PINC  = PIND  =  0; // LOW
 
-	/* alusta SPI (tarpeellinen tehdä vain kerran koska
-	 * AD muunnin on ainoa kytketty SPI laite)
-	 */
-	SPCR = 0;
-	SET(SPCR, SPE);
-	SET(SPCR, MSTR);
-	SET(SPCR, CPOL);
-	SET(SPCR, SPR0);
-	WRITE(SPI_SS, HIGH);
-	MODE(SPI_SS, OUTPUT);
-	MODE(SPI_CLK, OUTPUT);
-	MODE(SPI_MOSI, OUTPUT);
-	PLUP(SPI_MISO, 0);
-
-	/* alusta näyttö (LiquidCrystal kutsuu
-	 * pinMode():a vasta tässä vaiheessa)
-	 */
+	/* Alusta moduulit/tilat. */
 	lcd_init();
-
-	/* alusta muut pinnit, napeille voidaan käyttää
-	 * sisäisiä ylosvetovastuksia joten niiden
-	 * modeihin ei tarvitse puuttua.
-	 */
-	WRITE(LCD_AN, HIGH);
-	MODE(LCD_AN, OUTPUT);
-
-	//tone(BUZZER, 1000);
-
-	UI_SET_STATE(SPLASH);
-
-	/* alusta PNS malli */
+	spi_init();
+	i2c_init();
+	alarm_init();
 	default_points();
 	compute_lss_coefs();
+	
+	/* käyttöliittymä alkaa splash näytöstä */
+	UI_SET_STATE(SPLASH);
 
 	/* paluu keskeytyksistä tähän */
-	code = setjmp(main_loop);
+	code = setjmp(main_loop) - 1;
 main_loop:
 
 	switch (UI_GET_STATE) {
@@ -194,7 +172,7 @@ main_loop:
 		} else {
 			switch (button_update(&s)) {
 			case BOTH|HOLD:
-				ERROR(OK);
+				ERROR(TEST);
 				break;
 			case BOTH|UP:
 				if (is_locked)
@@ -253,7 +231,7 @@ main_loop:
 	case UI_LOOP(ERROR):
 		ts_now = millis();
 
-		if ((ts_now - ts_old) > ERROR_WAIT/225) {
+		if ((ts_now - ts_old) > (ERROR_WAIT/225)) {
 			prog_dec();
 			lcd_update();
 			ts_old = ts_now;
@@ -265,7 +243,7 @@ main_loop:
 		break;
 
 	default:
-		UI_SET_STATE(ERROR);
+		ERROR(OK);
 	}
 
 	goto main_loop;

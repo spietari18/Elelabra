@@ -2,12 +2,6 @@
 #include "screen.h"
 #include "button.h"
 
-#if 0
-void (*menu_callback)(void)[MENU_CHARS] = {
-
-};
-#endif
-
 /* valikko tarvitsee oman nappitilansa
  * jotta kutsut button_update():lle muualla
  * eivät vaikuta nappien tilaan täällä.
@@ -46,13 +40,11 @@ bool menu_update()
 	}
 
 	/* pakotettu valikon päivitys */
-	if (menu_force_update) {
+	if (unlikely(menu_force_update))
 		menu_force_update = false;
-		goto render_menu;
-	}
 
 	/* jos mikään ei muutu, älä päivitä */
-	if (likely(old == menu_entry))
+	else if (likely(old == menu_entry))
 		return false;
 
 render_menu:
@@ -66,9 +58,6 @@ render_menu:
 
 	lcd_update();
 
-#if 0
-	menu_callback[menu_entry]();
-#else
 	switch (menu_entry) {
 	case 0:
 		UI_SET_STATE(DEFAULT);
@@ -83,7 +72,6 @@ render_menu:
 		UI_SET_STATE(CONFIG2);
 		break;
 	}
-#endif
 
 	return false;
 }
@@ -127,7 +115,6 @@ void prog_init(uint8_t n, uint8_t i)
 	dst[k] = pgm_read_byte(&prg[j & 1]);
 	while (k--)
 		dst[k] = pgm_read_byte(&prg[1]);
-	
 }
 
 /* Pienennä edistymispalkkia yhdellä. */

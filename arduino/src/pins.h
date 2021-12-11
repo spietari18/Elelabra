@@ -24,7 +24,10 @@ DEFINE_PIN(SPI_MISO, B, 4); // PB4
 #define LCD_B7 A3 // PD3
 
 /* tone() ohjaa tätä */
-#define BUZZER 3 // PD3
+//#define BUZZER 3 // PD3
+
+#define BUZZER_TIMER 2
+DEFINE_PIN(BUZZER, D, 3); // PD3
 
 /* Muut pinnit */
 DEFINE_PIN(LCD_AN, D, 4); // PD4

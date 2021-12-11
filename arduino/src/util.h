@@ -10,6 +10,12 @@ extern "C" {
 /* ääretön liukuluku (isfinite() palauttaa 0) */
 #define INF (1.0/0.0)
 
+/* SPI alustus AD muuntimelle. */
+void spi_init();
+
+/* I2C alustus EERAM:ille */
+void i2c_init();
+
 /* Lue yksi tavu SPI:llä.
  * (SS pitää asettaa itse)
  */

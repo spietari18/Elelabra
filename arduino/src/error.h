@@ -20,7 +20,7 @@ extern const char *const errstr[N_ERR] PROGMEM;
 #define ERROR(CODE) \
 	do { \
 		UI_SET_STATE(ERROR); \
-		longjmp(main_loop, (ERR_##CODE)); \
+		longjmp(main_loop, (ERR_##CODE) + 1); \
 	} while (0)
 
 #ifdef __cplusplus

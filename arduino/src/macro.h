@@ -1,15 +1,18 @@
-/* macro.h - useful preprocessor directives */
 #ifndef MACRO_H
 #define MACRO_H
 
 #include <avr/io.h>
 #include <stdint.h>
 
-/* for optimizing conditionals */
+/* Ehtolauseiden optimointi. */
 #define likely(A)   __builtin_expect((A), 1)
 #define unlikely(A) __builtin_expect((A), 0)
 
-/* arduino stdlib defines these already */
+/* Kääntöaikana vakiona olevan taulukon koko. */
+#define ARRAY_SIZE(A) \
+	(sizeof(A)/sizeof(*(A)))
+
+/* Arduinon standardikirjasto määrittää nämä jo. */
 #if 0
 #define min(A, B) \
 	((A < B) ? (A) : (B))
@@ -17,11 +20,11 @@
 	((A > B) ? (A) : (B))
 #endif
 
-/* rounding integer division */
+/* Pyöristävä kokonaislukujen jakolasku. */
 #define int_div_rnd(A, B) \
 	((A) + (B) - 1)/(B)
 
-/* bit manipulation */
+/* Bittimanipulaatio. */
 #define GET(NUM, N) \
 	(NUM & (1UL << (N)))
 #define SET(NUM, N) \
@@ -33,17 +36,17 @@
 #define VAL(NUM, N, V) \
 	((NUM) = ((NUM) & ~(1UL << (N))) | ((!!(V)) << (N)))
 
-/* We use direct register access for IO instead of
- * the Arduino digitalRead/Write instructions for
- * faster IO. To use MODE(), READ() and WRITE() the
- * following variables need to be in place for NAME:
+/* Tämän avulla voi käyttää suoraan IO rekistereitä
+ * IO pinnien manipuloimiseen, joka on huomattavasti
+ * nopeampaa kuin Arduinon standardikirjaston funktioiden
+ * käyttäminen. Tämä makro määrittää seuraavat muuttujat:
  * <NAME>_REG_PORT
  * <NAME>_REG_DATA
  * <NAME>_REG_PIN 
  * <NAME>_REG_POS
- * These should be created with DEFINE_PIN().
- * (we hope that the compiler optimizes these)
- */
+ * Joita muut alla olevat funktiot käyttävit pinnien
+ * manipuloimiseen. (Kääntäjän pitäisi optimoida nämä pois)
+ * */
 #define DEFINE_PIN(NAME, WHICH, POS) \
 	static volatile uint8_t *const \
 		PIN_##NAME##_REG_PORT = &(PORT##WHICH); \
@@ -53,20 +56,24 @@
 		PIN_##NAME##_REG_PIN = &(PIN##WHICH); \
 	static const uint8_t PIN_##NAME##_REG_POS = (POS)
 
-/* direct port register pinMode() */
+/* Aseta IO pinnin tila. (READ tai WRITE) */
 #define MODE(NAME, MODE) \
 	VAL(*(PIN_##NAME##_REG_DDR), PIN_##NAME##_REG_POS, (MODE))
 
-/* set PULLUP status for pin */
+/* Aseta IO pinnin PULLUP tila. */
 #define PLUP(NAME, MODE) \
 	VAL(*(PIN_##NAME##_REG_PORT), PIN_##NAME##_REG_POS, (MODE))
 
-/* direct port register digitalRead() */
+/* Lue IO pinnin arvo. (LOW tai HIGH) */
 #define READ(NAME) \
 	((*(PIN_##NAME##_REG_PIN) >> PIN_##NAME##_REG_POS) & 1)
 
-/* direct port register digitalWrite() */
+/* Kirjoita IO pinnille arvo. (LOW tai HIGH) */
 #define WRITE(NAME, VALUE) \
 	VAL(*(PIN_##NAME##_REG_PORT), PIN_##NAME##_REG_POS, (VALUE))
+
+/* Vaihda IO pinnin tilaa. */
+#define TOGGLE(NAME) \
+	TGL(*(PIN_##NAME##_REG_PORT), PIN_##NAME##_REG_POS);
 
 #endif /* !MACRO_H */
