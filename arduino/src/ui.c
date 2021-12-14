@@ -45,12 +45,17 @@ static uint8_t menu_update(bool force)
 		goto skip_buttons;
 
 	switch (button_update(&s)) {
+	/* valikossa eteen päin */
 	case RT|UP:
-		entry_now = (entry_now + 1) % MENU_ENTRIES;
+		INC_MOD(entry_now, MENU_ENTRIES);
 		break;
+	
+	/* valikossa taakse piän */
 	case LT|UP:
-		entry_now = (entry_now + MENU_ENTRIES - 1) % MENU_ENTRIES;
+		DEC_MOD(entry_now, MENU_ENTRIES);
 		break;
+	
+	/* poistu valikosta */
 	case BOTH|UP:
 		/* poistumisen takaisinkutsu */
 		callback_t callback = pgm_read_ptr(
@@ -152,7 +157,7 @@ void prog_init(uint8_t n, uint8_t i)
 	lcd_put_P_const(PROG_INIT, PROG_ROW, ALIGN_C);
 
 	/* missä kohtaa palkkia mennään */
-	j = int_div_rnd((2*PROG_CHARS - 1)*i, n);
+	j = INT_DIV_RND((2*PROG_CHARS - 1)*i, n);
 
 	/* j == 0 tarkoittaa, että palkki on tyhjä */
 	if (j == 0)
@@ -174,9 +179,9 @@ void prog_dec()
 		return;
 
 	/* askeleen alku- ja loppuindeksi */
-	i = int_div_rnd((2*PROG_CHARS - 1)*old, num)/2;
+	i = INT_DIV_RND((2*PROG_CHARS - 1)*old, num)/2;
 	old = pos;
-	j = int_div_rnd((2*PROG_CHARS - 1)*pos, num);
+	j = INT_DIV_RND((2*PROG_CHARS - 1)*pos, num);
 	pos--;
 
 	/* täytä askeleen pää */
@@ -204,9 +209,9 @@ void prog_inc()
 	}
 
 	/* askeleen alku- ja loppuindeksi */
-	i = int_div_rnd((2*PROG_CHARS - 1)*old, num)/2;
+	i = INT_DIV_RND((2*PROG_CHARS - 1)*old, num)/2;
 	old = pos;
-	j = int_div_rnd((2*PROG_CHARS - 1)*pos, num);
+	j = INT_DIV_RND((2*PROG_CHARS - 1)*pos, num);
 	pos++;
 
 	/* täytä askeleen pää */

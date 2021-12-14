@@ -2,16 +2,10 @@
 #include "screen.h"
 #include "temp_util.h"
 #include <LiquidCrystal.h>
+#include <stdarg.h>
 
-/* näytön puskuri (näyttö alkaa tyhjänä) */
-char lcd_buffer[2*LCD_ROWS][LCD_COLS] = {
-	/* nykyinen tila */
-	{"                "},
-	{"                "},
-	/* tila viimeisen lcd_update():en jälkeen */
-	{"                "},
-	{"                "}
-};
+/* näytön puskuri */
+char lcd_buffer[2*LCD_ROWS][LCD_COLS];
 
 static LiquidCrystal lcd(LCD_RS, LCD_CL, LCD_B4, LCD_B5, LCD_B6, LCD_B7);
 
@@ -21,6 +15,8 @@ static LiquidCrystal lcd(LCD_RS, LCD_CL, LCD_B4, LCD_B5, LCD_B6, LCD_B7);
  */
 void lcd_init()
 {
+	/* näyttö on lcd.begin() komennon jälkeen tyhjä */
+	(void)memset(lcd_buffer, ' ', 2*LCD_ROWS*LCD_COLS);
 	lcd.begin(LCD_COLS, LCD_ROWS);
 }
 
@@ -120,7 +116,7 @@ static uint8_t itoa(char *dst, uint16_t val,
 		val /= base;
 	}
 
-	k = min(i, lim)/2;
+	k = MIN(i, lim)/2;
 	while (j < k)
 	{
 		char c = dst[j];
@@ -150,13 +146,15 @@ void lcd_put_float(float V, uint8_t p, bool fill,
 	if (!isfinite(V)) {
 		buf[0] = sgn[V < 0];
 #define X "INFINITY"
-		i = min(lim, sizeof(X));
+		i = MIN(lim, sizeof(X));
 		(void)memcpy_P(&buf[1], PSTR(X), i - 1);
 #undef X
 		goto print;
 	} else {
 		buf[0] = pgm_read_byte(&sgn[v < 0]);
-		CLR(*(uint32_t *)&V, 31); // V = abs(V)
+		/* Poista V:n etumerkkibitti. (V = abs(V)) */
+		uint32_t *const may_alias tmp = (uint32_t *)&V;
+		CLR(*tmp, 31);
 	}
 
 	/* kokonaisosa */
@@ -220,13 +218,29 @@ void lcd_put_temp(float T, uint8_t p, uint8_t lim, uint8_t row, uint8_t align)
 	if (unlikely(T < T_ABS_MIN)) {
 		lim_str[0] = '-';
 		(void)memcpy_P(&lim_str[1], PSTR("LIMIT"), 5);
-		lcd_put(lim_str, min(6, lim), row, align);
+		lcd_put(lim_str, MIN(6, lim), row, align);
 	} else if (unlikely(T > T_ABS_MAX)) {
 		lim_str[0] = '+';
 		(void)memcpy_P(&lim_str[1], PSTR("LIMIT"), 5);
-		lcd_put(lim_str, min(6, lim), row, align);
+		lcd_put(lim_str, MIN(6, lim), row, align);
 	} else {
 		lcd_put_float(T, p, true, lim, row, align);
 	}
 }
 
+/* printf() näytölle */
+void __lcd_put_fmt(uint8_t lim, uint8_t row, uint8_t align, void *fmt, ...)
+{
+	char buf[lim + 1];
+	uint8_t len;
+	va_list args;
+
+	va_start(args, fmt);
+
+	len = vsnprintf_P(buf, lim, (const char *)fmt, args);
+	len = MIN(len, LCD_COLS);
+
+	va_end(args);
+
+	lcd_put(buf, len, row, align);
+}

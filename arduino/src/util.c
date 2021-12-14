@@ -39,7 +39,7 @@ uint8_t spi_byte(uint8_t v)
 }
 
 /* Nollaa mikrokontrolleri watchdog ajastimella. */
-void __attribute__((noreturn)) reset()
+void noreturn reset()
 {
 	WDTCSR = 0;
 	SET(WDTCSR, WDE);

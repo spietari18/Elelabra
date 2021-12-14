@@ -27,7 +27,7 @@
 #define BLNKENBL 1 // välkytys päälle
 #define BEEPCONT 2 // jatkuva äänimerkki
 #define BLNKCONT 3 // jatkuva välkytys
-#define SYNCENBL 4 // synkronoi
+#define SYNCENBL 4 // synkronoi (ei käytetty)
 #define BEEPSYNC 5 // äänimerkki synkronoitu
 #define BLNKSYNC 6 // välkytys synkronoitu
 #define BEEPSTAT 7 // jatkuvan äänimerkin tila
@@ -43,7 +43,7 @@ static volatile uint32_t ts_blink;
 static const struct {
 	uint16_t fact;
 	uint8_t  bits;
-} __attribute__((packed)) prescalers[] PROGMEM = {
+} packed prescalers[] PROGMEM = {
 	{1024, 0b101},
 	{ 256, 0b100},
 	{  64, 0b011},
@@ -57,7 +57,7 @@ static const struct {
 /* Valitse sopiva skaalain ja OCR arvo
  * ajastimelle halutun taajuuden perusteella.
  */
-uint16_t set_prescaler(uint8_t *reg, uint32_t freq, uint16_t max)
+uint16_t set_prescaler(volatile uint8_t *reg, uint32_t freq, uint16_t max)
 {
 	uint32_t res, old;
 	uint16_t div;
@@ -206,7 +206,7 @@ void alarm_init()
 	/* Alusta ajastin. */
 	TCCRA = TCCRB = TIMSK = 0;
 	SET(TCCRA, PASTE3(WGM, BUZZER_TIMER, 1)); // CTC
-	TIOCR = set_prescaler(TCCRB, BEEP_FREQUENCY, TIMER_MAX);
+	TIOCR = set_prescaler(&TCCRB, 2*BEEP_FREQUENCY, TIMER_MAX);
 }
 
 /* Nopea äänimerkki. */

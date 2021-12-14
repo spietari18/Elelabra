@@ -17,9 +17,7 @@
 #define NAV_CALLBACK(NAME) \
 	(&callback_##NAME##_nav)
 
-/* Arduino.h määrittelee tämän jostain syystä. */
 #undef DEFAULT
-
 DEFINE_NAV_CALLBACK(DEFAULT);
 DEFINE_NAV_CALLBACK(CALIBR);
 DEFINE_NAV_CALLBACK(CONFIG1);
@@ -28,20 +26,125 @@ DEFINE_NAV_CALLBACK(CONFIG2);
 /* Valikon takaisinkutsut. */
 MENU_CALLBACKS = {
 	MENU_CALLBACK(NAV_CALLBACK(DEFAULT), NULL),
-	MENU_CALLBACK(NAV_CALLBACK(CALIBR), NULL),
+	MENU_CALLBACK(NAV_CALLBACK(CALIBR),  NULL),
 	MENU_CALLBACK(NAV_CALLBACK(CONFIG1), NULL),
 	MENU_CALLBACK(NAV_CALLBACK(CONFIG2), NULL)
 };
 
-void __attribute__((noreturn))
-entry_point()
+/* Oletusnäkymä. */
+#define DEFAULT_VIEW 0
+
+/* millis() aikaleimat ajastukseen */
+static uint32_t ts_now, ts_old;
+
+/* lämpötila */
+static float T;
+
+/* lämpömittarin näkemä minimi- ja maksimilämpötila */
+static float obs_min =  INF;
+static float obs_max = -INF;
+
+/* asetetut rajat */
+static float lim_min = -INF;
+static float lim_max =  INF;
+
+bool common_update()
+{
+	/* lue uusi näyte? */
+	ts_now = millis();
+	if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
+		/* päivitä lämpötila */
+		T = read_temp();
+	
+		/* päivitä nähdyt maksimi ja minimi */
+		if (unlikely(T > obs_max))
+			obs_max = T;
+		else if (unlikely(T < obs_min))
+			obs_min = T;
+
+		/* päivitä lämpötilat näytöllä */
+		lcd_put_temp(T, 2, 6, 0, ALIGN_C);
+	
+		// TÄHÄN VÄLIIN HÄLYTYSKOODI
+
+		ts_old = ts_now;
+
+		return false;
+	}
+
+	return true;
+}
+
+void view_limit_init()
+{
+	/* näytön staattinen teksti */
+	lcd_put_P_const("MIN", 0, ALIGN_L);
+	lcd_put_P_const("MAX", 0, ALIGN_R);
+}
+
+void view_limit_loop()
+{
+	/* jos mikään ei päivity, palaa */
+	if (common_update())
+		return;
+
+	/* näkymäkohtainen info */
+	lcd_put_temp(obs_min, 1, 5, 1, ALIGN_L);
+	lcd_put_temp(obs_max, 1, 5, 1, ALIGN_R);
+	lcd_update();
+}
+
+void view_alarm_init()
+{
+	/* näytön staattinen teksti */
+	lcd_put_P_const("-LM", 0, ALIGN_L);
+	lcd_put_P_const("LM+", 0, ALIGN_R);
+}
+
+void view_alarm_loop()
+{
+	/* jos mikään ei päivity, palaa */
+	if (common_update())
+		return;
+
+	/* näkymäkohtainen info */
+	lcd_put_temp(lim_min, 1, 5, 1, ALIGN_L);
+	lcd_put_temp(lim_max, 1, 5, 1, ALIGN_R);
+	lcd_update();
+}
+
+
+/* DEFAULT näkymien takaisinkutsut. */
+static const struct {
+	const char name[MENU_ENTRIES];
+	callback_t init;
+	callback_t loop;
+} packed views[] PROGMEM = {
+	{{'L', 'I', 'M', 'T'}, &view_limit_init, &view_limit_loop},
+	{{'A', 'L', 'R', 'M'}, &view_alarm_init, &view_alarm_loop}
+};
+
+#define _view_(what) \
+	((typeof(&views[0]))pgm_read_ptr(&views[view]))->what
+
+void noreturn entry_point()
 {
 	struct button_state s = {};
-	uint32_t ts_now, ts_old, tmp;
-	bool is_locked = false;
+	uint32_t tmp;
 
-	/* lämpömittarin näkemä minimi- ja maksimilämpötila */
-	float obs_min = INF, obs_max = -INF;
+	uint16_t S_now = 0, S_old = 0;
+
+	/* luku jota napeilla muutetaan */
+	//float *target;
+
+	/* piirrä näkymän indikaattoriteksti */
+	bool view_redraw = true;
+
+	/* mikä näkymä DEFAULT näytössä on päällä */
+	uint8_t view = DEFAULT_VIEW;
+
+	/* näppäimet lukittu */
+	bool is_locked = false;
 
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
@@ -63,7 +166,6 @@ entry_point()
 	i2c_init();
 	alarm_init();
 	default_points();
-	compute_lss_coefs();
 	
 	/* käyttöliittymä alkaa splash näytöstä */
 	UI_SET_STATE(SPLASH);
@@ -100,8 +202,8 @@ main_loop:
 		/* alusta näytepuskuri täyteen */
 		ts_now = millis();
 		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
-			/* päivitä lämpötila */
-			(void)temp_update();
+			/* lue uusi näyte */
+			(void)read_sample();
 
 			/* päivitä edistymispalkki */
 			prog_inc();
@@ -125,49 +227,67 @@ main_loop:
 		/* tyhjennä näyttö */
 		LCD_CLEAR;
 
-		/* näytön staattinen teksti */
-		lcd_put_P_const("MIN", 0, ALIGN_L);
-		lcd_put_P_const("MAX", 0, ALIGN_R);
+		/* näkymän alustus */
+		_view_(init)();
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(DEFAULT):
-		/* lue uusi näyte? */
-		ts_now = millis();
-		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
-			/* päivitä lämpötila */
-			float T = temp_update();
-		
-			/* päivitä nähdyt maksimi ja minimi */
-			if (unlikely(T > obs_max))
-				obs_max = T;
-			else if (unlikely(T < obs_min))
-				obs_min = T;
-
-			/* päivitä lämpötilat näytöllä */
-			lcd_put_temp(T, 2, 6, 0, ALIGN_C);
-			lcd_put_temp(obs_min, 1, 5, 1, ALIGN_L);
-			lcd_put_temp(obs_max, 1, 5, 1, ALIGN_R);
-			lcd_update();
-
-			ts_old = ts_now;
-		}
+		/* näkymän päivitys */
+		_view_(loop)();
 
 		/* valikossa */
 		if (menu())
 			break;
 
+		/* piirrä näkymän indikaattoriteksti */
+		if (unlikely(view_redraw)) {
+			lcd_put_P(_view_(name), MENU_ENTRIES, 1, ALIGN_C);
+			view_redraw = false;
+			lcd_update();
+		}
+
 		/* pois valikosta */
 		switch (button_update(&s)) {
+		/* näppäinten lukitus */
 		case BOTH|HOLD:
 			is_locked = !is_locked;
-			if (is_locked)
+			if (is_locked) {
 				lcd_put_P_const("LOCK", 1, ALIGN_C);
-			else
-				lcd_put_P_const("    ", 1, ALIGN_C);
+				view_redraw = false;
+			} else {
+				// näkymän indikaattori ylikirjoittaa tämän
+				// kokonaan, joten tämä on tarpeeton (ehkä)
+				//lcd_put_P_const("    ", 1, ALIGN_C);
+				view_redraw = true;
+			}
 			lcd_update();
 			break;
+
+		/* näkymä eteen päin */
+		case RT|UP:
+			if (is_locked)
+				break;
+
+			INC_MOD(view, ARRAY_SIZE(views));
+			view_redraw = true;
+
+			UI_SET_STATE(DEFAULT);
+			break;
+
+		/* näkymä taakse päin */
+		case LT|UP:
+			if (is_locked)
+				break;
+
+			DEC_MOD(view, ARRAY_SIZE(views));
+			view_redraw = true;
+
+			UI_SET_STATE(DEFAULT);
+			break;
+
+		/* takaisin valikkoon */
 		case BOTH|UP:
 			if (is_locked)
 				break;
@@ -178,10 +298,7 @@ main_loop:
 
 	/* kalibrointinäkymä */
 	case UI_SETUP(CALIBR):
-		LCD_CLEAR;	/* Tässä sellainen vika, että jos käyttäjä
-	 * ehtii rämpyttää nappeja tarpeeksi nopeasti
-	 * valikko piirretään kaksi kertaa turhaan.
-	 */
+		LCD_CLEAR;
 
 		lcd_put_P_const("CALIBR", 0, ALIGN_C);
 
@@ -193,11 +310,30 @@ main_loop:
 		if (menu())
 			break;
 
+		/* lue uusi näyte */
+		ts_now = millis();
+		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
+			S_now = (uint16_t)(read_sample() + 0.5);
+
+			/* päivitä näyte */
+			if (S_now != S_old) {
+				lcd_put_uint(S_now, 4, 1, ALIGN_C);
+				lcd_update();
+
+				S_old = S_now;
+			}
+
+			ts_old = ts_now;
+		}
+
 		/* pois valikosta */
 		switch (button_update(&s)) {
+		/* testi */
 		case BOTH|HOLD:
 			ERROR(TEST);
 			break;
+
+		/* takaisin valikkoon */
 		case BOTH|UP:
 			menu_return();
 			break;
@@ -220,9 +356,12 @@ main_loop:
 
 		/* pois valikosta */
 		switch (button_update(&s)) {
+		/* testi */
 		case BOTH|HOLD:
 			ERROR(TEST);
 			break;
+
+		/* takaisin valikkoon */
 		case BOTH|UP:
 			menu_return();
 			break;
@@ -245,9 +384,12 @@ main_loop:
 
 		/* pois valikosta */
 		switch (button_update(&s)) {
+		/* testi */
 		case BOTH|HOLD:
 			ERROR(TEST);
 			break;
+
+		/* takaisin valikkoon */
 		case BOTH|UP:
 			menu_return();
 			break;
@@ -255,13 +397,14 @@ main_loop:
 		break;
 	
 	case UI_SETUP(ERROR):
-#define ERROR_SHOW 2000
-#define ERROR_WAIT 1000
+
+#define ERROR_SHOW 2000 // [ms]
+#define ERROR_WAIT 1000 // [ms]
+
 		LCD_CLEAR;
 
 		/* tulosta virhe */
-		lcd_put_P_const("VIRHE:", 0, ALIGN_L);
-		lcd_put_uint(ERROR_CODE, 2, 0, ALIGN_R);
+		lcd_put_fmt(LCD_COLS, 0, ALIGN_C, "VIRHE (%u):", ERROR_CODE);
 		lcd_put_P(ERROR_MSG, NULLTERM, 1, ALIGN_C);
 		lcd_update();
 

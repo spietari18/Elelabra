@@ -47,6 +47,9 @@ void lcd_put_uint(uint16_t, uint8_t, uint8_t, uint8_t);
 /* kirjoita lämpötila näytölle (huomioi absoluuttiset rajat) */
 void lcd_put_temp(float, uint8_t, uint8_t, uint8_t, uint8_t);
 
+/* printf() näytölle (älä kutsu suoraan) */
+void __lcd_put_fmt(uint8_t, uint8_t, uint8_t, void *, ...);
+
 /* kirjoita merkkijono joka on kääntöaikana vakio
  * näytölle (varastoituu RAM muistiin)
  */
@@ -66,6 +69,10 @@ void lcd_put_temp(float, uint8_t, uint8_t, uint8_t, uint8_t);
 /* kirjoita merkkijono ROM muistista näytölle */
 #define lcd_put_P(msg, len, row, align) \
 	__lcd_put((msg), (len), (row), (align), &memcpy_P, &strlen_P)
+
+/* printf() näytölle */
+#define lcd_put_fmt(lim, row, align, fmt, ...) \
+	__lcd_put_fmt((lim), (row), (align), PSTR(fmt), ##__VA_ARGS__)
 
 #ifdef __cplusplus
 }

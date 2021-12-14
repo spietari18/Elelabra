@@ -1,7 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdint.h>
+#include "macro.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,6 +9,8 @@ extern "C" {
 
 /* ääretön liukuluku (isfinite() palauttaa 0) */
 #define INF (1.0/0.0)
+
+typedef void (*callback_t)();
 
 /* SPI alustus AD muuntimelle. */
 void spi_init();
@@ -22,7 +24,7 @@ void i2c_init();
 uint8_t spi_byte(uint8_t);
 
 /* Nollaa mikrokontrolleri watchdog ajastimella. */
-void __attribute__((noreturn)) reset();
+void noreturn reset();
 
 #ifdef __cplusplus
 }

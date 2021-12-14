@@ -4,6 +4,11 @@
 #include <avr/io.h>
 #include <stdint.h>
 
+/* GCC:n extra ominaisuudet muuttujille. */
+#define noreturn  __attribute__((noreturn))
+#define packed    __attribute__((packed))
+#define may_alias __attribute__((__may_alias__))
+
 /* Ehtolauseiden optimointi. */
 #define likely(A)   __builtin_expect((A), 1)
 #define unlikely(A) __builtin_expect((A), 0)
@@ -12,16 +17,24 @@
 #define ARRAY_SIZE(A) \
 	(sizeof(A)/sizeof(*(A)))
 
-/* Arduinon standardikirjasto määrittää nämä jo. */
-#if 0
-#define min(A, B) \
+/* A++ % B */
+#define INC_MOD(A, B) \
+	((A) = ((A) + 1) % (B))
+
+/* A-- % B */
+#define DEC_MOD(A, B) \
+	((A) = ((A) + (B) - 1) % (B))
+
+/* Pienin A:sta ja B:stä */
+#define MIN(A, B) \
 	((A < B) ? (A) : (B))
-#define max(A, B) \
+
+/* Suurin A:sta ja B:stä */
+#define MAX(A, B) \
 	((A > B) ? (A) : (B))
-#endif
 
 /* Pyöristävä kokonaislukujen jakolasku. */
-#define int_div_rnd(A, B) \
+#define INT_DIV_RND(A, B) \
 	((A) + (B) - 1)/(B)
 
 /* Bittimanipulaatio. */

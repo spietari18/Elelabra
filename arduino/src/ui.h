@@ -1,6 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
+#include "util.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -54,8 +55,6 @@ extern "C" {
 
 /* Käyttöliittymän tilakone. */
 extern uint8_t ui_state;
-
-typedef void (*callback_t)();
 
 #define MENU_CALLBACKS \
 	const callback_t menu_callbacks[MENU_ENTRIES][2]

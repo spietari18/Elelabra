@@ -30,11 +30,14 @@ extern "C" {
 /* Aseta sisäänrakennetut kalibrointipisteet. */
 void default_points();
 
-/* Laske PNS kertoimet. */
-void compute_lss_coefs();
+/* Lue raaka näyte AD-muuntimelta. */
+uint16_t read_sample_raw();
 
-/* Lue uusi lämpötila. */
-float temp_update();
+/* Lue suodatettu näyte AD-muuntimelta. */
+float read_sample();
+
+/* Lue lämpötila AD-muuntimelta. */
+float read_temp();
 
 #ifdef __cplusplus
 }

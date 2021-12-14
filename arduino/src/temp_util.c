@@ -26,15 +26,8 @@ static float lss_coefs[2];
 static uint8_t sample_pos;
 static float samples[MAX_SAMPLES];
 
-/* Aseta sisäänrakennetut kalibrointipisteet. */
-void default_points()
-{
-	num_points = sizeof(points_builtin)/sizeof(points_builtin[0]);
-	(void)memcpy_P(points, points_builtin, sizeof(points_builtin));
-}
-
 /* Laske PNS kertoimet. */
-void compute_lss_coefs()
+static void compute_lss_coefs()
 {
 	float Sx = 0, Sy = 0, Sxx = 0, Sxy = 0, Syy = 0;
 
@@ -51,25 +44,18 @@ void compute_lss_coefs()
 	lss_coefs[1] = (num_points*Sxy - Sx*Sy)/(num_points*Sxx - Sx*Sx);
 }
 
-/* muuta AD muuntimen näyte lämpötilaksi
- * lineaarisella PNS sovituksella
- */
-static float compute_temp(float s)
+/* Aseta sisäänrakennetut kalibrointipisteet. */
+void default_points()
 {
-	return lss_coefs[0] + lss_coefs[1]*s;
+	num_points = sizeof(points_builtin)/sizeof(points_builtin[0]);
+	(void)memcpy_P(points, points_builtin, sizeof(points_builtin));
+	compute_lss_coefs();
 }
 
-static int float_cmp(const void *a, const void *b)
+/* Lue raaka näyte AD-muuntimelta. */
+uint16_t read_sample_raw()
 {
-	return *(float *)a - *(float *)b;
-}
-
-/* Lue uusi lämpötila. */
-float temp_update()
-{
-	float buffer[MAX_SAMPLES];
 	uint16_t tmp = 0;
-	float res = 0.0;
 
 	/* lue näyte AD-muuntimelta */
 	WRITE(SPI_SS, LOW);
@@ -79,23 +65,35 @@ float temp_update()
 	WRITE(SPI_SS, HIGH);
 
 	/* näyte on 12 bittiä */
-	tmp &= (1 << 12) - 1;
+	return tmp & ((1 << 12) - 1);
+}
 
-	/* lisää kiertopuskuriin */
-	samples[sample_pos] = tmp;
-	sample_pos = (sample_pos + 1) % MAX_SAMPLES;
+static int float_cmp(const void *a, const void *b)
+{
+	return *(float *)a - *(float *)b;
+}
 
+/* Lue suodatettu näyte AD-muuntimelta. */
+float read_sample()
+{
+	float buffer[MAX_SAMPLES];
+	float tmp;
+
+	/* lue näyte kiertopuskuriin */
+	samples[sample_pos] = read_sample_raw();
+	INC_MOD(sample_pos, MAX_SAMPLES);
+
+	/* kopioi puskuri */
 	(void)memcpy(buffer, samples, MAX_SAMPLES*sizeof(samples[0]));
 
 	/* järjestä puskuri numerojärkestykseen */
-	qsort(buffer, MAX_SAMPLES, sizeof(buffer[0]), float_cmp);
+	qsort(buffer, MAX_SAMPLES, sizeof(buffer[0]), &float_cmp);
 
 	/* laske kiertopuskurin moodi */
-	float mode;
 #if (MAX_SAMPLES & 1)
-	mode = buffer[MAX_SAMPLES/2];
+	tmp = buffer[MAX_SAMPLES/2];
 #else
-	mode = (buffer[MAX_SAMPLES/2] + buffer[MAX_SAMPLES/2 + 1])/2;
+	tmp = (buffer[MAX_SAMPLES/2] + buffer[MAX_SAMPLES/2 + 1])/2;
 #endif
 
 	/* suodata pois arvot, jotka ovat moodia SAMPLE_MAX_DELTA
@@ -103,16 +101,24 @@ float temp_update()
 	 */
 	uint8_t beg = 0, end = MAX_SAMPLES - 1;
 	while ((beg < MAX_SAMPLES/2) &&
-		(abs(mode - buffer[beg]) > SAMPLE_MAX_DELTA))
+		(abs(tmp - buffer[beg]) > SAMPLE_MAX_DELTA))
 		beg++;
 	while ((end > MAX_SAMPLES/2) &&
-		(abs(mode - buffer[end]) > SAMPLE_MAX_DELTA))
+		(abs(tmp - buffer[end]) > SAMPLE_MAX_DELTA))
 		end--;
 
 	/* laske puskurin keskiarvo */
+	tmp = 0;
 	for (uint8_t i = beg; i <= end; i++)
-		res += buffer[i];
-	res /= end - beg + 1;
+		tmp += buffer[i];
+	tmp /= end - beg + 1;
 
-	return compute_temp(res);
+	return tmp;
+}
+
+/* Lue lämpötila AD-muuntimelta. */
+float read_temp()
+{
+	/* lineaarinen PNS sovitus */
+	return lss_coefs[0] + lss_coefs[1]*read_sample();
 }
