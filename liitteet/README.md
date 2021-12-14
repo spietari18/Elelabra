@@ -1,5 +1,5 @@
 # Liitteet
-## Mikrokontrollerin käyttöönotto & Käyttöliittymä
+## Mikrokontrollerin Käyttöönotto
 - `käyttöönotto.c`: Lähdekoodi.
 - `käyttöönotto.mp4`: Video toiminnasta.
 - `vahvistin_lasku.rtf`: Vahvistinkytkennän lasku.
