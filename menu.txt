@@ -1,0 +1,5 @@
+" >TEMP< <C> <O> "
+" <T> >CLBR< <O> "
+" <T> <C> >OPTS< "
+
+EXPANDED_LEN = LCD_COLS - 3*(MENU_ENTRIES - 1)
