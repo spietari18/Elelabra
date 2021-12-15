@@ -111,19 +111,27 @@ void view_alarm_loop()
 	lcd_update();
 }
 
+const char text_1[] PROGMEM = {'L', 'I', 'M', 'T'};
+const char text_2[] PROGMEM = {'A', 'L', 'R', 'M'};
 
 /* DEFAULT näkymien takaisinkutsut. */
 static const struct {
-	const char name[MENU_ENTRIES];
+	void *name;
 	callback_t init;
 	callback_t loop;
 } packed views[] PROGMEM = {
-	{{'L', 'I', 'M', 'T'}, &view_limit_init, &view_limit_loop},
-	{{'A', 'L', 'R', 'M'}, &view_alarm_init, &view_alarm_loop}
+	{&text_1, &view_limit_init, &view_limit_loop},
+	{&text_2, &view_alarm_init, &view_alarm_loop}
 };
 
-#define _view_(what) \
-	((typeof(&views[0]))pgm_read_ptr(&views[view]))->what
+#define view_name \
+	((const char *)pgm_read_ptr(&views[view].name))
+
+#define view_init \
+	((callback_t)pgm_read_ptr(&views[view].init))
+
+#define view_loop \
+	((callback_t)pgm_read_ptr(&views[view].loop))
 
 void noreturn entry_point()
 {
@@ -184,6 +192,9 @@ main_loop:
 		lcd_put_P_const(SPLASH_2, 1, ALIGN_C);
 		lcd_update();
 
+		beep_begin();
+		blink_begin();
+
 		/* näytä alarivi SPLASH_WAIT millisekuntia */
 		ts_old = millis();
 		while ((millis() - ts_old) < SPLASH_WAIT);
@@ -215,8 +226,11 @@ main_loop:
 		 * kohtaan 0. (kutsuu MENU_CALLBACKS[0] navigaatio-
 		 * takaisinkutsua, joka asettaa tilan DEFAULT)
 		 */
-		if (tmp >= MAX_SAMPLES)
+		if (tmp >= MAX_SAMPLES) {
+			beep_end();
+			blink_end();
 			menu_enter(0);
+		}
 
 		break;
 	
@@ -226,14 +240,14 @@ main_loop:
 		LCD_CLEAR;
 
 		/* näkymän alustus */
-		_view_(init)();
+		view_init();
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(DEFAULT):
 		/* näkymän päivitys */
-		_view_(loop)();
+		view_loop();
 
 		/* valikossa */
 		if (menu())
@@ -241,7 +255,7 @@ main_loop:
 
 		/* piirrä näkymän indikaattoriteksti */
 		if (unlikely(view_redraw)) {
-			lcd_put_P(_view_(name), MENU_ENTRIES, 1, ALIGN_C);
+			lcd_put_P(view_name, MENU_ENTRIES, 1, ALIGN_C);
 			view_redraw = false;
 			lcd_update();
 		}
@@ -251,15 +265,16 @@ main_loop:
 		/* näppäinten lukitus */
 		case BOTH|HOLD:
 			is_locked = !is_locked;
+
 			if (is_locked) {
 				lcd_put_P_const("LOCK", 1, ALIGN_C);
 				view_redraw = false;
 			} else {
-				// näkymän indikaattori ylikirjoittaa tämän
-				// kokonaan, joten tämä on tarpeeton (ehkä)
-				//lcd_put_P_const("    ", 1, ALIGN_C);
 				view_redraw = true;
 			}
+
+			beep_slow();
+
 			lcd_update();
 			break;
 
@@ -267,6 +282,8 @@ main_loop:
 		case RT|UP:
 			if (is_locked)
 				break;
+
+			beep_fast();
 
 			INC_MOD(view, ARRAY_SIZE(views));
 			view_redraw = true;
@@ -278,6 +295,8 @@ main_loop:
 		case LT|UP:
 			if (is_locked)
 				break;
+
+			beep_fast();
 
 			DEC_MOD(view, ARRAY_SIZE(views));
 			view_redraw = true;
@@ -403,16 +422,13 @@ main_loop:
 
 		/* tulosta virhe */
 		lcd_put_fmt(LCD_COLS, 0, ALIGN_C, "VIRHE (%u):", ERROR_CODE);
+		//lcd_put_P_const("VIRHE", 0, ALIGN_C);
 		lcd_put_P(ERROR_MSG, NULLTERM, 1, ALIGN_C);
 		lcd_update();
-
-		beep_begin();
 
 		/* näytä virhe ERROR_SHOW millisekuntia */
 		tmp = millis();
 		while ((millis() - tmp) < ERROR_SHOW);
-
-		beep_end();
 
 		LCD_CLEAR;
 
@@ -420,8 +436,6 @@ main_loop:
 		lcd_put_P_const("REBOOT", 0, ALIGN_C);
 		prog_init(200, 200);
 		lcd_update();
-
-		blink();
 
 		ts_old = 0;
 		tmp = millis();

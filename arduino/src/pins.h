@@ -15,6 +15,10 @@ DEFINE_PIN(SPI_CLK,  B, 5); // PB5
 DEFINE_PIN(SPI_MOSI, B, 3); // PB3
 DEFINE_PIN(SPI_MISO, B, 4); // PB4
 
+/* I2C pinnit */
+DEFINE_PIN(I2C_SDA, C, 4); // PC4
+DEFINE_PIN(I2C_SCL, C, 5); // PC5
+
 /* Arduinon LiquidCrystal kirjasto ohjaa näitä. */
 #define LCD_RS 7  // PD7
 #define LCD_CL 8  // PB0

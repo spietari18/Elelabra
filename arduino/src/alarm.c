@@ -91,7 +91,7 @@ ISR(PASTE3(TIMER, BUZZER_TIMER, _COMPA_vect))
 
 	/* jos mikään ei ole päällä, pysäytä ajastin */
 	if (unlikely(!(GET(state, BEEPENBL)
-		&& GET(state, BLNKENBL)))) {
+		|| GET(state, BLNKENBL)))) {
 		CLR(TIMSK, ENABLE);
 		return;
 	}
@@ -170,7 +170,7 @@ ISR(PASTE3(TIMER, BUZZER_TIMER, _COMPA_vect))
 			if (unlikely((now - ts_blink)
 				> (COMMON_PERIOD/2))) {
 				TOGGLE(LCD_AN);
-				ts_beep = now;
+				ts_blink = now;
 			}
 
 		/* yksittäinen */
@@ -180,7 +180,7 @@ ISR(PASTE3(TIMER, BUZZER_TIMER, _COMPA_vect))
 				/* aika kulunut */
 				if (now >= ts_blink) {
 					WRITE(LCD_AN, HIGH);
-					CLR(state, BEEPENBL);
+					CLR(state, BLNKENBL);
 				}
 
 			/* alusta */
@@ -216,7 +216,7 @@ void beep_fast()
 
 	/* onko äänimerkki päällä */
 	if (GET(state, BEEPENBL))
-		return;
+		goto exit;
 
 	/* äänimerkki päälle */
 	ts_beep = BEEP_FAST_DURATION;
@@ -224,7 +224,7 @@ void beep_fast()
 	CLR(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
 	SET(TIMSK, ENABLE);	
-
+exit:
 	sei();
 }
 
@@ -235,7 +235,7 @@ void beep_slow()
 
 	/* onko äänimerkki päällä */
 	if (GET(state, BEEPENBL))
-		return;
+		goto exit;
 	
 	/* äänimerkki päälle */
 	ts_beep = BEEP_SLOW_DURATION;
@@ -243,7 +243,7 @@ void beep_slow()
 	CLR(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
 	SET(TIMSK, ENABLE);	
-
+exit:
 	sei();
 }
 
@@ -254,7 +254,7 @@ void beep_begin()
 
 	/* onko äänimerkki päällä */
 	if (GET(state, BEEPENBL))
-		return;
+		goto exit;
 	
 	/* äänimerkki päälle */
 	ts_beep = 0;
@@ -264,7 +264,7 @@ void beep_begin()
 	CLR(state, BEEPSYNC);
 	SET(state, BEEPSTAT);
 	SET(TIMSK, ENABLE);
-
+exit:
 	sei();
 }
 
@@ -275,12 +275,12 @@ void beep_end()
 
 	/* onko toistuva äänimerkki päällä */
 	if (!GET(state, BEEPCONT))
-		return;
+		goto exit;
 	
 	/* äänimerkki pois päältä */
 	CLR(state, BEEPENBL);
 	CLR(state, BEEPCONT);
-
+exit:
 	sei();
 }
 
@@ -291,7 +291,7 @@ void blink()
 
 	/* onko välkytys päällä */
 	if (GET(state, BLNKENBL))
-		return;
+		goto exit;
 	
 	/* väläytys päälle */
 	ts_blink = BLINK_DURATION;
@@ -299,7 +299,7 @@ void blink()
 	CLR(state, SYNCENBL);
 	CLR(state, BLNKSYNC);
 	SET(TIMSK, ENABLE);
-
+exit:
 	sei();
 }
 
@@ -310,7 +310,7 @@ void blink_begin()
 
 	/* onko välkytys päällä */
 	if (GET(state, BLNKENBL))
-		return;
+		goto exit;
 
 	/* välkytys päälle */
 	ts_blink = 0;
@@ -319,7 +319,7 @@ void blink_begin()
 	SET(state, SYNCENBL);
 	CLR(state, BLNKSYNC);
 	SET(TIMSK, ENABLE);
-
+exit:
 	sei();
 }
 
@@ -330,11 +330,11 @@ void blink_end()
 
 	/* onko toistuva välkytys päällä */
 	if (!GET(state, BLNKCONT))
-		return;
+		goto exit;
 
 	/* välkytys pois päältä */
 	CLR(state, BLNKENBL);
 	CLR(state, BLNKCONT);
-
+exit:
 	sei();
 }

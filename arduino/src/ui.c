@@ -40,6 +40,8 @@ static void menu_draw(bool clear)
 /* päivitä valikko */
 static uint8_t menu_update(bool force)
 {
+	callback_t callback;
+
 	/* ohita napit */
 	if (force)
 		goto skip_buttons;
@@ -58,7 +60,7 @@ static uint8_t menu_update(bool force)
 	/* poistu valikosta */
 	case BOTH|UP:
 		/* poistumisen takaisinkutsu */
-		callback_t callback = pgm_read_ptr(
+		callback = pgm_read_ptr(
 			&menu_callbacks[entry_now][1]);
 		if (callback)
 			callback();
@@ -74,7 +76,7 @@ static uint8_t menu_update(bool force)
 
 skip_buttons:
 	/* navigaation takaisinkutsu */
-	callback_t callback = pgm_read_ptr(
+	callback = pgm_read_ptr(
 		&menu_callbacks[entry_now][0]);
 	if (callback)
 		callback();

@@ -56,14 +56,17 @@ extern "C" {
 /* Käyttöliittymän tilakone. */
 extern uint8_t ui_state;
 
-#define MENU_CALLBACKS \
+#define __MENU_CALLBACKS \
 	const callback_t menu_callbacks[MENU_ENTRIES][2]
+
+#define MENU_CALLBACKS \
+	__MENU_CALLBACKS PROGMEM
 
 #define MENU_CALLBACK(ENTER, EXIT) \
 	{(ENTER), (EXIT)}
 
 /* Tämä tulee määritellä pääohjelmassa. */
-extern MENU_CALLBACKS;
+extern __MENU_CALLBACKS;
 
 /* Valikon tila. (päivittää valikon ja palauttaa
  * true kun käyttäjä poistuu valikosta)

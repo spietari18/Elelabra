@@ -20,7 +20,31 @@ void spi_init()
 /* I2C alustus EERAM:ille */
 void i2c_init()
 {
-	// NOP
+	TWSR = 0;
+
+	/* 500kHz */
+	TWBR = 2;
+	SET(TWSR, TWPS0);
+}
+
+bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
+{
+
+}
+
+bool eeram_write(uint16_t addr, uint8_t data[], uint8_t len)
+{
+
+}
+
+bool eeram_reg_read(uint8_t *dst)
+{
+
+}
+
+bool eeram_reg_write(uint8_t src)
+{
+
 }
 
 /* Lue yksi tavu SPI:llä.

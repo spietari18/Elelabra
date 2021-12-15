@@ -6,19 +6,19 @@ extern "C" {
 #endif // __cplusplus
 
 /* Äänimerkin taajuus. */
-#define BEEP_FREQUENCY 500 // [Hz]
+#define BEEP_FREQUENCY 250 // [Hz]
 
 /* Nopean äänimerkin kesto. */
-#define BEEP_FAST_DURATION 100 // [ms]
+#define BEEP_FAST_DURATION 500 // [ms]
 
 /* Hitaan äänimerkin kesto. */
-#define BEEP_SLOW_DURATION 500 // [ms]
+#define BEEP_SLOW_DURATION 1000 // [ms]
 
 /* Taustavalon väläytyksen kesto. */
 #define BLINK_DURATION 500 // [ms]
 
 /* Äänimerkin ja taustavalon välkkymisen jaksonaika. */
-#define COMMON_PERIOD 1000 // [ms]
+#define COMMON_PERIOD 500 // [ms]
 
 /* Alustus. */
 void alarm_init();
