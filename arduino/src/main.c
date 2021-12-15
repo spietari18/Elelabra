@@ -10,9 +10,7 @@
 #include <setjmp.h>
 
 #define DEFINE_NAV_CALLBACK(NAME) \
-	void callback_##NAME##_nav() {\
-		UI_SET_STATE(NAME); \
-	}\
+	void callback_##NAME##_nav() { UI_SET_STATE(NAME); }
 
 #define NAV_CALLBACK(NAME) \
 	(&callback_##NAME##_nav)
