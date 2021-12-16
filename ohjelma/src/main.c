@@ -168,8 +168,9 @@ int noreturn main()
 	/* Alusta moduulit/tilat. */
 	lcd_init();
 	adc_init();
-	eeram_init();
+	//eeram_init();
 	timer_init();
+	alarm_init();
 	default_points();
 	
 	/* käyttöliittymä alkaa splash näytöstä */

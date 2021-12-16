@@ -1,10 +1,6 @@
 #ifndef TEMP_UTIL_H
 #define TEMP_UTIL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
 /* Monta kalibrointipistettä voi
  * olla enintään muistissa.
  */
@@ -35,9 +31,5 @@ float read_sample();
 
 /* Lue lämpötila AD-muuntimelta. */
 float read_temp();
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // !TEMP_UTIL_H

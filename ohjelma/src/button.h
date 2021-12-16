@@ -3,10 +3,6 @@
 
 #include "pins.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
 /* Kauan nappien tilaa luetaan ennekuin se lukitaan. */
 #define BTN_POLL_TIME 150 // [ms]
 
@@ -55,9 +51,5 @@ struct button_state
 
 uint8_t
 button_update(struct button_state *);
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // !BUTTON_H

@@ -1,10 +1,6 @@
 #ifndef ALARM_H
 #define ALARM_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
 /* Äänimerkin taajuus. */
 #define BEEP_FREQUENCY 250 // [Hz]
 
@@ -43,9 +39,5 @@ void blink_begin();
 
 /* Lopeta taustavalon välkytys. */
 void blink_end();
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // !ALARM_H

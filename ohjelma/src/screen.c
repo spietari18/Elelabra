@@ -1,4 +1,5 @@
 #include "lcd.h"
+#include "util.h"
 #include "pins.h"
 #include "screen.h"
 #include "temp_util.h"
@@ -28,6 +29,17 @@ char lcd_buffer[2*LCD_ROWS][LCD_COLS];
 
 void lcd_init()
 {
+	/* laita pinnit OUTPUT modeen */
+	MODE(_LCD_RS, OUTPUT);
+	MODE(_LCD_EN, OUTPUT);
+	MODE(_LCD_B5, OUTPUT);
+	MODE(_LCD_B6, OUTPUT);
+	MODE(_LCD_B7, OUTPUT);
+	MODE(_LCD_B8, OUTPUT);
+
+	MODE(LCD_AN, OUTPUT);
+	WRITE(LCD_AN, HIGH);
+
 	/* pinnit */
 	lcd.pins[LCD_RS] = REF_WRITER(_LCD_RS);
 	lcd.pins[LCD_EN] = REF_WRITER(_LCD_EN);
@@ -72,7 +84,7 @@ void lcd_update()
 			    || (lcd_row != row))) {
 				lcd_col = col;
 				lcd_row = row;
-				lcd_cursor(&lcd, col, row);
+				lcd_cursor(&lcd, row, col);
 			}
 
 			/* kirjoita muuttunut kirjain

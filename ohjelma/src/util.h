@@ -8,10 +8,6 @@
 #define F_CPU 16000000UL // prosessorin kellotaajuus
 #include <util/delay.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
 /* ääretön liukuluku (isfinite() palauttaa 0) */
 #define INF (1.0/0.0)
 
@@ -49,9 +45,5 @@ bool eeram_reg_write(uint8_t src);
 
 /* Nollaa mikrokontrolleri watchdog ajastimella. */
 void noreturn reset();
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // !UTIL_H

@@ -2,12 +2,9 @@
 #define UI_H
 
 #include "util.h"
+
 #include <stdint.h>
 #include <stdbool.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
 
 /* Käyttöliittymän tilat. */
 #define UI_SPLASH  0 
@@ -95,9 +92,5 @@ void prog_dec();
 
 /* Suurenna edistymispalkkia yhdellä. */
 void prog_inc();
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // !UI_H

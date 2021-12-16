@@ -6,10 +6,6 @@
 
 #include <avr/pgmspace.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
 #define LCD_ROWS 2  // näytön rivit
 #define LCD_COLS 16 // näytön sarakkeet
 
@@ -74,9 +70,5 @@ void __lcd_put_fmt(uint8_t, uint8_t, uint8_t, const char *, ...);
 /* printf() näytölle */
 #define lcd_put_fmt(lim, row, align, fmt, ...) \
 	__lcd_put_fmt((lim), (row), (align), PSTR(fmt), ##__VA_ARGS__)
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // !SCREEN_H

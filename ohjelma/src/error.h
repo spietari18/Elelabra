@@ -5,10 +5,6 @@
 #include <setjmp.h>
 #include <avr/pgmspace.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
 #define ERR_OK   0
 #define ERR_TEST 1
 
@@ -34,9 +30,5 @@ extern uint8_t error_code;
 
 #define ERROR_MSG \
 	pgm_read_ptr(&errstr[error_code])
-
-#ifdef __cplusplus
-}
-#endif // __cplusplus
 
 #endif // !ERROR_H

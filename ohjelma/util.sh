@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -o pipefail
+
 script_path()
 {
         prg="$0"
@@ -107,7 +109,8 @@ action_compile()
 		# run C preprocessor
 		echo "Preprocessing '$rel'" 1>&2
 		avr-gcc $CFLAGS -E -o "$cpp.new" "$file" 2>&1 \
-			| sed -e 's/^/  /g' 1>&2 || exit 1
+			| sed -e 's/^/  /g' 1>&2
+		[ "$?" -ne 0 ] && exit 1
 
 		# recompile updated files
 		if [ ! -f "${cpp}" -o ! -f "$obj" ]; then
@@ -128,11 +131,13 @@ action_compile()
 		# compile
 		echo "Compiling '$rel' ($reason)" 1>&2
 		avr-gcc $CFLAGS -c -o "$obj" "$cpp" 2>&1 \
-			| sed -e 's/^/  /g' 1>&2 || exit 1
+			| sed -e 's/^/  /g' 1>&2
+		[ "$?" -ne 0 ] && exit 1
 	
 		# save compilation CFLAGS
 		echo "$CFLAGS" > "$flg"
 	done 3>&1`
+	[ "$?" -ne 0 ] && exit 1
 
 	elf="`echo "$PRGOUT" | sed -e 's/\.[^.]\+$/.elf/g'`"
 

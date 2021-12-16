@@ -1,114 +1,3 @@
-#if 0
-#ifndef LiquidCrystal_h
-#define LiquidCrystal_h
-
-#include <inttypes.h>
-#include "Print.h"
-
-// commands
-#define LCD_CLEARDISPLAY 0x01
-#define LCD_RETURNHOME 0x02
-#define LCD_ENTRYMODESET 0x04
-#define LCD_DISPLAYCONTROL 0x08
-#define LCD_CURSORSHIFT 0x10
-#define LCD_FUNCTIONSET 0x20
-#define LCD_SETCGRAMADDR 0x40
-#define LCD_SETDDRAMADDR 0x80
-
-// flags for display entry mode
-#define LCD_ENTRYRIGHT 0x00
-#define LCD_ENTRYLEFT 0x02
-#define LCD_ENTRYSHIFTINCREMENT 0x01
-#define LCD_ENTRYSHIFTDECREMENT 0x00
-
-// flags for display on/off control
-#define LCD_DISPLAYON 0x04
-#define LCD_DISPLAYOFF 0x00
-#define LCD_CURSORON 0x02
-#define LCD_CURSOROFF 0x00
-#define LCD_BLINKON 0x01
-#define LCD_BLINKOFF 0x00
-
-// flags for display/cursor shift
-#define LCD_DISPLAYMOVE 0x08
-#define LCD_CURSORMOVE 0x00
-#define LCD_MOVERIGHT 0x04
-#define LCD_MOVELEFT 0x00
-
-// flags for function set
-#define LCD_8BITMODE 0x10
-#define LCD_4BITMODE 0x00
-#define LCD_2LINE 0x08
-#define LCD_1LINE 0x00
-#define LCD_5x10DOTS 0x04
-#define LCD_5x8DOTS 0x00
-
-class LiquidCrystal : public Print {
-public:
-  LiquidCrystal(uint8_t rs, uint8_t enable,
-		uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
-		uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7);
-  LiquidCrystal(uint8_t rs, uint8_t rw, uint8_t enable,
-		uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
-		uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7);
-  LiquidCrystal(uint8_t rs, uint8_t rw, uint8_t enable,
-		uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3);
-  LiquidCrystal(uint8_t rs, uint8_t enable,
-		uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3);
-
-  void init(uint8_t fourbitmode, uint8_t rs, uint8_t rw, uint8_t enable,
-	    uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3,
-	    uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7);
-    
-  void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS);
-
-  void clear();
-  void home();
-
-  void noDisplay();
-  void display();
-  void noBlink();
-  void blink();
-  void noCursor();
-  void cursor();
-  void scrollDisplayLeft();
-  void scrollDisplayRight();
-  void leftToRight();
-  void rightToLeft();
-  void autoscroll();
-  void noAutoscroll();
-
-  void setRowOffsets(int row1, int row2, int row3, int row4);
-  void createChar(uint8_t, uint8_t[]);
-  void setCursor(uint8_t, uint8_t); 
-  virtual size_t write(uint8_t);
-  void command(uint8_t);
-  
-  using Print::write;
-private:
-  void send(uint8_t, uint8_t);
-  void write4bits(uint8_t);
-  void write8bits(uint8_t);
-  void pulseEnable();
-
-  uint8_t _rs_pin; // LOW: command.  HIGH: character.
-  uint8_t _rw_pin; // LOW: write to LCD.  HIGH: read from LCD.
-  uint8_t _enable_pin; // activated by a HIGH pulse.
-  uint8_t _data_pins[8];
-
-  uint8_t _displayfunction;
-  uint8_t _displaycontrol;
-  uint8_t _displaymode;
-
-  uint8_t _initialized;
-
-  uint8_t _numlines;
-  uint8_t _row_offsets[4];
-};
-
-#endif
-#endif
-
 /* LiquidCrystal kirjasto portattu C:ksi ja käyttämään tämän
  * kansion sisältämää koodia Arduinon standardikirjaston sijasta.
  */
@@ -154,6 +43,7 @@ struct lcd
 #define LCD_CRAS 0x40 // aseta CGRAM osoite
 #define LCD_DRAS 0x80 // aseta DDRAM osoite
 
+#if 0
 #define OFF(A) \
 	(8*sizeof(int) - __builtin_clz(A))
 #define MSK(A, B) \
@@ -169,6 +59,16 @@ struct lcd
 #define FS_MSK MSK(5, FS_OFF)
 #define IN_OFF OFF(FS_MSK)
 #define IN_MSK MSK(1, IN_OFF)
+#endif
+
+#define DM_OFF 0
+#define DM_MSK (3 << 0)
+#define DC_OFF 2
+#define DC_MSK (7 << 2)
+#define CS_OFF 5
+#define CS_MSK (15 << 5)
+#define FS_OFF 9
+#define FS_MSK (31 << 9)
 
 /* indikaattori ja sen komplementti */
 #define FLAG(A, B) ((A) << (B))
@@ -202,7 +102,7 @@ struct lcd
 #define LCD_XDOT FLAG(0x04, FS_OFF) // 5x10 kirjaimet
 #define LCD_8DOT COMP(0x04, FS_OFF) // 5x8 kirjaimet
 
-#define LCD_INIT FLAG(0x01, IN_OFF) // pakota alustus
+#define LCD_INIT 0x4000 // pakota alustus
 
 #define LCD(var) \
 	struct lcd var = {{0}, LCD_INIT}
