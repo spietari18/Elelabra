@@ -63,11 +63,12 @@ find_device()
 # GLOBALS
 MYPATH=`script_path`
 SRCDIR="$MYPATH/src"
-TMPDIR="$MYPATH/build"
+TMPDIR="/tmp/avr-build"
 PRGOUT="$TMPDIR/program.hex"
 DEVICE="atmega328p"
 
-COMMON="-mmcu=${DEVICE} -Os -mcall-prologues -ffunction-sections -fdata-sections"
+COMMON="-mmcu=${DEVICE} -O2 -mcall-prologues \
+-ffunction-sections -fdata-sections"
 CFLAGS="${COMMON} -std=gnu99 -Wall -Wextra"
 LDFLAGS="${COMMON} -Wl,-flto -mendup-at=main -lm"
 
@@ -77,32 +78,59 @@ action_compile()
 	[ ! -d "$TMPDIR" ] && mkdir -p "$TMPDIR"
 
 	# compile code
-	objs=`find "$SRCDIR" -name '*.c' \
+	objs=`find "$SRCDIR" -name '*.c' -type f \
 		| while read file; do
-		sum="$(md5sum "$file" | cut -d\  -f1)"
+		rel="$(echo "$file" | cut -c$(expr "${#SRCDIR}" + 2)-)"
+		dir="$(dirname "$rel")"
 
-		name="$(basename "$file")"
+		# make paths consistent
+		[ "$dir" != '.' ] && dir="./${dir}"
 
-		src="${TMPDIR}/${sum}$(echo "$name" | grep -o '\.[^.]\+$')"
-		obj="$(echo "$src" | sed -e 's/\.[^.]\+$/.o/g')"
-		flg="${TMPDIR}/${sum}.cflags"
+		# filename without extension
+		name="$(basename "$file" | sed -e 's/\.[^.]\+$//g')"
 
+		# replicate source hierarchy
+		cpp="${TMPDIR}/cpp/${dir}/${name}.pp$(echo "$file" | grep -o '\.[^.]\+$')"
+		obj="${TMPDIR}/obj/${dir}/${name}.o"
+		flg="${TMPDIR}/cflags/${dir}/${name}.cflags"
+
+		[ ! -d "$(dirname "$cpp")" ] \
+			&& mkdir -p "$(dirname "$cpp")"
+		[ ! -d "$(dirname "$obj")" ] \
+			&& mkdir -p "$(dirname "$obj")"
+		[ ! -d "$(dirname "$flg")" ] \
+			&& mkdir -p "$(dirname "$flg")"
+
+		# output object path
 		echo "$obj"
 
+		# run C preprocessor
+		echo "Preprocessing '$rel'" 1>&2
+		avr-gcc $CFLAGS -E -o "$cpp.new" "$file" 2>&1 \
+			| sed -e 's/^/  /g' 1>&2 || exit 1
+
 		# recompile updated files
-		if [ -f "$src" ] && \
-			cmp -s "$src" "$file" && \
-			echo "$CFLAGS" | cmp -s "$flg"; then
-			echo "Using existing object for '$name'." 1>&2
+		if [ ! -f "${cpp}" -o ! -f "$obj" ]; then
+			reason="not compiled"
+		elif ! cmp -s "${cpp}.new" "$cpp"; then
+			reason="source changed"
+		elif ! echo "$CFLAGS" | cmp -s "$flg"; then
+			reason="CFLAGS changed"
+		else
+			echo "Using existing object for '$rel'." 1>&2
+			rm "${cpp}.new"
 			continue
 		fi
 
+		# save new preprocessor output
+		mv "${cpp}.new" "${cpp}"
+
 		# compile
-		echo "Compiling '$name'" 1>&2
-		avr-gcc $CFLAGS -c -o "$obj" "$file" 2>&1 | sed -e 's/^/  /g' 1>&2 || exit 1
+		echo "Compiling '$rel' ($reason)" 1>&2
+		avr-gcc $CFLAGS -c -o "$obj" "$cpp" 2>&1 \
+			| sed -e 's/^/  /g' 1>&2 || exit 1
 	
-		# save parameters
-		cp "$file" "$src"
+		# save compilation CFLAGS
 		echo "$CFLAGS" > "$flg"
 	done 3>&1`
 
@@ -110,7 +138,10 @@ action_compile()
 
 	# link objects
 	echo "Linking objects:" 1>&2
-	echo "$objs" | grep -o '[^/]\+$' | sed -e 's/^/  /g' 1>&2
+	prf="`echo "$objs" \
+		| sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D' \
+		| sed -e 's/[^/]\+$//g'`"
+	echo "$objs" | sed -e "s/^.\{${#prf}\}/  /g" 1>&2
 	echo "$objs" | xargs -d '\n' avr-gcc $LDFLAGS -o "$elf" || exit 1
 
 	# extract relevant sections from executable
