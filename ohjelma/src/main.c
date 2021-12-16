@@ -1,35 +1,33 @@
 #include "ui.h"
-#include "util.h"
 #include "alarm.h"
 #include "error.h"
-#include "screen.h"
 #include "button.h"
 #include "temp_util.h"
 
 #include <setjmp.h>
 
-#define DEFINE_NAV_CALLBACK(NAME) \
-	void callback_##NAME##_nav() { UI_SET_STATE(NAME); }
+DEFINE_PSTR_PTR(TEMP_1, "TEMPERATURE");
+DEFINE_PSTR_PTR(TEMP_2, "TEMP");
+DEFINE_PSTR_PTR(CLBR_1, "CALIBRATION");
+DEFINE_PSTR_PTR(CLBR_2, "CLBR");
+DEFINE_PSTR_PTR(OPTS_1, "OPTIONS");
+DEFINE_PSTR_PTR(OPTS_2, "OPTS");
 
-#define NAV_CALLBACK(NAME) \
-	(&callback_##NAME##_nav)
-
-#undef DEFAULT
-DEFINE_NAV_CALLBACK(DEFAULT);
-DEFINE_NAV_CALLBACK(CALIBR);
-DEFINE_NAV_CALLBACK(CONFIG1);
-DEFINE_NAV_CALLBACK(CONFIG2);
-
-/* Valikon takaisinkutsut. */
-MENU_CALLBACKS = {
-	MENU_CALLBACK(NAV_CALLBACK(DEFAULT), NULL),
-	MENU_CALLBACK(NAV_CALLBACK(CALIBR),  NULL),
-	MENU_CALLBACK(NAV_CALLBACK(CONFIG1), NULL),
-	MENU_CALLBACK(NAV_CALLBACK(CONFIG2), NULL)
+/* Valikon konfiguraatio. */
+MENU_CONFIG = {
+	MENU_ENTRY(
+		REF_PSTR_PTR(TEMP_1),
+		REF_PSTR_PTR(TEMP_2),
+		TEMP, NULL, NULL),
+	MENU_ENTRY(
+		REF_PSTR_PTR(CLBR_1),
+		REF_PSTR_PTR(CLBR_2),
+		CLBR, NULL, NULL), 
+	MENU_ENTRY(
+		REF_PSTR_PTR(OPTS_1),
+		REF_PSTR_PTR(OPTS_2),
+		OPTS, NULL, NULL), 
 };
-
-/* Oletusnäkymä. */
-#define DEFAULT_VIEW 0
 
 /* millis() aikaleimat ajastukseen */
 static uint32_t ts_now, ts_old;
@@ -60,7 +58,8 @@ bool common_update()
 			obs_min = T;
 
 		/* päivitä lämpötilat näytöllä */
-		lcd_put_temp(T, 2, 6, 0, ALIGN_C);
+		if (!in_menu)
+			lcd_put_temp(T, 2, 6, 0, ALIGN_C);
 	
 		// TÄHÄN VÄLIIN HÄLYTYSKOODI
 
@@ -75,8 +74,10 @@ bool common_update()
 void view_limit_init()
 {
 	/* näytön staattinen teksti */
-	lcd_put_P_const("MIN", 0, ALIGN_L);
-	lcd_put_P_const("MAX", 0, ALIGN_R);
+	if (!in_menu) {
+		lcd_put_P_const("MIN", 0, ALIGN_L);
+		lcd_put_P_const("MAX", 0, ALIGN_R);
+	}
 }
 
 void view_limit_loop()
@@ -86,16 +87,20 @@ void view_limit_loop()
 		return;
 
 	/* näkymäkohtainen info */
-	lcd_put_temp(obs_min, 1, 5, 1, ALIGN_L);
-	lcd_put_temp(obs_max, 1, 5, 1, ALIGN_R);
-	lcd_update();
+	if (!in_menu) {
+		lcd_put_temp(obs_min, 1, 5, 1, ALIGN_L);
+		lcd_put_temp(obs_max, 1, 5, 1, ALIGN_R);
+		lcd_update();
+	}
 }
 
 void view_alarm_init()
 {
 	/* näytön staattinen teksti */
-	lcd_put_P_const("-LM", 0, ALIGN_L);
-	lcd_put_P_const("LM+", 0, ALIGN_R);
+	if (!in_menu) {
+		lcd_put_P_const("AL-", 0, ALIGN_L);
+		lcd_put_P_const("AL+", 0, ALIGN_R);
+	}
 }
 
 void view_alarm_loop()
@@ -105,22 +110,24 @@ void view_alarm_loop()
 		return;
 
 	/* näkymäkohtainen info */
-	lcd_put_temp(lim_min, 1, 5, 1, ALIGN_L);
-	lcd_put_temp(lim_max, 1, 5, 1, ALIGN_R);
-	lcd_update();
+	if (!in_menu) {
+		lcd_put_temp(lim_min, 1, 5, 1, ALIGN_L);
+		lcd_put_temp(lim_max, 1, 5, 1, ALIGN_R);
+		lcd_update();
+	}
 }
 
-const char text_1[] PROGMEM = {'L', 'I', 'M', 'T'};
-const char text_2[] PROGMEM = {'A', 'L', 'R', 'M'};
+DEFINE_PSTR_PTR(LIMT, "LIMT");
+DEFINE_PSTR_PTR(ALRM, "ALRM");
 
-/* DEFAULT näkymien takaisinkutsut. */
+/* TEMP näkymien takaisinkutsut. */
 static const struct {
 	const void *name;
 	callback_t init;
 	callback_t loop;
 } packed views[] PROGMEM = {
-	{&text_1, &view_limit_init, &view_limit_loop},
-	{&text_2, &view_alarm_init, &view_alarm_loop}
+	{REF_PSTR_PTR(LIMT), &view_limit_init, &view_limit_loop},
+	{REF_PSTR_PTR(ALRM), &view_alarm_init, &view_alarm_loop}
 };
 
 #define view_name \
@@ -132,7 +139,10 @@ static const struct {
 #define view_loop \
 	((callback_t)pgm_read_ptr(&views[view].loop))
 
-int noreturn main()
+/* noreturn ei toimi tässä, mutta viimeistään
+ * linkkeri optimoi paluukoodin pois
+ */
+int main()
 {
 	struct button_state s = {};
 	uint32_t tmp;
@@ -142,11 +152,11 @@ int noreturn main()
 	/* luku jota napeilla muutetaan */
 	//float *target;
 
-	/* piirrä näkymän indikaattoriteksti */
-	bool view_redraw = true;
-
 	/* mikä näkymä DEFAULT näytössä on päällä */
-	uint8_t view = DEFAULT_VIEW;
+	uint8_t view = 0;
+
+	/* pitääkö näkymän indikaattori piirtää uudelleen */
+	bool view_redraw;
 
 	/* näppäimet lukittu */
 	bool is_locked = false;
@@ -174,17 +184,17 @@ int noreturn main()
 	default_points();
 
 	/* käyttöliittymä alkaa splash näytöstä */
-	UI_SET_STATE(SPLASH);
+	UI_SET_STATE(SPLH);
 
 	/* ERROR() palaa tähän mistä tahansa. */
 	ERROR_RETURN;
 main_loop:
 
 	switch (UI_GET_STATE) {
-	case UI_SETUP(SPLASH):
+	case UI_SETUP(SPLH):
 
 #define SPLASH_1 "L\xE1mp\xEFmittari"
-#define SPLASH_2 "v. 1.0"
+#define SPLASH_2 "V. 1.0"
 #define SPLASH_WAIT 1000 // [ms]
 
 		/* splash */
@@ -205,7 +215,7 @@ main_loop:
 		UI_SETUP_END;     
 		break;
 
-	case UI_LOOP(SPLASH):
+	case UI_LOOP(SPLH):
 		/* alusta näytepuskuri täyteen */
 		ts_now = millis();
 		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
@@ -225,32 +235,38 @@ main_loop:
 		 * takaisinkutsua, joka asettaa tilan DEFAULT)
 		 */
 		if (tmp >= MAX_SAMPLES)
-			menu_enter(0);
+			UI_SET_STATE(TEMP);
 
 		break;
 	
-	/* oletusnäkymä */
-	case UI_SETUP(DEFAULT):
+	case UI_SETUP(MENU):
+		LCD_CLEAR;
+		menu_draw();
+		UI_SETUP_END;
+		break;
+	
+	case UI_LOOP(MENU):
+		menu_update();
+		break;
+
+	case UI_SETUP(TEMP):
 		/* tyhjennä näyttö */
 		LCD_CLEAR;
 
 		/* näkymän alustus */
 		view_init();
+		view_redraw = true;
 
 		UI_SETUP_END;
 		break;
 
-	case UI_LOOP(DEFAULT):
+	case UI_LOOP(TEMP):
 		/* näkymän päivitys */
 		view_loop();
 
-		/* valikossa */
-		if (menu())
-			break;
-
 		/* piirrä näkymän indikaattoriteksti */
 		if (unlikely(view_redraw)) {
-			lcd_put_P(view_name, MENU_ENTRIES, 1, ALIGN_C);
+			lcd_put_P(view_name, 4, 1, ALIGN_C);
 			view_redraw = false;
 			lcd_update();
 		}
@@ -283,7 +299,7 @@ main_loop:
 			INC_MOD(view, ARRAY_SIZE(views));
 			view_redraw = true;
 
-			UI_SET_STATE(DEFAULT);
+			UI_SET_STATE(TEMP);
 			break;
 
 		/* näkymä taakse päin */
@@ -296,32 +312,32 @@ main_loop:
 			DEC_MOD(view, ARRAY_SIZE(views));
 			view_redraw = true;
 
-			UI_SET_STATE(DEFAULT);
+			UI_SET_STATE(TEMP);
 			break;
 
 		/* takaisin valikkoon */
 		case BOTH|UP:
 			if (is_locked)
 				break;
-			menu_return();
+			
+			beep_slow();
+
+			MENU_BACK;
 			break;
 		}
 		break;
 
-	/* kalibrointinäkymä */
-	case UI_SETUP(CALIBR):
+	case UI_SETUP(CLBR):
 		LCD_CLEAR;
 
-		lcd_put_P_const("CALIBR", 0, ALIGN_C);
+		lcd_put_P_const("<EMPTY>", 0, ALIGN_C);
+		lcd_update();
+
 
 		UI_SETUP_END;
 		break;
 
-	case UI_LOOP(CALIBR):
-		/* valikossa */
-		if (menu())
-			break;
-
+	case UI_LOOP(CLBR):
 		/* lue uusi näyte */
 		ts_now = millis();
 		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
@@ -338,77 +354,56 @@ main_loop:
 			ts_old = ts_now;
 		}
 
-		/* pois valikosta */
 		switch (button_update(&s)) {
 		/* testi */
 		case BOTH|HOLD:
 			ERROR(TEST);
 			break;
 
+		case RT|UP:
+		case LT|UP:
+			beep_fast();
+			break;
+
 		/* takaisin valikkoon */
 		case BOTH|UP:
-			menu_return();
+			beep_slow();
+			MENU_BACK;
 			break;
 		}
 		break;
 
-	/* asetusnäkymä 1 */
-	case UI_SETUP(CONFIG1):
+	case UI_SETUP(OPTS):
 		LCD_CLEAR;
 
-		lcd_put_P_const("CONFIG1", 0, ALIGN_C);
+		lcd_put_P_const("<EMPTY>", 0, ALIGN_C);
+		lcd_update();
 
 		UI_SETUP_END;
 		break;
 
-	case UI_LOOP(CONFIG1):
-		/* valikossa */
-		if (menu())
-			break;
+	case UI_LOOP(OPTS):
 
-		/* pois valikosta */
 		switch (button_update(&s)) {
 		/* testi */
 		case BOTH|HOLD:
 			ERROR(TEST);
 			break;
 
-		/* takaisin valikkoon */
-		case BOTH|UP:
-			menu_return();
-			break;
-		}
-		break;
-
-	/* asetusnäkymä 2 */
-	case UI_SETUP(CONFIG2):
-		LCD_CLEAR;
-
-		lcd_put_P_const("CONFIG2", 0, ALIGN_C);
-
-		UI_SETUP_END;
-		break;
-	
-	case UI_LOOP(CONFIG2):
-		/* valikossa */
-		if (menu())
-			break;
-
-		/* pois valikosta */
-		switch (button_update(&s)) {
-		/* testi */
-		case BOTH|HOLD:
-			ERROR(TEST);
+		case RT|UP:
+		case LT|UP:
+			beep_fast();
 			break;
 
 		/* takaisin valikkoon */
 		case BOTH|UP:
-			menu_return();
+			beep_slow();
+			MENU_BACK;
 			break;
 		}
 		break;
 	
-	case UI_SETUP(ERROR):
+	case UI_SETUP(ERRR):
 
 #define ERROR_SHOW 3000 // [ms]
 #define ERROR_WAIT 1000 // [ms]
@@ -441,7 +436,7 @@ main_loop:
 		UI_SETUP_END;
 		break;
 
-	case UI_LOOP(ERROR):
+	case UI_LOOP(ERRR):
 		ts_now = millis();
 
 		/* edistymispalkki */

@@ -7,6 +7,13 @@
 
 #define F_CPU 16000000UL // prosessorin kellotaajuus
 #include <util/delay.h>
+#include <avr/pgmspace.h>
+
+#define DEFINE_PSTR_PTR(name, str) \
+	static const char PSTR_PTR_##name[] PROGMEM = (str)
+
+#define REF_PSTR_PTR(name) \
+	&(PSTR_PTR_##name)
 
 /* ääretön liukuluku (isfinite() palauttaa 0) */
 #define INF (1.0/0.0)

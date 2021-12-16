@@ -2,7 +2,7 @@
 #define ALARM_H
 
 /* Äänimerkin taajuus. */
-#define BEEP_FREQUENCY 350 // [Hz]
+#define BEEP_FREQUENCY 750 // [Hz]
 
 /* Nopean äänimerkin kesto. */
 #define BEEP_FAST_DURATION 80 // [ms]
@@ -14,7 +14,7 @@
 #define BLINK_DURATION 200 // [ms]
 
 /* Äänimerkin ja taustavalon välkkymisen jaksonaika. */
-#define COMMON_PERIOD 500 // [ms]
+#define COMMON_PERIOD 350 // [ms]
 
 /* Alustus. */
 void alarm_init();

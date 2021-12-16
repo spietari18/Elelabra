@@ -40,7 +40,6 @@ DEFINE_PIN(_LCD_B7, C, 4); // PC2
 DEFINE_PIN(_LCD_B8, C, 5); // PC3
 
 /* Summeri. */
-#define ALARM_TIMER 2
 DEFINE_PIN(BUZZER, D, 3); // PD3
 
 /* Muut pinnit. */

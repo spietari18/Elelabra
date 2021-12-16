@@ -6,27 +6,6 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-/* Ajastimen maksimiarvo select_prescaler():ille. */
-#if (ALARM_TIMER == 1)
-#define TIMER_MAX (uint16_t)(~0)
-#else
-#define TIMER_MAX (uint8_t)(~0)
-#endif
-
-/* Tämä sotku koska C esikääntäjä on paska. */
-#define CAT(X, Y) X##Y
-#define PASTE2(X, Y) CAT(X, Y)
-#define PASTE3(X, Y, Z) PASTE2(X, PASTE2(Y, Z))
-
-/* Ajastimen rekisterit. */
-#define TCCRA PASTE3(TCCR, ALARM_TIMER, A)
-#define TCCRB PASTE3(TCCR, ALARM_TIMER, B)
-#define TIMSK PASTE2(TIMSK, ALARM_TIMER)
-#define TIOCR PASTE3(OCR, ALARM_TIMER, A)
-
-/* Ajastimen OCR ENABLE bitti TIMSK rekisterissä. */
-#define ENABLE PASTE3(OCIE, ALARM_TIMER, A)
-
 #define BEEPENBL 0 // äänimerkki päälle
 #define BLNKENBL 1 // välkytys päälle
 #define BEEPCONT 2 // jatkuva äänimerkki
@@ -43,14 +22,16 @@ static volatile uint8_t state;
 static volatile uint32_t ts_beep;
 static volatile uint32_t ts_blink;
 
-/* Ajastimien skaalaimet ja niiden bitit TCCRnB:ssä. */
+/* TIMER2 skaalaimet ja niiden bitit TCCR2B:ssä. */
 static const struct {
 	uint16_t fact;
 	uint8_t  bits;
 } packed prescalers[] PROGMEM = {
-	{1024, 0b101},
-	{ 256, 0b100},
-	{  64, 0b011},
+	{1024, 0b111},
+	{ 256, 0b110},
+	{ 128, 0b101},
+	{  64, 0b100},
+	{  32, 0b011},
 	{   8, 0b010},
 	{   1, 0b001}
 };
@@ -88,14 +69,14 @@ uint16_t set_prescaler(volatile uint8_t *reg, uint16_t freq, uint16_t max)
 }
 
 /* Ajastimen keskeytys. */
-ISR(PASTE3(TIMER, ALARM_TIMER, _COMPA_vect))
+ISR(TIMER2_COMPA_vect)
 {
 	uint32_t now;
 
 	/* jos mikään ei ole päällä, pysäytä ajastin */
 	if (unlikely(!(GET(state, BEEPENBL)
 		|| GET(state, BLNKENBL)))) {
-		CLR(TIMSK, ENABLE);
+		CLR(TIMSK2, OCIE2A);
 		return;
 	}
 	
@@ -208,10 +189,9 @@ void alarm_init()
 	MODE(BUZZER, OUTPUT);
 
 	/* Alusta ajastin. */
-	TCCRA = TCCRB = TIMSK = 0;
-	SET(TCCRA, PASTE3(WGM, ALARM_TIMER, 1)); // CTC
-	TIOCR = set_prescaler(&TCCRB, 2*BEEP_FREQUENCY, TIMER_MAX);
-	SET(TIMSK, ENABLE);
+	TCCR2A = TCCR2B = TIMSK2 = 0;
+	SET(TCCR2A, WGM21); // CTC
+	OCR2A = set_prescaler(&TCCR2B, 2*BEEP_FREQUENCY, (uint8_t)~0);
 
 	sei();
 }
@@ -230,7 +210,7 @@ void beep_fast()
 	SET(state, BEEPENBL);
 	CLR(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
-	SET(TIMSK, ENABLE);	
+	SET(TIMSK2, OCIE2A);	
 exit:
 	sei();
 }
@@ -249,7 +229,7 @@ void beep_slow()
 	SET(state, BEEPENBL);
 	CLR(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
-	SET(TIMSK, ENABLE);	
+	SET(TIMSK2, OCIE2A);	
 exit:
 	sei();
 }
@@ -270,7 +250,7 @@ void beep_begin()
 	SET(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
 	SET(state, BEEPSTAT);
-	SET(TIMSK, ENABLE);
+	SET(TIMSK2, OCIE2A);	
 exit:
 	sei();
 }
@@ -305,7 +285,7 @@ void blink()
 	SET(state, BLNKENBL);
 	CLR(state, SYNCENBL);
 	CLR(state, BLNKSYNC);
-	SET(TIMSK, ENABLE);
+	SET(TIMSK2, OCIE2A);	
 exit:
 	sei();
 }
@@ -325,7 +305,7 @@ void blink_begin()
 	SET(state, BLNKCONT);
 	SET(state, SYNCENBL);
 	CLR(state, BLNKSYNC);
-	SET(TIMSK, ENABLE);
+	SET(TIMSK2, OCIE2A);	
 exit:
 	sei();
 }

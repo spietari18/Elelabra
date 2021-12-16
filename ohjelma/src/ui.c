@@ -1,6 +1,5 @@
 #include "ui.h"
 #include "alarm.h"
-#include "screen.h"
 #include "button.h"
 
 /* Käyttöliittymän tilakone. */
@@ -9,45 +8,55 @@ uint8_t ui_state;
 /* Valikon tila. */
 static struct button_state s;
 static uint8_t entry_now;
-static uint8_t entry_old = ~0;
-static bool in_menu;
+static uint8_t entry_old;
 static bool redraw;
 
-#define MENU_EXIT 0
-#define MENU_NOCH 1
-#define MENU_MOVE 2
+/* tämä on globaali, jotta koodi jonka
+ * tarvitsee tietää onko valikko päällä
+ * voi hakea arvon nopeasti.
+ */
+bool in_menu;
 
 /* Piirrä valikko. */
-static void menu_draw(bool clear)
+void menu_draw()
 {
-	char menu_str[MENU_ENTRIES];
+	char *dst = &lcd_buffer[1][1];
+	uint8_t i = 0;
 
-	if (unlikely(clear)) {
-		(void)memset(menu_str, ' ', MENU_ENTRIES);
-	} else {
-		for (uint8_t i = 0; i < MENU_ENTRIES; i++)
-		{
-			if (unlikely(i == entry_now))
-				menu_str[i] = 0xFF;
-			else
-				menu_str[i] = i + '1';
+	LCD_CLEAR;
+	
+	lcd_put_P(pgm_read_ptr(&menu_config[entry_now]
+		.text_title), NULLTERM, 0, ALIGN_C);
+	for (uint8_t j = 0; j < MENU_ENTRIES; j++)
+	{
+		if (unlikely(j == entry_now)) {
+			uint8_t tmp;
+
+			dst[i++] = '>';
+			(void)memset(&dst[i], ' ', EXPANDED_LEN);
+			tmp = strnlen_P(pgm_read_ptr(
+				&menu_config[j].text_menu), EXPANDED_LEN);
+			(void)memcpy_P(&dst[i + (EXPANDED_LEN- tmp)/2],
+				pgm_read_ptr(&menu_config[j].text_menu), tmp);
+			i += EXPANDED_LEN;
+			dst[i++] = '<';
+		} else {
+			dst[i++] = '<';
+			dst[i++] = pgm_read_byte(pgm_read_ptr(
+				&menu_config[j].text_menu));
+			dst[i++] = '>';
 		}
+
+		dst[i++] = ' ';
 	}
 
-	lcd_put(menu_str, MENU_ENTRIES, MENU_ROW, MENU_ALIGN);	
 	lcd_update();
 }
 
 /* päivitä valikko */
-static uint8_t menu_update(bool force)
+void menu_update()
 {
 	callback_t callback;
-
-	/* ohita napit */
-	if (force) {
-		beep_slow();
-		goto skip_buttons;
-	}
 
 	switch (button_update(&s)) {
 	/* valikossa eteen päin */
@@ -65,76 +74,35 @@ static uint8_t menu_update(bool force)
 	/* poistu valikosta */
 	case BOTH|UP:
 		beep_slow();
+
 		/* poistumisen takaisinkutsu */
 		callback = pgm_read_ptr(
-			&menu_callbacks[entry_now][1]);
+			&menu_config[entry_now].enter);
 		if (callback)
 			callback();
 
-		return MENU_EXIT;
+		__UI_SET_STATE(pgm_read_word(
+			&menu_config[entry_now].state));
+		in_menu = false;
+
+		return;
 	}
 
 	/* jos mikään ei muutu tai päivitystä
 	 * ei pakoteta, älä päivitä
 	 */
 	if (likely(entry_old == entry_now))
-		return MENU_NOCH;
+		return;
 
-skip_buttons:
-	/* navigaation takaisinkutsu */
+	menu_draw();
+
+	/* taustatilan päivitystakaisinkutsu */
 	callback = pgm_read_ptr(
-		&menu_callbacks[entry_now][0]);
+		&menu_config[entry_now].update);
 	if (callback)
 		callback();
 
 	entry_old = entry_now;
-
-	return MENU_MOVE;
-}
-
-/* Valikon tila. */
-bool menu()
-{
-	if (in_menu) {
-		switch (menu_update(false)) {
-		case MENU_EXIT:
-			/* tyhjennä valikko */
-			menu_draw(true);
-			in_menu = false;
-			return false;
-		case MENU_NOCH:
-			/* piirrä valikko */
-			if (redraw) {
-				menu_draw(false);
-				redraw = false;
-			}
-			return true;
-		case MENU_MOVE:
-			/* piirrä valikko seuraavalla
-			 * menu() kutsulla
-			 */
-			redraw = true;
-			return true;
-		}
-	} 
-	
-	return false;
-}
-
-/* Siirry valikkoon. */
-void menu_enter(uint8_t entry)
-{
-	in_menu = true;
-	redraw = false;
-	entry_now = entry;
-	(void)menu_update(true);
-}
-
-/* Palaa valikkoon. */
-void menu_return()
-{
-	in_menu = redraw = true;
-	(void)menu_update(true);
 }
 
 #define PROG_CHARS \

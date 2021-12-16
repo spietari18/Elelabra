@@ -12,7 +12,7 @@ extern const char *const errstr[] PROGMEM;
 
 #define ERROR(CODE) \
 	do { \
-		UI_SET_STATE(ERROR); \
+		UI_SET_STATE(ERRR); \
 		longjmp(error_return, (ERR_##CODE) + 1); \
 	} while (0)
 

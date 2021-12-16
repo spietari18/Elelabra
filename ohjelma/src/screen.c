@@ -37,9 +37,6 @@ void lcd_init()
 	MODE(_LCD_B7, OUTPUT);
 	MODE(_LCD_B8, OUTPUT);
 
-	MODE(LCD_AN, OUTPUT);
-	WRITE(LCD_AN, HIGH);
-
 	/* pinnit */
 	lcd.pins[LCD_RS] = REF_WRITER(_LCD_RS);
 	lcd.pins[LCD_EN] = REF_WRITER(_LCD_EN);

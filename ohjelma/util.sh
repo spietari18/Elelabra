@@ -74,6 +74,25 @@ COMMON="-mmcu=${DEVICE} -O2 -mcall-prologues \
 CFLAGS="${COMMON} -std=gnu99 -Wall -Wextra"
 LDFLAGS="${COMMON} -Wl,-flto -mendup-at=main -lm"
 
+action_clean()
+{
+	[ ! -d "$TMPDIR" ] && return 0
+
+	while read \
+		-p "Delete '$TMPDIR'? [Y/N]: " \
+		'choice'; do
+		case "$choice" in
+		Y|y)
+			rm -r "$TMPDIR"
+			return "$?";;
+		N|n)
+			return 0;;
+		*)
+			echo "Invalid input." 1>&2;;
+		esac
+	done
+}
+
 action_compile()
 {
 	# make sure the build directory exists
@@ -202,8 +221,8 @@ action_monitor()
 # we treat each parameter as an action
 while [ ! -z "$1" ]; do
 	case "$1" in
-		# compilation doesn't require a device
-		compile) "action_$1";;
+		# compilation and cleanup don't require a device
+		compile|clean) "action_$1";;
 
 		# upload and monitor require a device
 		upload|monitor)
