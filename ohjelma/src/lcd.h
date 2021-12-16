@@ -43,7 +43,6 @@ struct lcd
 #define LCD_CRAS 0x40 // aseta CGRAM osoite
 #define LCD_DRAS 0x80 // aseta DDRAM osoite
 
-#if 0
 #define OFF(A) \
 	(8*sizeof(int) - __builtin_clz(A))
 #define MSK(A, B) \
@@ -59,16 +58,6 @@ struct lcd
 #define FS_MSK MSK(5, FS_OFF)
 #define IN_OFF OFF(FS_MSK)
 #define IN_MSK MSK(1, IN_OFF)
-#endif
-
-#define DM_OFF 0
-#define DM_MSK (3 << 0)
-#define DC_OFF 2
-#define DC_MSK (7 << 2)
-#define CS_OFF 5
-#define CS_MSK (15 << 5)
-#define FS_OFF 9
-#define FS_MSK (31 << 9)
 
 /* indikaattori ja sen komplementti */
 #define FLAG(A, B) ((A) << (B))

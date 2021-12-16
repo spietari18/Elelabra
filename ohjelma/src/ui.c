@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "alarm.h"
 #include "screen.h"
 #include "button.h"
 
@@ -43,22 +44,27 @@ static uint8_t menu_update(bool force)
 	callback_t callback;
 
 	/* ohita napit */
-	if (force)
+	if (force) {
+		beep_slow();
 		goto skip_buttons;
+	}
 
 	switch (button_update(&s)) {
 	/* valikossa eteen päin */
 	case RT|UP:
+		beep_fast();
 		INC_MOD(entry_now, MENU_ENTRIES);
 		break;
 	
 	/* valikossa taakse piän */
 	case LT|UP:
+		beep_fast();
 		DEC_MOD(entry_now, MENU_ENTRIES);
 		break;
 	
 	/* poistu valikosta */
 	case BOTH|UP:
+		beep_slow();
 		/* poistumisen takaisinkutsu */
 		callback = pgm_read_ptr(
 			&menu_callbacks[entry_now][1]);

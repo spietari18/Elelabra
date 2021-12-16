@@ -54,10 +54,12 @@ void timer_init()
 uint32_t millis()
 {
 	uint32_t tmp;
+	uint8_t old;
 
+	old = SREG;
 	cli();
 	tmp = timer0_ms;
-	sei();
+	SREG = old;
 
 	return tmp;
 }
@@ -66,8 +68,10 @@ uint32_t millis()
 uint32_t micros()
 {
 	uint32_t tmp;
+	uint8_t old;
 	uint8_t cnt;
 
+	old = SREG;
 	cli();
 
 	/* monta kertaa ajastin on ylivuotanut */
@@ -82,7 +86,7 @@ uint32_t micros()
 	if (GET(TIFR0, TOV0) && (cnt < 255))
                 tmp++;
 
-	sei();
+	SREG = old;
 
 	/* (tmp << 8) | cnt kertoo kuinka monta kertaa
 	 * ajastin on korottanut laskuria.

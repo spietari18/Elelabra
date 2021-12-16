@@ -40,13 +40,13 @@ DEFINE_PIN(_LCD_B7, C, 4); // PC2
 DEFINE_PIN(_LCD_B8, C, 5); // PC3
 
 /* Summeri. */
-#define BUZZER_TIMER 2
+#define ALARM_TIMER 2
 DEFINE_PIN(BUZZER, D, 3); // PD3
 
 /* Muut pinnit. */
 DEFINE_PIN(LCD_AN, D, 2); // PD4
-DEFINE_PIN(BTN_LT, D, 1); // PD1, (vasen)
-DEFINE_PIN(BTN_RT, D, 0); // PD1, (oikea)
+DEFINE_PIN(BTN_RT, D, 1); // PD1, (vasen)
+DEFINE_PIN(BTN_LT, D, 0); // PD1, (oikea)
 #endif
 
 #endif // !PINS_H

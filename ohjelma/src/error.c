@@ -1,17 +1,17 @@
 #include "error.h"
 
 #define ERROR_STR(A, B) \
-	static const char ERROR_STR_##B[] PROGMEM = (A)
+	static const char ERROR_STR_##A[] PROGMEM = (B)
 
 #define ERROR_PTR(A) \
-	ERROR_STR_##A
+	[ERR_##A] = ERROR_STR_##A
 
-ERROR_STR("NO ERROR", 0);
-ERROR_STR("TEST ERROR", 1);
+ERROR_STR(OK, "NO ERROR");
+ERROR_STR(TEST, "TEST ERROR");
 
-const char *const errstr[N_ERR] PROGMEM = {
-	ERROR_PTR(0),
-	ERROR_PTR(1)
+const char *const errstr[] PROGMEM = {
+	ERROR_PTR(OK),
+	ERROR_PTR(TEST)
 };
 
 jmp_buf error_return;

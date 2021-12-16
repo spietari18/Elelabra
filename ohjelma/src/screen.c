@@ -139,8 +139,7 @@ static uint8_t custom_itoa(char *dst, uint16_t val,
 {
 	uint8_t i = 0, j = 0, k;
 
-	while (val)
-	{
+	do {
 		if (unlikely(i >= lim)) {
 			if (likely(trunc_low)) {
 				(void)memmove(&dst[0],
@@ -153,7 +152,7 @@ static uint8_t custom_itoa(char *dst, uint16_t val,
 
 		dst[i++] = pgm_read_byte(&itoa_chars[val % base]);
 		val /= base;
-	}
+	} while (val);
 
 	k = MIN(i, lim)/2;
 	while (j < k)
@@ -267,7 +266,7 @@ void lcd_put_temp(float T, uint8_t p, uint8_t lim, uint8_t row, uint8_t align)
 	}
 }
 
-/* printf() näytölle */
+/* printf() näytölle (älä kutsu suoraan) */
 void __lcd_put_fmt(uint8_t lim, uint8_t row, uint8_t align, const char *fmt, ...)
 {
 	char buf[lim + 1];

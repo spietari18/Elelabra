@@ -172,7 +172,7 @@ int noreturn main()
 	timer_init();
 	alarm_init();
 	default_points();
-	
+
 	/* käyttöliittymä alkaa splash näytöstä */
 	UI_SET_STATE(SPLASH);
 
@@ -192,12 +192,10 @@ main_loop:
 		lcd_put_P_const(SPLASH_2, 1, ALIGN_C);
 		lcd_update();
 
-		beep_begin();
-		blink_begin();
+		beep_slow();
 
 		/* näytä alarivi SPLASH_WAIT millisekuntia */
-		ts_old = millis();
-		while ((millis() - ts_old) < SPLASH_WAIT);
+		_delay_ms(SPLASH_WAIT);
 
 		/* alusta SPLASH LOOP tila */
 		tmp = 0;
@@ -226,11 +224,8 @@ main_loop:
 		 * kohtaan 0. (kutsuu MENU_CALLBACKS[0] navigaatio-
 		 * takaisinkutsua, joka asettaa tilan DEFAULT)
 		 */
-		if (tmp >= MAX_SAMPLES) {
-			beep_end();
-			blink_end();
+		if (tmp >= MAX_SAMPLES)
 			menu_enter(0);
-		}
 
 		break;
 	
@@ -415,10 +410,12 @@ main_loop:
 	
 	case UI_SETUP(ERROR):
 
-#define ERROR_SHOW 2000 // [ms]
+#define ERROR_SHOW 3000 // [ms]
 #define ERROR_WAIT 1000 // [ms]
 
 		LCD_CLEAR;
+
+		beep_begin();
 
 		/* tulosta virhe */
 		lcd_put_fmt(LCD_COLS, 0, ALIGN_C, "VIRHE (%u):", ERROR_CODE);
@@ -427,8 +424,9 @@ main_loop:
 		lcd_update();
 
 		/* näytä virhe ERROR_SHOW millisekuntia */
-		tmp = millis();
-		while ((millis() - tmp) < ERROR_SHOW);
+		_delay_ms(ERROR_SHOW);
+
+		beep_end();
 
 		LCD_CLEAR;
 

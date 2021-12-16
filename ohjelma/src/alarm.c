@@ -7,7 +7,7 @@
 #include <avr/interrupt.h>
 
 /* Ajastimen maksimiarvo select_prescaler():ille. */
-#if (BUZZER_TIMER == 1)
+#if (ALARM_TIMER == 1)
 #define TIMER_MAX (uint16_t)(~0)
 #else
 #define TIMER_MAX (uint8_t)(~0)
@@ -19,13 +19,13 @@
 #define PASTE3(X, Y, Z) PASTE2(X, PASTE2(Y, Z))
 
 /* Ajastimen rekisterit. */
-#define TCCRA PASTE3(TCCR, BUZZER_TIMER, A)
-#define TCCRB PASTE3(TCCR, BUZZER_TIMER, B)
-#define TIMSK PASTE2(TIMSK, BUZZER_TIMER)
-#define TIOCR PASTE3(OCR, BUZZER_TIMER, A)
+#define TCCRA PASTE3(TCCR, ALARM_TIMER, A)
+#define TCCRB PASTE3(TCCR, ALARM_TIMER, B)
+#define TIMSK PASTE2(TIMSK, ALARM_TIMER)
+#define TIOCR PASTE3(OCR, ALARM_TIMER, A)
 
 /* Ajastimen OCR ENABLE bitti TIMSK rekisterissä. */
-#define ENABLE PASTE3(OCIE, BUZZER_TIMER, A)
+#define ENABLE PASTE3(OCIE, ALARM_TIMER, A)
 
 #define BEEPENBL 0 // äänimerkki päälle
 #define BLNKENBL 1 // välkytys päälle
@@ -55,38 +55,40 @@ static const struct {
 	{   1, 0b001}
 };
 
+/* tämä vähentää sotkua alla */
+#define fact(i) \
+	pgm_read_word(&prescalers[i].fact)
+#define bits(i) \
+	pgm_read_byte(&prescalers[i].bits)
+
 /* Valitse sopiva skaalain ja OCR arvo
  * ajastimelle halutun taajuuden perusteella.
  */
-uint16_t set_prescaler(volatile uint8_t *reg, uint32_t freq, uint16_t max)
+uint16_t set_prescaler(volatile uint8_t *reg, uint16_t freq, uint16_t max)
 {
-	uint32_t res, old;
-	uint16_t div;
+	uint32_t now, old;
 	uint8_t i;
 
 	i = 0;
 	old = max;
 	while (i < ARRAY_SIZE(prescalers))
 	{
-		div = freq*((typeof(&prescalers[0]))
-			pgm_read_ptr(&prescalers[i]))->fact;
-		res = (F_CPU + (div >> 2))/div;
-		if (res > max)
+		now = F_CPU/((uint32_t)freq*(uint32_t)fact(i)) - 1;
+		if (now > max)
 			break;
-		old = res;
+		old = now;
 		i++;
 	}
-	i--;
-	*reg &= ~7;
-	*reg |= ((typeof(&prescalers[0]))
-		pgm_read_ptr(&prescalers[i]))->bits;
-	max -= (uint16_t)old;
+	i -= !!i;
 
-	return max;
+	*reg &= ~7;
+	*reg |= bits(i);
+
+	return old;
 }
 
 /* Ajastimen keskeytys. */
-ISR(PASTE3(TIMER, BUZZER_TIMER, _COMPA_vect))
+ISR(PASTE3(TIMER, ALARM_TIMER, _COMPA_vect))
 {
 	uint32_t now;
 
@@ -192,12 +194,13 @@ ISR(PASTE3(TIMER, BUZZER_TIMER, _COMPA_vect))
 			}
 		}
 	}
-
 }
 
 /* Alustus. */
 void alarm_init()
 {
+	cli();
+
 	/* Alusta IO pinnit. */
 	WRITE(LCD_AN, HIGH);
 	WRITE(BUZZER, LOW);
@@ -206,8 +209,11 @@ void alarm_init()
 
 	/* Alusta ajastin. */
 	TCCRA = TCCRB = TIMSK = 0;
-	SET(TCCRA, PASTE3(WGM, BUZZER_TIMER, 1)); // CTC
+	SET(TCCRA, PASTE3(WGM, ALARM_TIMER, 1)); // CTC
 	TIOCR = set_prescaler(&TCCRB, 2*BEEP_FREQUENCY, TIMER_MAX);
+	SET(TIMSK, ENABLE);
+
+	sei();
 }
 
 /* Nopea äänimerkki. */

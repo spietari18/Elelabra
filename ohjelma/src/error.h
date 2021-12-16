@@ -8,9 +8,7 @@
 #define ERR_OK   0
 #define ERR_TEST 1
 
-#define N_ERR 2
-
-extern const char *const errstr[N_ERR] PROGMEM;
+extern const char *const errstr[] PROGMEM;
 
 #define ERROR(CODE) \
 	do { \
@@ -23,7 +21,7 @@ extern jmp_buf error_return;
 extern uint8_t error_code;
 
 #define ERROR_RETURN \
-	error_code = setjmp(error_return)
+	error_code = setjmp(error_return) - 1
 
 #define ERROR_CODE \
 	error_code
