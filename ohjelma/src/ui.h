@@ -80,29 +80,21 @@ struct menu_config
 /* Tämä tulee määritellä pääohjelmassa. */
 extern __MENU_CONFIG;
 
+/* Ollaanko valikossa vai ei. */
 extern bool in_menu;
 
+/* Piirrä valikko. */
 void menu_draw();
+
+/* Päivitä valikko. */
 void menu_update();
 
+/* Takaisin valikkoon. */
 #define MENU_BACK \
 	do { \
 		in_menu = true; \
 		UI_SET_STATE(MENU); \
 	} while (0)
-
-#if 0
-/* Valikon tila. (päivittää valikon ja palauttaa
- * true kun käyttäjä poistuu valikosta)
- */
-bool menu();
-
-/* Siirry valikkoon. */
-void menu_enter(uint8_t);
-
-/* Palaa valikkoon. */
-void menu_return();
-#endif
 
 /* Mille riville edistymispalkki piirretään. */
 #define PROG_ROW 1

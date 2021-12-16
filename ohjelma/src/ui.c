@@ -53,7 +53,7 @@ void menu_draw()
 	lcd_update();
 }
 
-/* päivitä valikko */
+/* Päivitä valikko. */
 void menu_update()
 {
 	callback_t callback;
