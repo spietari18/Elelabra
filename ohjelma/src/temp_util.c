@@ -18,8 +18,8 @@ static float points[MAX_POINTS][2];
  */
 static const float points_builtin[][2] PROGMEM = {
 	/* S, T */
-	{684.0, -51.70},
-	{2496.0, 79.76}
+	{1110.0, -05.04},
+	{2015.0,  46.47}
 };
 
 /* PNS kertoimet */
@@ -76,14 +76,14 @@ float read_sample()
 	/* järjestä puskuri numerojärkestykseen */
 	qsort(buffer, MAX_SAMPLES, sizeof(buffer[0]), &float_cmp);
 
-	/* laske kiertopuskurin moodi */
+	/* laske kiertopuskurin mediaani */
 #if (MAX_SAMPLES & 1)
 	tmp = buffer[MAX_SAMPLES/2];
 #else
 	tmp = (buffer[MAX_SAMPLES/2] + buffer[MAX_SAMPLES/2 + 1])/2;
 #endif
 
-	/* suodata pois arvot, jotka ovat moodia SAMPLE_MAX_DELTA
+	/* suodata pois arvot, jotka ovat mediaania SAMPLE_MAX_DELTA
 	 * suurempia tai pienempiä. (poistaa äkilliset vaihtelut)
 	 */
 	uint8_t beg = 0, end = MAX_SAMPLES - 1;

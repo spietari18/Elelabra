@@ -10,10 +10,10 @@
 #define MAX_SAMPLES 128
 
 /* AD muuntimen näytteistystaajuus. */
-#define SAMPLE_RATE 64 // [Hz]
+#define SAMPLE_RATE 32 // [Hz]
 
 /* Kuinka paljon näytteet saavat enintään
- * muuttua näytepuskurin moodista.
+ * muuttua näytepuskurin mediaani.
  */
 #define SAMPLE_MAX_DELTA 4.0
 
