@@ -1,0 +1,737 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L power:GND #PWR?
+U 1 1 619463CC
+P 2750 4650
+F 0 "#PWR?" H 2750 4400 50  0001 C CNN
+F 1 "GND" H 2755 4477 50  0000 C CNN
+F 2 "" H 2750 4650 50  0001 C CNN
+F 3 "" H 2750 4650 50  0001 C CNN
+	1    2750 4650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 6194694F
+P 2100 1950
+F 0 "#PWR?" H 2100 1700 50  0001 C CNN
+F 1 "GND" H 2105 1777 50  0000 C CNN
+F 2 "" H 2100 1950 50  0001 C CNN
+F 3 "" H 2100 1950 50  0001 C CNN
+	1    2100 1950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2150 1900 2100 1900
+Wire Wire Line
+	2100 1900 2100 1950
+Wire Wire Line
+	2750 4600 2750 4650
+Wire Wire Line
+	2850 1600 2850 1550
+Wire Wire Line
+	2850 1550 2750 1550
+Wire Wire Line
+	2750 1550 2750 1600
+$Comp
+L power:VCC #PWR?
+U 1 1 61949144
+P 2750 1500
+F 0 "#PWR?" H 2750 1350 50  0001 C CNN
+F 1 "VCC" H 2765 1673 50  0000 C CNN
+F 2 "" H 2750 1500 50  0001 C CNN
+F 3 "" H 2750 1500 50  0001 C CNN
+	1    2750 1500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2750 1500 2750 1550
+Connection ~ 2750 1550
+NoConn ~ 3850 3600
+NoConn ~ 3850 3700
+NoConn ~ 3850 3800
+NoConn ~ 3850 3900
+Entry Wire Line
+	3600 4400 3700 4300
+Entry Wire Line
+	3600 4300 3700 4200
+Entry Wire Line
+	3600 4200 3700 4100
+Entry Wire Line
+	3600 4100 3700 4000
+Wire Wire Line
+	3700 4000 3850 4000
+Wire Wire Line
+	3700 4100 3850 4100
+Wire Wire Line
+	3700 4200 3850 4200
+Wire Wire Line
+	3700 4300 3850 4300
+Entry Wire Line
+	3600 3200 3700 3100
+Entry Wire Line
+	3600 3400 3700 3300
+Entry Wire Line
+	3600 3300 3700 3200
+Wire Wire Line
+	3700 3200 3850 3200
+Wire Wire Line
+	3700 3300 3850 3300
+Wire Wire Line
+	3700 3100 3850 3100
+Text Label 3750 3100 0    50   ~ 0
+CL
+Text Label 3700 3200 0    50   ~ 0
+GND
+Text Label 3750 3300 0    50   ~ 0
+RS
+Text Label 3750 4000 0    50   ~ 0
+B4
+Text Label 3750 4100 0    50   ~ 0
+B5
+Text Label 3750 4200 0    50   ~ 0
+B6
+Text Label 3750 4300 0    50   ~ 0
+B7
+Entry Wire Line
+	3700 2200 3600 2300
+Entry Wire Line
+	3700 1900 3600 2000
+Wire Wire Line
+	4150 1900 3700 1900
+Text Label 3800 2200 2    50   ~ 0
+X1
+Text Label 3800 1900 2    50   ~ 0
+X2
+$Comp
+L power:VCC #PWR?
+U 1 1 619A21AA
+P 4250 2850
+F 0 "#PWR?" H 4250 2700 50  0001 C CNN
+F 1 "VCC" H 4265 3023 50  0000 C CNN
+F 2 "" H 4250 2850 50  0001 C CNN
+F 3 "" H 4250 2850 50  0001 C CNN
+	1    4250 2850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4250 2850 4250 2900
+$Comp
+L power:GND #PWR?
+U 1 1 619A5960
+P 4250 4550
+F 0 "#PWR?" H 4250 4300 50  0001 C CNN
+F 1 "GND" H 4255 4377 50  0000 C CNN
+F 2 "" H 4250 4550 50  0001 C CNN
+F 3 "" H 4250 4550 50  0001 C CNN
+	1    4250 4550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4250 4500 4250 4550
+$Comp
+L Device:R_POT RV1
+U 1 1 619AA1FC
+P 4900 3100
+F 0 "RV1" H 4830 3054 50  0000 R CNN
+F 1 "10k" H 4830 3145 50  0000 R CNN
+F 2 "" H 4900 3100 50  0001 C CNN
+F 3 "~" H 4900 3100 50  0001 C CNN
+	1    4900 3100
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	4650 3100 4750 3100
+$Comp
+L power:VCC #PWR?
+U 1 1 619AE013
+P 4900 2900
+F 0 "#PWR?" H 4900 2750 50  0001 C CNN
+F 1 "VCC" H 4915 3073 50  0000 C CNN
+F 2 "" H 4900 2900 50  0001 C CNN
+F 3 "" H 4900 2900 50  0001 C CNN
+	1    4900 2900
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	4800 3400 4900 3500
+Wire Wire Line
+	4800 3400 4650 3400
+Wire Wire Line
+	4650 3500 4700 3500
+Wire Wire Line
+	4700 3500 4700 3550
+$Comp
+L power:GND #PWR?
+U 1 1 619B6978
+P 4700 3900
+F 0 "#PWR?" H 4700 3650 50  0001 C CNN
+F 1 "GND" H 4705 3727 50  0000 C CNN
+F 2 "" H 4700 3900 50  0001 C CNN
+F 3 "" H 4700 3900 50  0001 C CNN
+	1    4700 3900
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4700 3850 4700 3900
+$Comp
+L Device:R R1
+U 1 1 6194008D
+P 4700 3700
+F 0 "R1" H 4630 3654 50  0000 R CNN
+F 1 "220" H 4630 3745 50  0000 R CNN
+F 2 "" V 4630 3700 50  0001 C CNN
+F 3 "~" H 4700 3700 50  0001 C CNN
+	1    4700 3700
+	-1   0    0    1   
+$EndComp
+$Comp
+L Display_Character:WC1602A DS1
+U 1 1 6195664D
+P 4250 3700
+F 0 "DS1" H 4250 4681 50  0001 C CNN
+F 1 "MC21605H6W" H 4850 3050 50  0000 C CNN
+F 2 "Display:WC1602A" H 4250 2800 50  0001 C CIN
+F 3 "http://www.wincomlcd.com/pdf/WC1602A-SFYLYHTC06.pdf" H 4950 3700 50  0001 C CNN
+	1    4250 3700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 619BE190
+P 4900 3300
+F 0 "#PWR?" H 4900 3050 50  0001 C CNN
+F 1 "GND" H 4988 3263 50  0000 L CNN
+F 2 "" H 4900 3300 50  0001 C CNN
+F 3 "" H 4900 3300 50  0001 C CNN
+	1    4900 3300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4900 3300 4900 3250
+Wire Wire Line
+	4900 2950 4900 2900
+Wire Bus Line
+	4900 3500 5200 3500
+Connection ~ 3600 2600
+Text Label 4700 3400 0    50   ~ 0
+AN
+Entry Wire Line
+	3700 6150 3600 6050
+$Comp
+L power:GND #PWR?
+U 1 1 619F5353
+P 3700 6250
+F 0 "#PWR?" H 3700 6000 50  0001 C CNN
+F 1 "GND" H 3705 6077 50  0000 C CNN
+F 2 "" H 3700 6250 50  0001 C CNN
+F 3 "" H 3700 6250 50  0001 C CNN
+	1    3700 6250
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	3700 6150 3700 6250
+Text Label 3700 6250 2    50   ~ 0
+GND
+Wire Wire Line
+	4150 2200 3700 2200
+$Comp
+L Device:Crystal Y1
+U 1 1 6193A7FC
+P 4150 2050
+F 0 "Y1" V 4196 2180 50  0000 L CNN
+F 1 "16MHz" V 4105 2180 50  0000 L CNN
+F 2 "" H 4150 2050 50  0001 C CNN
+F 3 "~" H 4150 2050 50  0001 C CNN
+	1    4150 2050
+	0    1    1    0   
+$EndComp
+$Comp
+L Device:C C4
+U 1 1 6193B882
+P 4000 1700
+F 0 "C4" V 4100 1450 50  0000 C CNN
+F 1 "22pF" V 4000 1400 50  0000 C CNN
+F 2 "" H 4038 1550 50  0001 C CNN
+F 3 "~" H 4000 1700 50  0001 C CNN
+	1    4000 1700
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:C C5
+U 1 1 6193BC02
+P 4000 2400
+F 0 "C5" V 3900 2650 50  0000 C CNN
+F 1 "22pF" V 4000 2700 50  0000 C CNN
+F 2 "" H 4038 2250 50  0001 C CNN
+F 3 "~" H 4000 2400 50  0001 C CNN
+	1    4000 2400
+	0    1    1    0   
+$EndComp
+Entry Wire Line
+	3600 2500 3700 2400
+Entry Wire Line
+	3600 1800 3700 1700
+Wire Wire Line
+	3700 1700 3850 1700
+Wire Wire Line
+	3700 2400 3850 2400
+Text Label 3700 2400 0    50   ~ 0
+GND
+Text Label 3700 1700 0    50   ~ 0
+GND
+Wire Wire Line
+	4150 1700 4150 1900
+Connection ~ 4150 1900
+Wire Wire Line
+	4150 2200 4150 2400
+Connection ~ 4150 2200
+$Comp
+L Switch:SW_Push SW3
+U 1 1 61A76DEC
+P 5800 2500
+F 0 "SW3" H 5800 2693 50  0000 C CNN
+F 1 "SW_Push" H 5800 2694 50  0001 C CNN
+F 2 "" H 5800 2700 50  0001 C CNN
+F 3 "~" H 5800 2700 50  0001 C CNN
+	1    5800 2500
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	5200 2600 5300 2500
+Text Label 5300 2500 0    50   ~ 0
+S3
+Wire Wire Line
+	5300 2500 5550 2500
+Wire Bus Line
+	3600 2600 5200 2600
+$Comp
+L Device:C C3
+U 1 1 61A81A69
+P 5800 2650
+F 0 "C3" V 5960 2650 50  0000 C CNN
+F 1 "22n" V 6051 2650 50  0000 C CNN
+F 2 "" H 5838 2500 50  0001 C CNN
+F 3 "~" H 5800 2650 50  0001 C CNN
+	1    5800 2650
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5950 2650 6050 2650
+Wire Wire Line
+	6050 2650 6050 2500
+Wire Wire Line
+	6050 2500 6000 2500
+Wire Wire Line
+	5650 2650 5550 2650
+Wire Wire Line
+	5550 2650 5550 2500
+Connection ~ 5550 2500
+Wire Wire Line
+	5550 2500 5600 2500
+$Comp
+L Switch:SW_Push SW2
+U 1 1 61A99D0A
+P 5800 3200
+F 0 "SW2" H 5800 3393 50  0000 C CNN
+F 1 "SW_Push" H 5800 3394 50  0001 C CNN
+F 2 "" H 5800 3400 50  0001 C CNN
+F 3 "~" H 5800 3400 50  0001 C CNN
+	1    5800 3200
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	5200 3300 5300 3200
+Text Label 5300 3200 0    50   ~ 0
+S2
+Wire Wire Line
+	5300 3200 5550 3200
+$Comp
+L Device:C C2
+U 1 1 61A99D13
+P 5800 3350
+F 0 "C2" V 5960 3350 50  0000 C CNN
+F 1 "22n" V 6051 3350 50  0000 C CNN
+F 2 "" H 5838 3200 50  0001 C CNN
+F 3 "~" H 5800 3350 50  0001 C CNN
+	1    5800 3350
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5950 3350 6050 3350
+Wire Wire Line
+	6050 3350 6050 3200
+Wire Wire Line
+	6050 3200 6000 3200
+Wire Wire Line
+	5650 3350 5550 3350
+Wire Wire Line
+	5550 3350 5550 3200
+Connection ~ 5550 3200
+Wire Wire Line
+	5550 3200 5600 3200
+$Comp
+L Switch:SW_Push SW1
+U 1 1 61AA4817
+P 5800 3900
+F 0 "SW1" H 5800 4093 50  0000 C CNN
+F 1 "SW_Push" H 5800 4094 50  0001 C CNN
+F 2 "" H 5800 4100 50  0001 C CNN
+F 3 "~" H 5800 4100 50  0001 C CNN
+	1    5800 3900
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	5200 4000 5300 3900
+Text Label 5300 3900 0    50   ~ 0
+S1
+Wire Wire Line
+	5300 3900 5550 3900
+$Comp
+L Device:C C1
+U 1 1 61AA4820
+P 5800 4050
+F 0 "C1" V 5960 4050 50  0000 C CNN
+F 1 "22n" V 6051 4050 50  0000 C CNN
+F 2 "" H 5838 3900 50  0001 C CNN
+F 3 "~" H 5800 4050 50  0001 C CNN
+	1    5800 4050
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5950 4050 6050 4050
+Wire Wire Line
+	6050 4050 6050 3900
+Wire Wire Line
+	6050 3900 6000 3900
+Wire Wire Line
+	5650 4050 5550 4050
+Wire Wire Line
+	5550 4050 5550 3900
+Connection ~ 5550 3900
+Wire Wire Line
+	5550 3900 5600 3900
+Wire Bus Line
+	5200 3500 5200 4000
+Connection ~ 5200 3500
+Entry Wire Line
+	3500 3400 3600 3500
+Wire Wire Line
+	3500 3400 3350 3400
+Text Label 3400 3400 0    50   ~ 0
+S3
+Wire Wire Line
+	3500 3700 3350 3700
+Text Label 3400 3700 0    50   ~ 0
+S2
+Entry Wire Line
+	3500 3600 3600 3700
+Wire Wire Line
+	3500 3600 3350 3600
+Text Label 3400 3600 0    50   ~ 0
+S1
+Text Label 3400 2600 0    50   ~ 0
+X2
+Text Label 3400 2500 0    50   ~ 0
+X1
+Wire Wire Line
+	3350 2600 3500 2600
+Wire Wire Line
+	3500 2500 3350 2500
+Entry Wire Line
+	3500 2500 3600 2600
+$Comp
+L power:GND #PWR?
+U 1 1 61AD0301
+P 6050 2700
+F 0 "#PWR?" H 6050 2450 50  0001 C CNN
+F 1 "GND" H 6055 2527 50  0000 C CNN
+F 2 "" H 6050 2700 50  0001 C CNN
+F 3 "" H 6050 2700 50  0001 C CNN
+	1    6050 2700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 61AD0E0B
+P 6050 3400
+F 0 "#PWR?" H 6050 3150 50  0001 C CNN
+F 1 "GND" H 6055 3227 50  0000 C CNN
+F 2 "" H 6050 3400 50  0001 C CNN
+F 3 "" H 6050 3400 50  0001 C CNN
+	1    6050 3400
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 61AD1A3C
+P 6050 4100
+F 0 "#PWR?" H 6050 3850 50  0001 C CNN
+F 1 "GND" H 6055 3927 50  0000 C CNN
+F 2 "" H 6050 4100 50  0001 C CNN
+F 3 "" H 6050 4100 50  0001 C CNN
+	1    6050 4100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6050 4100 6050 4050
+Connection ~ 6050 4050
+Wire Wire Line
+	6050 3400 6050 3350
+Connection ~ 6050 3350
+Wire Wire Line
+	6050 2700 6050 2650
+Connection ~ 6050 2650
+$Comp
+L MCU_Microchip_ATmega:ATmega328P-PU U1
+U 1 1 61938427
+P 2750 3100
+F 0 "U1" H 2106 3146 50  0001 R CNN
+F 1 "ATmega328P" H 2950 3100 50  0000 R CNN
+F 2 "Package_DIP:DIP-28_W7.62mm" H 2750 3100 50  0001 C CIN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega328_P%20AVR%20MCU%20with%20picoPower%20Technology%20Data%20Sheet%2040001984A.pdf" H 2750 3100 50  0001 C CNN
+	1    2750 3100
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	3500 2600 3600 2700
+Entry Wire Line
+	3500 3700 3600 3800
+Entry Wire Line
+	3500 2800 3600 2900
+Wire Wire Line
+	3500 2800 3350 2800
+Text Label 3400 2800 0    50   ~ 0
+B4
+Entry Wire Line
+	3500 2900 3600 3000
+Wire Wire Line
+	3500 2900 3350 2900
+Text Label 3400 2900 0    50   ~ 0
+B5
+Entry Wire Line
+	3500 3000 3600 3100
+Wire Wire Line
+	3500 3000 3350 3000
+Text Label 3400 3000 0    50   ~ 0
+B6
+Entry Wire Line
+	3500 3100 3600 3200
+Wire Wire Line
+	3500 3100 3350 3100
+Text Label 3400 3100 0    50   ~ 0
+B7
+Entry Wire Line
+	3500 4000 3600 4100
+Wire Wire Line
+	3500 4000 3350 4000
+Text Label 3400 4000 0    50   ~ 0
+AN
+Entry Wire Line
+	3500 4300 3600 4400
+Wire Wire Line
+	3500 4300 3350 4300
+Text Label 3400 4300 0    50   ~ 0
+RS
+Entry Wire Line
+	3500 2400 3600 2500
+Wire Wire Line
+	3500 2400 3350 2400
+Text Label 3350 2400 0    50   ~ 0
+SCK
+Entry Wire Line
+	3500 2300 3600 2400
+Wire Wire Line
+	3500 2300 3350 2300
+Text Label 3350 2300 0    50   ~ 0
+MISO
+Entry Wire Line
+	3500 2200 3600 2300
+Wire Wire Line
+	3500 2200 3350 2200
+Text Label 3350 2200 0    50   ~ 0
+MOSI
+Entry Wire Line
+	3500 2100 3600 2200
+Wire Wire Line
+	3500 2100 3350 2100
+Text Label 3400 2100 0    50   ~ 0
+SS
+$Comp
+L Analog_ADC:MCP3202 U1
+U 1 1 61B0447C
+P 2650 5750
+F 0 "U1" H 2750 6431 50  0001 C CNN
+F 1 "MCP3202" H 3000 6250 50  0000 C CNN
+F 2 "" H 2650 5650 50  0001 C CNN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21034D.pdf" H 2650 5950 50  0001 C CNN
+	1    2650 5750
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:VCC #PWR?
+U 1 1 61B0B93F
+P 2650 5100
+F 0 "#PWR?" H 2650 4950 50  0001 C CNN
+F 1 "VCC" H 2665 5273 50  0000 C CNN
+F 2 "" H 2650 5100 50  0001 C CNN
+F 3 "" H 2650 5100 50  0001 C CNN
+	1    2650 5100
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 61B0C3DD
+P 2650 6300
+F 0 "#PWR?" H 2650 6050 50  0001 C CNN
+F 1 "GND" H 2655 6127 50  0000 C CNN
+F 2 "" H 2650 6300 50  0001 C CNN
+F 3 "" H 2650 6300 50  0001 C CNN
+	1    2650 6300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2650 6300 2650 6250
+Wire Wire Line
+	2650 5250 2650 5150
+Wire Wire Line
+	2150 5950 2100 5950
+Wire Wire Line
+	2100 5950 2100 6000
+$Comp
+L power:GND #PWR?
+U 1 1 61B13AD3
+P 2100 6000
+F 0 "#PWR?" H 2100 5750 50  0001 C CNN
+F 1 "GND" H 2105 5827 50  0000 C CNN
+F 2 "" H 2100 6000 50  0001 C CNN
+F 3 "" H 2100 6000 50  0001 C CNN
+	1    2100 6000
+	1    0    0    -1  
+$EndComp
+Text GLabel 2100 5550 0    50   Input ~ 0
+VAHVISTIN_LÄHTÖ
+Wire Wire Line
+	2100 5550 2150 5550
+$Comp
+L Device:C C6
+U 1 1 61B176CE
+P 2350 5150
+F 0 "C6" V 2098 5150 50  0000 C CNN
+F 1 "22u" V 2189 5150 50  0000 C CNN
+F 2 "" H 2388 5000 50  0001 C CNN
+F 3 "~" H 2350 5150 50  0001 C CNN
+	1    2350 5150
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	2650 5150 2500 5150
+Connection ~ 2650 5150
+Wire Wire Line
+	2650 5150 2650 5100
+Wire Wire Line
+	2200 5150 2150 5150
+Wire Wire Line
+	2150 5150 2150 5200
+$Comp
+L power:GND #PWR?
+U 1 1 61B2690E
+P 2150 5200
+F 0 "#PWR?" H 2150 4950 50  0001 C CNN
+F 1 "GND" H 2155 5027 50  0000 C CNN
+F 2 "" H 2150 5200 50  0001 C CNN
+F 3 "" H 2150 5200 50  0001 C CNN
+	1    2150 5200
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	3500 5550 3600 5650
+Wire Wire Line
+	3500 5550 3350 5550
+Text Label 3400 5550 0    50   ~ 0
+SS
+Entry Wire Line
+	3500 5650 3600 5750
+Wire Wire Line
+	3500 5650 3350 5650
+Text Label 3350 5650 0    50   ~ 0
+SCK
+Entry Wire Line
+	3500 5850 3600 5950
+Wire Wire Line
+	3500 5850 3350 5850
+Text Label 3350 5850 0    50   ~ 0
+MISO
+Entry Wire Line
+	3500 5950 3600 6050
+Wire Wire Line
+	3500 5950 3350 5950
+Text Label 3350 5950 0    50   ~ 0
+MOSI
+NoConn ~ 3350 3800
+NoConn ~ 3350 3900
+NoConn ~ 3350 4100
+NoConn ~ 3350 4200
+NoConn ~ 3350 2000
+Text Label 3400 1900 0    50   ~ 0
+CL
+Wire Wire Line
+	3500 1900 3350 1900
+Entry Wire Line
+	3500 1900 3600 2000
+$Comp
+L Memory_NVRAM:47C16 U?
+U 1 1 61B8864D
+P 4400 5300
+F 0 "U?" H 4400 4811 50  0001 C CNN
+F 1 "47C16" H 4400 4811 50  0000 C CNN
+F 2 "" H 4400 4850 50  0001 C CNN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/20005371C.pdf" H 4650 5650 50  0001 C CNN
+	1    4400 5300
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	3600 5350 3700 5250
+Entry Wire Line
+	3600 5450 3700 5350
+Text Label 3700 5250 0    50   ~ 0
+SCL
+Text Label 3700 5350 0    50   ~ 0
+SDA
+Wire Wire Line
+	3700 5250 3850 5250
+Wire Wire Line
+	3700 5350 3850 5350
+Entry Wire Line
+	3600 3400 3500 3300
+Entry Wire Line
+	3600 3300 3500 3200
+Text Label 3500 3300 2    50   ~ 0
+SCL
+Text Label 3500 3200 2    50   ~ 0
+SDA
+Wire Wire Line
+	3500 3300 3350 3300
+Wire Wire Line
+	3500 3200 3350 3200
+Wire Bus Line
+	5200 2600 5200 3500
+Wire Bus Line
+	3600 1800 3600 2600
+Wire Bus Line
+	3600 2600 3600 6050
+$EndSCHEMATC

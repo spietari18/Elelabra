@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name flow_chart-rescue)(type Legacy)(uri ${KIPRJMOD}/flow_chart-rescue.lib)(options "")(descr ""))
+)

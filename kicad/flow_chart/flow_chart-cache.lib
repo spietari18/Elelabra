@@ -1,0 +1,170 @@
+EESchema-LIBRARY Version 2.4
+#encoding utf-8
+#
+# flow_chart-rescue_ADC-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_ADC-flow_chart-noname-rescue-flow_chart-rescue U 0 0 N N 1 F N
+F0 "U" 0 -100 50 H V C CNN
+F1 "flow_chart-rescue_ADC-flow_chart-noname-rescue-flow_chart-rescue" 0 0 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -250 100 250 -200 0 1 0 f
+X ~ ~ -350 -50 100 R 50 50 1 1 I
+X ~ ~ 350 -50 100 L 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_ATMega328P-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_ATMega328P-flow_chart-noname-rescue-flow_chart-rescue U 0 0 N N 1 F N
+F0 "U" 100 100 50 H V C CNN
+F1 "flow_chart-rescue_ATMega328P-flow_chart-noname-rescue-flow_chart-rescue" 100 -50 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S 400 250 -200 -350 0 1 0 f
+X ~ ~ -300 -50 100 R 50 50 1 1 I
+X ~ ~ -100 350 100 D 50 50 1 1 B
+X ~ ~ -50 -450 100 U 50 50 1 1 B
+X ~ ~ 250 -450 100 U 50 50 1 1 O
+X ~ ~ 300 350 100 D 50 50 1 1 O
+X ~ ~ 500 -200 100 L 50 50 1 1 I
+X ~ ~ 500 100 100 L 50 50 1 1 I
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_Amplifier-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_Amplifier-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -50 50 H V C CNN
+F1 "flow_chart-rescue_Amplifier-flow_chart-noname-rescue-flow_chart-rescue" 0 50 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S 300 150 -300 -150 0 1 0 f
+X ~ ~ -400 0 100 R 50 50 1 1 I
+X ~ ~ 400 0 100 L 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_Button-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_Button-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" -50 -100 50 H V C CNN
+F1 "flow_chart-rescue_Button-flow_chart-noname-rescue-flow_chart-rescue" -50 0 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -200 50 100 -150 0 1 0 f
+X ~ ~ -300 -50 100 R 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_Buzzer-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_Buzzer-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 0 50 H V C CNN
+F1 "flow_chart-rescue_Buzzer-flow_chart-noname-rescue-flow_chart-rescue" 0 0 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S 200 100 -200 -100 0 1 0 f
+X ~ ~ 0 200 100 D 50 50 1 1 I
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_LCD-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_LCD-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -50 50 H V C CNN
+F1 "flow_chart-rescue_LCD-flow_chart-noname-rescue-flow_chart-rescue" 0 50 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -300 100 300 -150 0 1 0 f
+X ~ ~ 0 -250 100 U 50 50 1 1 B
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_NVRAM-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_NVRAM-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -50 50 H V C CNN
+F1 "flow_chart-rescue_NVRAM-flow_chart-noname-rescue-flow_chart-rescue" 0 50 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -200 100 200 -150 0 1 0 f
+X ~ ~ 0 -250 100 U 50 50 1 1 B
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_OSCILLATOR-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_OSCILLATOR-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -50 50 H V C CNN
+F1 "flow_chart-rescue_OSCILLATOR-flow_chart-noname-rescue-flow_chart-rescue" 0 50 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -250 100 250 -150 0 1 0 f
+X ~ ~ 0 200 100 D 50 50 1 1 B
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_PowerSource-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_PowerSource-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -100 50 H V C CNN
+F1 "flow_chart-rescue_PowerSource-flow_chart-noname-rescue-flow_chart-rescue" 0 0 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S 300 100 -300 -200 0 1 0 f
+X ~ ~ 400 -50 100 L 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_Switch-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_Switch-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -100 50 H V C CNN
+F1 "flow_chart-rescue_Switch-flow_chart-noname-rescue-flow_chart-rescue" 0 0 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S 200 100 -200 -200 0 1 0 f
+X ~ ~ -300 -50 100 R 50 50 1 1 I
+X ~ ~ 300 -50 100 L 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_VoltageRegulator-flow_chart-noname-rescue-flow_chart-rescue
+#
+DEF flow_chart-rescue_VoltageRegulator-flow_chart-noname-rescue-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -150 50 H V C CNN
+F1 "flow_chart-rescue_VoltageRegulator-flow_chart-noname-rescue-flow_chart-rescue" 0 0 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S 300 50 -300 -250 0 1 0 f
+X ~ ~ 0 -350 100 U 50 50 1 1 I
+X ~ ~ 400 -100 100 L 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+# flow_chart-rescue_pt100_wheatstone-flow_chart-rescue
+#
+DEF flow_chart-rescue_pt100_wheatstone-flow_chart-rescue U 0 40 Y Y 1 F N
+F0 "U" 0 -100 50 H V C CNN
+F1 "flow_chart-rescue_pt100_wheatstone-flow_chart-rescue" 0 0 50 H V C CNN
+F2 "" 0 0 50 H I C CNN
+F3 "" 0 0 50 H I C CNN
+DRAW
+S -300 100 300 -200 0 1 0 f
+X ~ ~ 400 -50 100 L 50 50 1 1 O
+ENDDRAW
+ENDDEF
+#
+#End Library
