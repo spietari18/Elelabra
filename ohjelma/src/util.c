@@ -348,7 +348,7 @@ bool eeram_reg_write(uint8_t addr, uint8_t reg, uint8_t src)
 	if (!i2c_start(EERAM_CREG | (addr & 3) | EERAM_W))
 		return false;
 	
-	/* transmit register address and byte */
+	/* lähetä rekisterin osoite ja tavu */
 	if (!(i2c_tx_byte(reg, true) && i2c_tx_byte(src, true)))
 		return false;
 
