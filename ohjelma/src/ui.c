@@ -9,13 +9,8 @@ uint8_t ui_state;
 static struct button_state s;
 static uint8_t entry_now;
 static uint8_t entry_old;
-static bool redraw;
-
-/* tämä on globaali, jotta koodi jonka
- * tarvitsee tietää onko valikko päällä
- * voi hakea arvon nopeasti.
- */
-bool in_menu;
+static uint8_t entry_last = ~0;
+static bool in_menu;
 
 /* Piirrä valikko. */
 void menu_draw()
@@ -25,8 +20,11 @@ void menu_draw()
 
 	LCD_CLEAR;
 	
+	/* Kirjoita otsikko. */
 	lcd_put_P(pgm_read_ptr(&menu_config[entry_now]
-		.text_title), NULLTERM, 0, ALIGN_C);
+		.text_title), NULLTERM, 0, CENTER);
+	
+	/* Kirjoita napit. */
 	for (uint8_t j = 0; j < MENU_ENTRIES; j++)
 	{
 		if (unlikely(j == entry_now)) {
@@ -53,11 +51,12 @@ void menu_draw()
 	lcd_update();
 }
 
+#define CALLBACK(X) \
+	if (X) (X)();
+
 /* Päivitä valikko. */
 void menu_update()
 {
-	callback_t callback;
-
 	switch (button_update(&s)) {
 	/* valikossa eteen päin */
 	case RT|UP:
@@ -75,12 +74,11 @@ void menu_update()
 	case BOTH|UP:
 		beep_slow();
 
-		/* poistumisen takaisinkutsu */
-		callback = pgm_read_ptr(
-			&menu_config[entry_now].enter);
-		if (callback)
-			callback();
+		/* siirtymisen takaisinkutsu */
+		CALLBACK((callback_t)pgm_read_ptr(
+			&menu_config[entry_now].enter));
 
+		/* aseta tila */
 		__UI_SET_STATE(pgm_read_word(
 			&menu_config[entry_now].state));
 		in_menu = false;
@@ -88,28 +86,42 @@ void menu_update()
 		return;
 	}
 
-	/* jos mikään ei muutu tai päivitystä
-	 * ei pakoteta, älä päivitä
-	 */
+	/* jos mikään ei muutu älä päivitä */
 	if (likely(entry_old == entry_now))
 		return;
 
 	menu_draw();
 
 	/* taustatilan päivitystakaisinkutsu */
-	callback = pgm_read_ptr(
-		&menu_config[entry_now].update);
-	if (callback)
-		callback();
+	CALLBACK((callback_t)pgm_read_ptr(
+		&menu_config[entry_now].update));
 
 	entry_old = entry_now;
+}
+
+/* Siirry valikkoon. */
+void menu_enter()
+{
+	/* poistumisen takaisinkutsu */
+	if (likely(entry_old != (uint8_t)~0))
+		CALLBACK((callback_t)pgm_read_ptr(
+			&menu_config[entry_last].exit));
+
+	beep_slow();
+
+	/* aseta tila */
+	in_menu = true;
+	UI_SET_STATE(MENU);
 }
 
 #define PROG_CHARS \
 	(sizeof(PROG_INIT) - 3)
 
+/* Edistymispalkin paikka. */
+uint8_t prog_pos;
+
+/* Sisäinen tila. */
 static uint8_t old;
-static uint8_t pos;
 static uint8_t num;
 
 /* Mistä kohtaa puskurissa edistymispalkki alkaa. */
@@ -127,10 +139,10 @@ void prog_init(uint8_t n, uint8_t i)
 	/* päivitä globaali tila */
 	num = n;
 	old = i - 1;
-	pos = i - 1;
+	prog_pos = i - 1;
 
 	/* kopioi palkin alkutila */
-	lcd_put_P_const(PROG_INIT, PROG_ROW, ALIGN_C);
+	lcd_put_P_const(PROG_INIT, PROG_ROW, CENTER);
 
 	/* missä kohtaa palkkia mennään */
 	j = INT_DIV_RND((2*PROG_CHARS - 1)*i, n);
@@ -156,9 +168,9 @@ void prog_dec()
 
 	/* askeleen alku- ja loppuindeksi */
 	i = INT_DIV_RND((2*PROG_CHARS - 1)*old, num)/2;
-	old = pos;
-	j = INT_DIV_RND((2*PROG_CHARS - 1)*pos, num);
-	pos--;
+	old = prog_pos;
+	j = INT_DIV_RND((2*PROG_CHARS - 1)*prog_pos, num);
+	prog_pos--;
 
 	/* täytä askeleen pää */
 	k = j/2;
@@ -179,16 +191,16 @@ void prog_inc()
 {
 	uint8_t i, j, k;
 
-	if (pos >= (num - 1)) {
-		pos = num - 1;
+	if (prog_pos >= (num - 1)) {
+		prog_pos = num - 1;
 		return;
 	}
 
 	/* askeleen alku- ja loppuindeksi */
 	i = INT_DIV_RND((2*PROG_CHARS - 1)*old, num)/2;
-	old = pos;
-	j = INT_DIV_RND((2*PROG_CHARS - 1)*pos, num);
-	pos++;
+	old = prog_pos;
+	j = INT_DIV_RND((2*PROG_CHARS - 1)*prog_pos, num);
+	prog_pos++;
 
 	/* täytä askeleen pää */
 	k = j/2;

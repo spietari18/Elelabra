@@ -13,9 +13,8 @@
 #define LCD_CLEAR \
 	(void)memset(lcd_buffer, ' ', LCD_ROWS*LCD_COLS)
 
-#define ALIGN_L 0 // kohdista vasemmalle
-#define ALIGN_R 1 // kohdista oikealle
-#define ALIGN_C 2 // keskitä
+/* tekstin kohdistus */
+enum text_align { LEFT, RIGHT, CENTER };
 
 /* arvo len parametrille lcd_put_* funktioissa jos haluaa
  * että merkkijonon pituus selvitetään strlen() funktiolla.
@@ -32,23 +31,23 @@ void lcd_init();
 void lcd_update();
 
 /* kirjoita merkkijono näytölle (älä kutsu suoraan) */
-void __lcd_put(const char *, uint8_t, uint8_t, uint8_t,
+void __lcd_put(const char *, uint8_t, uint8_t, enum text_align,
 	void *(*)(void *, const void *, size_t), size_t (*)(const char *));
 
 /* kirjoita liukuluku näytölle */
-void lcd_put_float(float, uint8_t, bool, uint8_t, uint8_t, uint8_t);
+void lcd_put_float(float, uint8_t, bool, uint8_t, uint8_t, enum text_align);
 
 /* kirjoita uint16_t tai uint8_t näytölle */
-void lcd_put_uint(uint16_t, uint8_t, uint8_t, uint8_t);
+void lcd_put_uint(uint16_t, uint8_t, uint8_t, enum text_align);
 
 /* kirjoita lämpötila näytölle (huomioi absoluuttiset rajat) */
-void lcd_put_temp(float, uint8_t, uint8_t, uint8_t, uint8_t);
+void lcd_put_temp(float, uint8_t, uint8_t, uint8_t, enum text_align);
 
 /* printf() näytölle (älä kutsu suoraan) */
-void __lcd_put_fmt(uint8_t, uint8_t, uint8_t, const char *, ...);
+void __lcd_put_fmt(uint8_t, uint8_t, enum text_align, const char *, ...);
 
-/* kirjoita merkkijono joka on kääntöaikana vakio
- * näytölle (varastoituu RAM muistiin)
+/* kirjoita merkkijono joka on kääntöaikana vakio näytölle
+ * (varastoituu RAM muistiin, tätä ei kannata käyttää)
  */
 #define lcd_put_const(msg, row, align) \
 	__lcd_put((msg), sizeof(msg) - 1, (row), (align), &memcpy, NULL)

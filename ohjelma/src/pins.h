@@ -23,29 +23,32 @@ DEFINE_PIN(_LCD_B7, C, 2); // PC2
 DEFINE_PIN(_LCD_B8, C, 3); // PC3
 
 /* Summeri. */
-#define BUZZER_TIMER 2
 DEFINE_PIN(BUZZER, D, 3); // PD3
 
-/* Muut pinnit. */
+/* LCD:n taustavalon anodi. */
 DEFINE_PIN(LCD_AN, D, 4); // PD4
+
+/* Napit. */
 DEFINE_PIN(BTN_LT, D, 1); // PD1, (vasen)
 DEFINE_PIN(BTN_RT, D, 0); // PD1, (oikea)
 #else
 /* LCD näyttö. */
-DEFINE_PIN(_LCD_RS, C, 0); // PD7
-DEFINE_PIN(_LCD_EN, C, 1); // PB0
-DEFINE_PIN(_LCD_B5, C, 2); // PC0
-DEFINE_PIN(_LCD_B6, C, 3); // PC1
-DEFINE_PIN(_LCD_B7, C, 4); // PC2
-DEFINE_PIN(_LCD_B8, C, 5); // PC3
+DEFINE_PIN(_LCD_RS, C, 0); // PC0, (A0)
+DEFINE_PIN(_LCD_EN, C, 1); // PC1, (A1)
+DEFINE_PIN(_LCD_B5, C, 2); // PC2, (A2)
+DEFINE_PIN(_LCD_B6, C, 3); // PC3, (A3)
+DEFINE_PIN(_LCD_B7, C, 4); // PC4, (A4)
+DEFINE_PIN(_LCD_B8, C, 5); // PC5, (A5)
 
 /* Summeri. */
-DEFINE_PIN(BUZZER, D, 3); // PD3
+DEFINE_PIN(BUZZER, D, 3); // PD3, (D3)
 
-/* Muut pinnit. */
-DEFINE_PIN(LCD_AN, D, 2); // PD4
-DEFINE_PIN(BTN_RT, D, 1); // PD1, (vasen)
-DEFINE_PIN(BTN_LT, D, 0); // PD1, (oikea)
+/* LCD:n taustavalon anodi. */
+DEFINE_PIN(LCD_AN, D, 2); // PD2, (D2)
+
+/* Napit. */
+DEFINE_PIN(BTN_RT, D, 1); // PD1, (D1) (vasen)
+DEFINE_PIN(BTN_LT, D, 0); // PD0, (D0) (oikea)
 #endif
 
 #endif // !PINS_H

@@ -67,7 +67,7 @@ float read_sample()
 	float tmp;
 
 	/* lue näyte kiertopuskuriin */
-	samples[sample_pos] = adc_sample();
+	samples[sample_pos] = adc_sample(ADC_DF0);
 	INC_MOD(sample_pos, MAX_SAMPLES);
 
 	/* kopioi puskuri */

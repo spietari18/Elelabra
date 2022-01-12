@@ -5,9 +5,11 @@
 #include <stdint.h>
 
 /* GCC:n extra ominaisuudet muuttujille. */
-#define noreturn  __attribute__((noreturn))
-#define packed    __attribute__((packed))
-#define may_alias __attribute__((__may_alias__))
+#define noreturn    __attribute__((noreturn))
+#define packed      __attribute__((packed))
+#define may_alias   __attribute__((__may_alias__))
+#define fallthrough __attribute__((fallthrough))
+#define unreachable __builtin_unreachable()
 
 /* Ehtolauseiden optimointi. */
 #define likely(A)   __builtin_expect((A), 1)

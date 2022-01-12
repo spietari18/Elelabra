@@ -92,6 +92,20 @@ uint32_t micros()
 	return ((tmp << 8) | cnt)*(64*CLK_US);
 }
 
+/* Palauttaa true tiettynä ajanjaksona. */
+bool interval(uint16_t ms_int, uint32_t *ts)
+{
+	uint32_t tmp;
+
+	tmp = millis();
+	if ((tmp - *ts) > ms_int) {
+		*ts = tmp;
+		return true;
+	}
+
+	return false;
+}
+
 /* Lue ja lähetä yksi tavu SPI:llä. */
 static uint8_t spi_byte(uint8_t v)
 {
@@ -103,6 +117,100 @@ static uint8_t spi_byte(uint8_t v)
 
 	/* palauta luettu arvo */
 	return SPDR;
+}
+
+#define I2C_MR_STTX 0x08
+#define I2C_MR_RETX 0x10
+#define I2C_MR_ALST 0x38
+
+#define I2C_MT_WACK 0x18
+#define I2C_MT_WNCK 0x20
+#define I2C_MT_DACK 0x28
+#define I2C_MT_DNCK 0x30
+
+#define I2C_MR_RACK 0x40
+#define I2C_MR_RNCK 0x48
+#define I2C_MR_DACK 0x50
+#define I2C_MR_DNCK 0x58
+
+#define I2C_STAT (TWSR & 0xF8)
+
+/* Varaa I2C väylä. */
+static bool i2c_start(uint8_t packet)
+{
+	/* lähetä START */
+	TWCR = 0;
+	SET(TWCR, TWINT);
+	SET(TWCR, TWSTA);
+	SET(TWCR, TWEN);
+
+	while (!GET(TWCR, TWINT)); // odota
+	
+	/* tarkista, että lähetys onnistui */
+	if (I2C_STAT != I2C_MR_STTX)
+		return false;
+
+	/* lähetä osoitetavu */
+	TWDR = packet;
+	TWCR = 0;
+	SET(TWCR, TWINT);
+	SET(TWCR, TWEN);
+
+	while (!GET(TWCR, TWINT)); // odota
+
+	/* tarkista, että lähetys onnistui */
+	if ((I2C_STAT != I2C_MT_WACK) && (I2C_STAT != I2C_MR_RACK))
+		return false;
+
+	return true;
+}
+
+/* Vapauta I2C väylä. */
+static void i2c_stop()
+{
+	/* lähetä STOP */
+	TWCR = 0;
+	SET(TWCR, TWINT);
+	SET(TWCR, TWSTO);
+	SET(TWCR, TWEN);
+}
+
+/* Lähetä tavu I2C väylään. */
+static bool i2c_tx_byte(uint8_t src, bool ack)
+{
+	/* lähetä tavu */
+	TWDR = src;
+	TWCR = 0;
+	SET(TWCR, TWINT);
+	SET(TWCR, TWEN);
+	VAL(TWCR, TWEA, ack);
+
+	while (!GET(TWCR, TWINT)); // odota
+
+	/* tarkista, että lähetys onnistui */
+	if (I2C_STAT != I2C_MT_DACK)
+		return false;
+	
+	return true;
+}
+
+/* Vastaanota tavu I2C väylästä. */
+static bool i2c_rx_byte(uint8_t *dst, bool ack)
+{
+	/* vastaanota tavu */
+	TWCR = 0;
+	SET(TWCR, TWINT);
+	SET(TWCR, TWEN);
+	VAL(TWCR, TWEA, ack);
+
+	while (!GET(TWCR, TWINT)); // odota
+
+	/* tarkista, että vastaanotto onnistui */
+	if (I2C_STAT != I2C_MR_DACK)
+		return false;
+
+	*dst = TWDR;
+	return true;
 }
 
 /* SPI alustus AD muuntimelle. */
@@ -121,49 +229,146 @@ void adc_init()
 }
 
 /* Lue näyte AD muuntimelta. */
-uint16_t adc_sample()
+uint16_t adc_sample(uint8_t ch)
 {
 	uint16_t tmp = 0;
 
 	/* lue näyte AD-muuntimelta */
 	WRITE(SPI_SS, LOW);
-	(void)spi_byte(0x01);
-	tmp |= (uint16_t)spi_byte(0x20) << 8;
-	tmp |= spi_byte(0x00);
+	(void)spi_byte(0); // aloita
+	tmp |= (uint16_t)spi_byte(ch | 32) << 8; // valitse kanava
+	tmp |= spi_byte(0); // lue loput näytteen bitit
 	WRITE(SPI_SS, HIGH);
 
 	/* näyte on 12 bittiä */
 	return tmp & ((1 << 12) - 1);
 }
 
-/* I2C alustus EERAM:ille */
+/* I2C alustus EERAM:ille
+ * (main() alustaa SDA ja SCL pinnit PULLUP tilaan)
+ */
 void eeram_init()
 {
 	TWSR = 0;
-
-	/* 500kHz */
 	TWBR = 2;
-	SET(TWSR, TWPS0);
+	SET(TWSR, TWPS0); // 500 kHz
 }
 
+#define EERAM_SRAM 0x50
+#define EERAM_CREG 0x30
+
+#define EERAM_DEVA(A) (((A) >> 0xB) & 0xC)
+
+#define EERAM_R 1
+#define EERAM_W 0
+
+#define EERAM_HGH(A) (((A) >> 8) & 0x07)
+#define EERAM_LOW(A) ((A) & 0xFF)
+
+static inline bool eeram_tx_addr(uint16_t addr)
+{
+	/* aloita I2C */
+	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_W))
+		return false;
+
+	/* lähetä osoite */
+	return !(i2c_tx_byte(EERAM_HGH(addr), true)
+		&& i2c_tx_byte(EERAM_LOW(addr), true));
+}
+
+/* Lue tavu EERAM:ilta. */
 bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
 {
-	return false;
+	/* jos ei käytetä nykyistä osoitetta, lähetä osoite */
+	if ((addr != EERAM_ADDR) && !eeram_tx_addr(addr))
+		return false;
+	
+	/* aloita I2C */
+	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_R))
+		return false;
+
+	len--;
+
+	/* vastaanota kaikki tavut */
+	for (size_t i = 0; i < len; i++)
+		if (!i2c_rx_byte(&data[i], true))
+			return false;
+	
+	/* viimeinen tavu ei saa lähettää ACK bittiä */
+	if (!i2c_rx_byte(&data[len], false))
+		return false;
+
+	/* lopeta I2C */
+	i2c_stop();
+
+	return true;
 }
 
+/* Kirjoita tavu EERAM:ille. */
 bool eeram_write(uint16_t addr, uint8_t data[], uint8_t len)
 {
-	return false;
+	/* lähetä osoite */
+	if (!eeram_tx_addr(addr))
+		return false;
+
+	/* lähetä kaikki tavut */
+	for (size_t i = 0; i < len; i++)
+		if (!i2c_tx_byte(data[i], true))
+			return false;
+
+	/* lopeta I2C */
+	i2c_stop();
+
+	return true;
 }
 
-bool eeram_reg_read(uint8_t *dst)
+bool eeram_reg_read(uint8_t addr, uint8_t *dst)
 {
-	return false;
+	/* aloita I2C */
+	if (!i2c_start(EERAM_CREG | (addr & 3) | EERAM_R))
+		return false;
+
+	/* read status register */
+	if (!i2c_rx_byte(dst, false))
+		return false;
+
+	/* lopeta I2C */
+	i2c_stop();
+
+	return true;
 }
 
-bool eeram_reg_write(uint8_t src)
+#define EERAM_TWC  1 // [ms]
+#define EERAM_TST 25 // [ms]
+#define EERAM_TRC  5 // [ms]
+
+bool eeram_reg_write(uint8_t addr, uint8_t reg, uint8_t src)
 {
-	return false;
+	/* aloita I2C */
+	if (!i2c_start(EERAM_CREG | (addr & 3) | EERAM_W))
+		return false;
+	
+	/* transmit register address and byte */
+	if (!(i2c_tx_byte(reg, true) && i2c_tx_byte(src, true)))
+		return false;
+
+	/* lopeta I2C */
+	i2c_stop();
+
+	/* odota, että operaatio on valmis */
+	switch (src) {
+	case EERAM_STR:
+		_delay_ms(EERAM_TST);
+		break;
+	case EERAM_REC:
+		_delay_ms(EERAM_TRC);
+		break;
+	default:
+		_delay_ms(EERAM_TWC);
+		break;
+	}
+
+	return true;
 }
 
 /* Nollaa mikrokontrolleri watchdog ajastimella. */

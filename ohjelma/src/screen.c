@@ -9,17 +9,17 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define DECL_WRITER(pin) \
+#define DEF_WRITER(pin) \
 	void pin##_writer(bool value) { WRITE(pin, value); }
 
 #define REF_WRITER(pin) (&pin##_writer)
 
-DECL_WRITER(_LCD_RS);
-DECL_WRITER(_LCD_EN);
-DECL_WRITER(_LCD_B5);
-DECL_WRITER(_LCD_B6);
-DECL_WRITER(_LCD_B7);
-DECL_WRITER(_LCD_B8);
+DEF_WRITER(_LCD_RS);
+DEF_WRITER(_LCD_EN);
+DEF_WRITER(_LCD_B5);
+DEF_WRITER(_LCD_B6);
+DEF_WRITER(_LCD_B7);
+DEF_WRITER(_LCD_B8);
 
 /* näyttö */
 static LCD(lcd);
@@ -87,7 +87,7 @@ void lcd_update()
 			/* kirjoita muuttunut kirjain
 			 * näytölle ja muistiin
 			 */
-			(void)lcd_write(&lcd, *src);
+			lcd_write(&lcd, *src);
 			*dst = *src;
 
 			/* kursori siirtyy sarakkeen eteenpäin mutta
@@ -100,7 +100,7 @@ void lcd_update()
 
 /* kirjoita merkkijono näytölle (älä kutsu suoraan) */
 void __lcd_put(const char *msg, uint8_t len, uint8_t row,
-	uint8_t align, void * (*copy)(void *, const void *,
+	enum text_align align, void * (*copy)(void *, const void *,
 	size_t), size_t (*length)(const char *))
 {
 	void *dst = NULL;
@@ -109,15 +109,17 @@ void __lcd_put(const char *msg, uint8_t len, uint8_t row,
 		len = length(msg);
 
 	switch (align) {
-	case ALIGN_L:
+	case LEFT:
 		dst = &lcd_buffer[row][0];
-	break;
-	case ALIGN_R:
+		break;
+	case RIGHT:
 		dst = &lcd_buffer[row][LCD_COLS - len];
-	break;
-	case ALIGN_C:
+		break;
+	case CENTER:
 		dst = &lcd_buffer[row][(LCD_COLS - len + 1)/2];
-	break;
+		break;
+	default:
+		unreachable;
 	}
 
 	(void)copy(dst, msg, len);
@@ -167,7 +169,7 @@ static const char sgn[2] PROGMEM = {'+', '-'};
 
 /* kirjoita liukuluku näytölle */
 void lcd_put_float(float V, uint8_t p, bool fill,
-	uint8_t lim, uint8_t row, uint8_t align)
+	uint8_t lim, uint8_t row, enum text_align align)
 {
 	uint8_t i = 1, j;
 	int16_t v;
@@ -178,15 +180,19 @@ void lcd_put_float(float V, uint8_t p, bool fill,
 	v = (int16_t)V;
 	V -= v;
 
-	if (!isfinite(V)) {
-		buf[0] = sgn[V < 0];
+	/* kirjoita etumerkki */
+	buf[0] = pgm_read_byte(&sgn[v < 0]);
+
+	/* ääretön */
+	if (unlikely(!isfinite(V))) {
 #define X "INFINITY"
 		i = MIN(lim, sizeof(X));
 		(void)memcpy_P(&buf[1], PSTR(X), i - 1);
 #undef X
 		goto print;
+	
+	/* äärellinen */
 	} else {
-		buf[0] = pgm_read_byte(&sgn[v < 0]);
 		/* Poista V:n etumerkkibitti. (V = abs(V)) */
 		uint32_t *const may_alias tmp = (uint32_t *)&V;
 		CLR(*tmp, 31);
@@ -238,7 +244,8 @@ print:
 }
 
 /* kirjoita uint16_t tai uint8_t näytölle */
-void lcd_put_uint(uint16_t val, uint8_t lim, uint8_t row, uint8_t align)
+void lcd_put_uint(uint16_t val, uint8_t lim,
+	uint8_t row, enum text_align align)
 {
 	char buf[6];
 
@@ -246,7 +253,8 @@ void lcd_put_uint(uint16_t val, uint8_t lim, uint8_t row, uint8_t align)
 }
 
 /* kirjoita lämpötila näytölle (huomioi absoluuttiset rajat) */
-void lcd_put_temp(float T, uint8_t p, uint8_t lim, uint8_t row, uint8_t align)
+void lcd_put_temp(float T, uint8_t p, uint8_t lim,
+	uint8_t row, enum text_align align)
 {
 	char lim_str[6];
 
@@ -264,7 +272,8 @@ void lcd_put_temp(float T, uint8_t p, uint8_t lim, uint8_t row, uint8_t align)
 }
 
 /* printf() näytölle (älä kutsu suoraan) */
-void __lcd_put_fmt(uint8_t lim, uint8_t row, uint8_t align, const char *fmt, ...)
+void __lcd_put_fmt(uint8_t lim, uint8_t row,
+	enum text_align align, const char *fmt, ...)
 {
 	char buf[lim + 1];
 	uint8_t len;

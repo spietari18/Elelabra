@@ -66,6 +66,7 @@ struct menu_config
 	uint8_t state;
 	callback_t update;
 	callback_t enter;
+	callback_t exit;
 };
 
 #define __MENU_CONFIG \
@@ -74,14 +75,11 @@ struct menu_config
 #define MENU_CONFIG \
 	__MENU_CONFIG PROGMEM
 
-#define MENU_ENTRY(text_title, text_menu, state, update, enter) \
-	{(text_title), (text_menu), (UI_##state), (update), (enter)}
+#define MENU_ENTRY(text_title, text_menu, state, update, enter, exit) \
+	{(text_title), (text_menu), (UI_##state), (update), (enter), (exit)}
 
 /* Tämä tulee määritellä pääohjelmassa. */
 extern __MENU_CONFIG;
-
-/* Ollaanko valikossa vai ei. */
-extern bool in_menu;
 
 /* Piirrä valikko. */
 void menu_draw();
@@ -89,18 +87,17 @@ void menu_draw();
 /* Päivitä valikko. */
 void menu_update();
 
-/* Takaisin valikkoon. */
-#define MENU_BACK \
-	do { \
-		in_menu = true; \
-		UI_SET_STATE(MENU); \
-	} while (0)
+/* Siirry valikkoon. */
+void menu_enter();
 
 /* Mille riville edistymispalkki piirretään. */
 #define PROG_ROW 1
 
 /* Edistymispalkin koko ja reunat. */
 #define PROG_INIT "[            ]"
+
+/* Edistymispalkin paikka. */
+extern uint8_t prog_pos;
 
 /* Alusta edistymispalkki. (määrittää "määrän"
  * jota prog_dec() ja prog_inc() käsittelevät)

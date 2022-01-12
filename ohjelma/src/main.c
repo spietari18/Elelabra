@@ -4,33 +4,50 @@
 #include "button.h"
 #include "temp_util.h"
 
-#include <setjmp.h>
+static uint32_t ts;
+#define INTERVAL(F) \
+	if (interval((F), &ts))
 
-DEFINE_PSTR_PTR(TEMP_1, "TEMPERATURE");
-DEFINE_PSTR_PTR(TEMP_2, "TEMP");
-DEFINE_PSTR_PTR(CLBR_1, "CALIBRATION");
-DEFINE_PSTR_PTR(CLBR_2, "CLBR");
-DEFINE_PSTR_PTR(OPTS_1, "OPTIONS");
-DEFINE_PSTR_PTR(OPTS_2, "OPTS");
+uint16_t updates;
+
+/* Taustalla kutsuttava päivitysfunktio.
+ * Ideana se, että lämpötilaa päivitetään
+ * myös valikossa TEMP näkymän lisäksi.
+ */
+void global_update()
+{
+	// TESTIKOODI
+	INTERVAL(100) {
+		lcd_put_P_const("      ", 0, LEFT);
+		lcd_put_uint(updates, 6, 0, LEFT);
+		lcd_update();
+		updates++;
+	}
+}
+
+/* Valikon teksti. */
+DEF_PSTR_PTR(TEMP_1, "TEMPERATURE");
+DEF_PSTR_PTR(TEMP_2, "TEMP");
+DEF_PSTR_PTR(CLBR_1, "CALIBRATION");
+DEF_PSTR_PTR(CLBR_2, "CLBR");
+DEF_PSTR_PTR(OPTS_1, "OPTIONS");
+DEF_PSTR_PTR(OPTS_2, "OPTS");
 
 /* Valikon konfiguraatio. */
 MENU_CONFIG = {
 	MENU_ENTRY(
 		REF_PSTR_PTR(TEMP_1),
 		REF_PSTR_PTR(TEMP_2),
-		TEMP, NULL, NULL),
+		TEMP, &global_update, NULL, NULL),
 	MENU_ENTRY(
 		REF_PSTR_PTR(CLBR_1),
 		REF_PSTR_PTR(CLBR_2),
-		CLBR, NULL, NULL), 
+		CLBR, &global_update, NULL, NULL), 
 	MENU_ENTRY(
 		REF_PSTR_PTR(OPTS_1),
 		REF_PSTR_PTR(OPTS_2),
-		OPTS, NULL, NULL), 
+		OPTS, &global_update, NULL, NULL), 
 };
-
-/* millis() aikaleimat ajastukseen */
-static uint32_t ts_now, ts_old;
 
 /* lämpötila */
 static float T;
@@ -43,11 +60,12 @@ static float obs_max = -INF;
 static float lim_min = -INF;
 static float lim_max =  INF;
 
+// TEMP
+static const bool in_menu = true;
+
 bool common_update()
 {
-	/* lue uusi näyte? */
-	ts_now = millis();
-	if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
+	INTERVAL(1000/SAMPLE_RATE) {
 		/* päivitä lämpötila */
 		T = read_temp();
 	
@@ -59,11 +77,9 @@ bool common_update()
 
 		/* päivitä lämpötilat näytöllä */
 		if (!in_menu)
-			lcd_put_temp(T, 2, 6, 0, ALIGN_C);
+			lcd_put_temp(T, 2, 6, 0, CENTER);
 	
 		// TÄHÄN VÄLIIN HÄLYTYSKOODI
-
-		ts_old = ts_now;
 
 		return false;
 	}
@@ -71,12 +87,13 @@ bool common_update()
 	return true;
 }
 
+
 void view_limit_init()
 {
 	/* näytön staattinen teksti */
 	if (!in_menu) {
-		lcd_put_P_const("MIN", 0, ALIGN_L);
-		lcd_put_P_const("MAX", 0, ALIGN_R);
+		lcd_put_P_const("MIN", 0, LEFT);
+		lcd_put_P_const("MAX", 0, RIGHT);
 	}
 }
 
@@ -88,8 +105,8 @@ void view_limit_loop()
 
 	/* näkymäkohtainen info */
 	if (!in_menu) {
-		lcd_put_temp(obs_min, 1, 5, 1, ALIGN_L);
-		lcd_put_temp(obs_max, 1, 5, 1, ALIGN_R);
+		lcd_put_temp(obs_min, 1, 5, 1, LEFT);
+		lcd_put_temp(obs_max, 1, 5, 1, RIGHT);
 		lcd_update();
 	}
 }
@@ -98,8 +115,8 @@ void view_alarm_init()
 {
 	/* näytön staattinen teksti */
 	if (!in_menu) {
-		lcd_put_P_const("AL-", 0, ALIGN_L);
-		lcd_put_P_const("AL+", 0, ALIGN_R);
+		lcd_put_P_const("AL-", 0, LEFT);
+		lcd_put_P_const("AL+", 0, RIGHT);
 	}
 }
 
@@ -111,14 +128,14 @@ void view_alarm_loop()
 
 	/* näkymäkohtainen info */
 	if (!in_menu) {
-		lcd_put_temp(lim_min, 1, 5, 1, ALIGN_L);
-		lcd_put_temp(lim_max, 1, 5, 1, ALIGN_R);
+		lcd_put_temp(lim_min, 1, 5, 1, LEFT);
+		lcd_put_temp(lim_max, 1, 5, 1, RIGHT);
 		lcd_update();
 	}
 }
 
-DEFINE_PSTR_PTR(LIMT, "LIMT");
-DEFINE_PSTR_PTR(ALRM, "ALRM");
+DEF_PSTR_PTR(LIMT, "LIMT");
+DEF_PSTR_PTR(ALRM, "ALRM");
 
 /* TEMP näkymien takaisinkutsut. */
 static const struct {
@@ -145,8 +162,6 @@ static const struct {
 int main()
 {
 	struct button_state s = {};
-	uint32_t tmp;
-
 	uint16_t S_now = 0, S_old = 0;
 
 	/* luku jota napeilla muutetaan */
@@ -166,6 +181,7 @@ int main()
 	CLR(PRR, PRTIM0); // TIMER0 päälle
 	CLR(PRR, PRTIM2); // TIMER2 päälle
 	CLR(PRR, PRSPI);  // SPI päälle
+	//CLR(PRR, PRTWI);  // I2C päälle
 
 	/* alusta kaikki IO pinnit INPUT PULLUP tilaan
 	 * jotta käyttämättömät pinnit eivät kellu.
@@ -198,8 +214,8 @@ main_loop:
 #define SPLASH_WAIT 1000 // [ms]
 
 		/* splash */
-		lcd_put_P_const(SPLASH_1, 0, ALIGN_C);
-		lcd_put_P_const(SPLASH_2, 1, ALIGN_C);
+		lcd_put_P_const(SPLASH_1, 0, CENTER);
+		lcd_put_P_const(SPLASH_2, 1, CENTER);
 		lcd_update();
 
 		beep_slow();
@@ -207,9 +223,7 @@ main_loop:
 		/* näytä alarivi SPLASH_WAIT millisekuntia */
 		_delay_ms(SPLASH_WAIT);
 
-		/* alusta SPLASH LOOP tila */
-		tmp = 0;
-		ts_old = 0;
+		/* alusta edistymispalkki */
 		prog_init(MAX_SAMPLES, 1);
 
 		UI_SETUP_END;     
@@ -217,24 +231,17 @@ main_loop:
 
 	case UI_LOOP(SPLH):
 		/* alusta näytepuskuri täyteen */
-		ts_now = millis();
-		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
+		INTERVAL(1000/SAMPLE_RATE) {
 			/* lue uusi näyte */
 			(void)read_sample();
 
 			/* päivitä edistymispalkki */
 			prog_inc();
 			lcd_update();
-
-			tmp++;
-			ts_old = ts_now;
 		}
 
-		/* menu_enter() alustaa valikon ja siirtyy valikossa
-		 * kohtaan 0. (kutsuu MENU_CALLBACKS[0] navigaatio-
-		 * takaisinkutsua, joka asettaa tilan DEFAULT)
-		 */
-		if (tmp >= MAX_SAMPLES)
+		/* Aseta tila oletusnäkymään. */
+		if (prog_pos >= MAX_SAMPLES)
 			UI_SET_STATE(TEMP);
 
 		break;
@@ -266,7 +273,7 @@ main_loop:
 
 		/* piirrä näkymän indikaattoriteksti */
 		if (unlikely(view_redraw)) {
-			lcd_put_P(view_name, 4, 1, ALIGN_C);
+			lcd_put_P(view_name, 4, 1, CENTER);
 			view_redraw = false;
 			lcd_update();
 		}
@@ -278,7 +285,7 @@ main_loop:
 			is_locked = !is_locked;
 
 			if (is_locked) {
-				lcd_put_P_const("LOCK", 1, ALIGN_C);
+				lcd_put_P_const("LOCK", 1, CENTER);
 				view_redraw = false;
 			} else {
 				view_redraw = true;
@@ -320,9 +327,7 @@ main_loop:
 			if (is_locked)
 				break;
 			
-			beep_slow();
-
-			MENU_BACK;
+			menu_enter();
 			break;
 		}
 		break;
@@ -330,28 +335,24 @@ main_loop:
 	case UI_SETUP(CLBR):
 		LCD_CLEAR;
 
-		lcd_put_P_const("<EMPTY>", 0, ALIGN_C);
+		lcd_put_P_const("<EMPTY>", 0, CENTER);
 		lcd_update();
-
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(CLBR):
 		/* lue uusi näyte */
-		ts_now = millis();
-		if ((ts_now - ts_old) > (1000/SAMPLE_RATE)) {
+		INTERVAL(1000/SAMPLE_RATE) {
 			S_now = (uint16_t)(read_sample() + 0.5);
 
 			/* päivitä näyte */
 			if (S_now != S_old) {
-				lcd_put_uint(S_now, 4, 1, ALIGN_C);
+				lcd_put_uint(S_now, 4, 1, CENTER);
 				lcd_update();
 
 				S_old = S_now;
 			}
-
-			ts_old = ts_now;
 		}
 
 		switch (button_update(&s)) {
@@ -367,8 +368,7 @@ main_loop:
 
 		/* takaisin valikkoon */
 		case BOTH|UP:
-			beep_slow();
-			MENU_BACK;
+			menu_enter();
 			break;
 		}
 		break;
@@ -376,7 +376,7 @@ main_loop:
 	case UI_SETUP(OPTS):
 		LCD_CLEAR;
 
-		lcd_put_P_const("<EMPTY>", 0, ALIGN_C);
+		lcd_put_P_const("<EMPTY>", 0, CENTER);
 		lcd_update();
 
 		UI_SETUP_END;
@@ -397,8 +397,7 @@ main_loop:
 
 		/* takaisin valikkoon */
 		case BOTH|UP:
-			beep_slow();
-			MENU_BACK;
+			menu_enter();
 			break;
 		}
 		break;
@@ -413,9 +412,8 @@ main_loop:
 		beep_begin();
 
 		/* tulosta virhe */
-		lcd_put_fmt(LCD_COLS, 0, ALIGN_C, "VIRHE (%u):", ERROR_CODE);
-		//lcd_put_P_const("VIRHE", 0, ALIGN_C);
-		lcd_put_P(ERROR_MSG, NULLTERM, 1, ALIGN_C);
+		lcd_put_fmt(LCD_COLS, 0, CENTER, "VIRHE (%u):", ERROR_CODE);
+		lcd_put_P(ERROR_MSG, NULLTERM, 1, CENTER);
 		lcd_update();
 
 		/* näytä virhe ERROR_SHOW millisekuntia */
@@ -425,35 +423,39 @@ main_loop:
 
 		LCD_CLEAR;
 
-		/* tulosta uudelleenkäynnistysviesti */
-		lcd_put_P_const("REBOOT", 0, ALIGN_C);
-		prog_init(200, 200);
-		lcd_update();
+#define PROG_SEGS 192
 
-		ts_old = 0;
-		tmp = millis();
+		/* tulosta uudelleenkäynnistysviesti */
+		lcd_put_P_const("REBOOT", 0, CENTER);
+		prog_init(PROG_SEGS, PROG_SEGS);
+		lcd_update();
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(ERRR):
-		ts_now = millis();
-
 		/* edistymispalkki */
-		if ((ts_now - ts_old) > (ERROR_WAIT/225)) {
+		INTERVAL(ERROR_WAIT/PROG_SEGS) {
 			prog_dec();
 			lcd_update();
-			ts_old = ts_now;
 		}
 
 		/* uudelleenkäynnistys */
-		if ((ts_now - tmp) > ERROR_WAIT)
+		if (prog_pos >= PROG_SEGS) {
+			_delay_ms(10);
 			reset();
+		}
 
 		break;
+
+	default:
+		unreachable;
 	}
 
+	/* pääsilmukka on toteutettu goto komennolla, jotta säästytään
+	 * turhalta sisennykseltä, eikä silmukasta voi vahingossa poistua.
+	 */
 	goto main_loop;
 
-	__builtin_unreachable();
+	unreachable;
 }

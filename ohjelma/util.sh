@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# bash extension (no better way of doing this at the moment)
 set -o pipefail
 
 script_path()
@@ -62,11 +63,20 @@ find_device()
 	fi
 }
 
+function round()
+{
+	# round to nearest power of 2
+	echo "tmp=l(${1}/(0.01*${2}))/l(2)+0.5;" \
+		"scale=0;" \
+		"tmp=tmp/1;" \
+		"2^tmp" | bc -l
+}
+
 # GLOBALS
 MYPATH=`script_path`
-SRCDIR="$MYPATH/src"
+SRCDIR="${MYPATH}/src"
 TMPDIR="/tmp/avr-build"
-PRGOUT="$TMPDIR/program.hex"
+PRGOUT="${TMPDIR}/program.hex"
 DEVICE="atmega328p"
 
 COMMON="-mmcu=${DEVICE} -O2 -mcall-prologues \
@@ -79,7 +89,7 @@ action_clean()
 	[ ! -d "$TMPDIR" ] && return 0
 
 	while read \
-		-p "Delete '$TMPDIR'? [Y/N]: " \
+		-p "Delete '${TMPDIR}'? [Y/N]: " \
 		'choice'; do
 		case "$choice" in
 		Y|y)
@@ -126,8 +136,8 @@ action_compile()
 		echo "$obj"
 
 		# run C preprocessor
-		echo "Preprocessing '$rel'" 1>&2
-		avr-gcc $CFLAGS -E -o "$cpp.new" "$file" 2>&1 \
+		echo "Preprocessing '${rel}'" 1>&2
+		avr-gcc $CFLAGS -E -o "${cpp}.new" "$file" 2>&1 \
 			| sed -e 's/^/  /g' 1>&2
 		[ "$?" -ne 0 ] && exit 1
 
@@ -139,16 +149,16 @@ action_compile()
 		elif ! echo "$CFLAGS" | cmp -s "$flg"; then
 			reason="CFLAGS changed"
 		else
-			echo "Using existing object for '$rel'." 1>&2
+			echo "Using existing object for '${rel}'." 1>&2
 			rm "${cpp}.new"
 			continue
 		fi
 
 		# save new preprocessor output
-		mv "${cpp}.new" "${cpp}"
+		mv "${cpp}.new" "$cpp"
 
 		# compile
-		echo "Compiling '$rel' ($reason)" 1>&2
+		echo "Compiling '${rel}' (${reason})" 1>&2
 		avr-gcc $CFLAGS -c -o "$obj" "$cpp" 2>&1 \
 			| sed -e 's/^/  /g' 1>&2
 		[ "$?" -ne 0 ] && exit 1
@@ -182,9 +192,24 @@ action_compile()
 	ram_abs=`echo "$ram" | grep -o '\s[0-9]\+' | tail -c +2`
 	ram_per=`echo "$ram" | grep -o '[0-9.]\+%' | head -c -2`
 
+	# guess total memory (nearest power of 2 based on percentage)
+	ram_tot=`round "$ram_abs" "$rom_per"`
+	rom_tot=`round "$rom_abs" "$rom_per"`
+
+	# output alignment
+	pad_abs=`[ "${#ram_abs}" -gt "${#rom_abs}" ] \
+		&& echo "${#ram_abs}" || echo "${#rom_abs}"`
+	pad_tot=`[ "${#ram_tot}" -gt "${#rom_tot}" ] \
+		&& echo "${#ram_tot}" || echo "${#rom_tot}"`
+
 	echo "Memory usage:" 1>&2
-	echo "  RAM: ${ram_abs} bytes (${ram_per}%)" 1>&2
-	echo "  ROM: ${rom_abs} bytes (${rom_per}%)" 1>&2
+	echo "  RAM: `printf '%0*.d' "$pad_abs" \
+		"$ram_abs"` bytes / `printf '%0*.d' "$pad_tot" \
+		"$ram_tot"` bytes (${ram_per}%) (globals)" 1>&2
+	echo "  ROM: `printf '%0*.d' "$pad_abs" \
+		"$rom_abs"` bytes / `printf '%0*.d' "$pad_tot" \
+		"$rom_tot"` bytes (${rom_per}%)" 1>&2
+	echo "  `expr "$ram_tot" - "$ram_abs"` bytes left for stack variables."
 }
 
 # $1 = serial device
@@ -200,7 +225,7 @@ action_upload()
 		-c arduino \
 		-P "$1" \
 		-b 115200 \
-		-U flash:w:"$PRGOUT":i \
+		-U "flash:w:${PRGOUT}:i" \
 		-C 'avrdude.conf' \
 		|| exit 1
 }
@@ -211,31 +236,32 @@ action_monitor()
 	# this whole thing is needed because
 	# CTRL+C on cat terminates the shell
 	# by itself
-	echo "Serial monitor (cat "$1"), CTRL+C to exit."
+	echo "Serial monitor (cat "${1}"), CTRL+C to exit."
 	cat "$1" </dev/null &
-	trap "kill -TERM $!" INT
-	wait $pid
+	pid="$!"
+	trap "kill -TERM ${pid}" INT
+	wait "$pid"
 	trap - INT
 }
 
 # we treat each parameter as an action
 while [ ! -z "$1" ]; do
 	case "$1" in
-		# compilation and cleanup don't require a device
-		compile|clean) "action_$1";;
-
 		# upload and monitor require a device
-		upload|monitor)
+		'upload'|'monitor')
 			# find device if one isn't selected 
 			if [ -z "$device" ]; then
 				device=`find_device`
 				[ "$?" -ne 0 ] && exit 1
-			fi
-			"action_$1" "$device";;
+			fi ;&
+
+		# compilation and cleanup don't require a device
+		'compile'|'clean')
+			"action_${1}" "$device";;
 		
 		# allow changing device mid execution
 		# NOP if only one device exists
-		change_dev)
+		'device')
 			if [ -z "$device" ]; then
 				device=`find_device`
 				[ "$?" -ne 0 ] && exit 1
@@ -243,10 +269,13 @@ while [ ! -z "$1" ]; do
 
 		# print usage and exit
 		*)
-			echo "Unknown action '$1'." 1>&2
-			echo "Usage: $0 [ACTION...]" 1>&2
-			echo "ACTION can be one of: " 1>&2
-			echo "compile, upload, monitor, change_dev" 1>&2
+			echo "Unknown action '${1}'." 1>&2
+			echo "Usage: ${0} [ACTION...]" 1>&2
+			echo "ACTION can be one of:" 1>&2
+			echo "  compile -> compile sources" 1>&2
+			echo "  upload  -> upload compiled executable" 1>&2
+			echo "  monitor -> serial monitor (cat <device>)" 1>&2
+			echo "  device  -> change serial device" 1>&2
 			exit 1;;
 	esac
 	shift 1

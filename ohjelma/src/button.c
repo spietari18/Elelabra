@@ -94,12 +94,16 @@ button_update(struct button_state *s)
 	td_2 = now - s->ts_2;
 	UPDATE_KEYS;
 	switch (GET_STATE) {
+
+	/* painallusta odotetaan */
 	case STATE_WAIT:
 		if (GET_KEYS) {
 			s->ts_1 = now;
 			SET_STATE(STATE_POLL);
 		}
 		break;
+
+	/* nappien tilaa luetaan */
 	case STATE_POLL:
 		if (td_1 > BTN_POLL_TIME) {
 			LOCK_KEYS;
@@ -109,6 +113,8 @@ button_update(struct button_state *s)
 			ret |= DOWN | GET_LOCKED;
 		}
 		break;
+
+	/* nappien tila lukittu */
 	case STATE_LOCK:
 		switch ((GET_HOLD_FLAG << 3)
 			| ((td_1 > BTN_HOLD_TIME) << 2) 
@@ -118,7 +124,7 @@ button_update(struct button_state *s)
 		case 0x6:
 		case 0x9:
 			s->ts_2 = now;
-			/* fallthrough */
+			fallthrough;
 		case 0x4:
 			SET_HOLD_FLAG;
 			ret |= HOLD | GET_LOCKED;
@@ -145,14 +151,22 @@ button_update(struct button_state *s)
 		case 0x1:
 		case 0xD:
 			break;
+		default:
+			unreachable;
 		}
+
 		CLEAR_KEYS;
 		break;
+
+	/* napit pois päältä */
 	case STATE_IACT:
 		RESET_STATE;
 		if (td_1 > BTN_INACTIVE_TIME)
 			SET_STATE(STATE_WAIT);
 		break;
+
+	default:
+		unreachable;
 	}
 
 	return ret;

@@ -83,30 +83,44 @@ void lcd_mode(struct lcd *lcd, ...)
 	}
 
 	tmp = new & FS_MSK;
-	if ((lcd->mode & LCD_INIT) || (tmp != (lcd->mode & FS_MSK))) {
+	if (tmp != (lcd->mode & FS_MSK)) {
 		uint8_t cmd = LCD_FCNS | (tmp >> FS_OFF);
 
-		/* tämä koska put4() ei käytä send() funktiota */
-		lcd->pins[LCD_RS](0);
-		lcd->pins[LCD_EN](0);
+		/* tarvitseeko näyttö alustaa? */
+		if (unlikely((lcd->mode & LCD_INIT) || ((tmp
+			& LCD_8BIT) != (lcd->mode & LCD_8BIT)))) {
 
-		_delay_us(5000);
+			/* tämä koska put4() ei käytä send() funktiota */
+			lcd->pins[LCD_RS](0);
+			lcd->pins[LCD_EN](0);
 
-		/* alustus tapahtuu näin datalehden mukaan */
-		if (tmp & LCD_8BIT) {
-			send(lcd, cmd, true);
-			_delay_us(4500);
-			send(lcd, cmd, true);
-			_delay_us(150);
-			send(lcd, cmd, true);
-		} else {
-			put4(lcd, 0x03);
-			_delay_us(4500);
-			put4(lcd, 0x03);
-			_delay_us(4500);
-			put4(lcd, 0x03);
-			_delay_us(150);
-			put4(lcd, 0x02);
+			/* alustusta ei voi tehdä liian nopeasti
+			 * mikrokontrollerin käynnistyksen jälkeen.
+			 * tämä estää sen, mutta sallii nopean
+			 * alustuksen, jos käynnistyksestä on kulunut
+			 * 5ms ja micros() laskuri ei ole ylivuotanut.
+			 */
+			while (micros() < 5000);
+			
+			//_delay_us(5000);
+
+			/* alustus tapahtuu näin datalehden mukaan */
+			if (tmp & LCD_8BIT) {
+				send(lcd, cmd, true);
+				_delay_us(4500);
+				send(lcd, cmd, true);
+				_delay_us(150);
+				send(lcd, cmd, true);
+			} else {
+				put4(lcd, 0x03);
+				_delay_us(4500);
+				put4(lcd, 0x03);
+				_delay_us(4500);
+				put4(lcd, 0x03);
+				_delay_us(150);
+				put4(lcd, 0x02);
+			}
+
 		}
 
 		send(lcd, cmd, true);
@@ -124,6 +138,9 @@ void lcd_mode(struct lcd *lcd, ...)
 	if (tmp != (lcd->mode & CS_MSK))
 		send(lcd, LCD_CRST | (tmp >> CS_OFF), true);
 
+	/* tällä pidetään huoli, että näyttöä
+	 * ei alusteta monta kertaa
+	 */
 	lcd->mode = new & ~LCD_INIT;
 
 	va_end(args);
