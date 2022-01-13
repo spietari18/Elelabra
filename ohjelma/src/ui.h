@@ -78,6 +78,8 @@ struct menu_config
 #define MENU_ENTRY(text_title, text_menu, state, update, enter, exit) \
 	{(text_title), (text_menu), (UI_##state), (update), (enter), (exit)}
 
+extern bool in_menu;
+
 /* Tämä tulee määritellä pääohjelmassa. */
 extern __MENU_CONFIG;
 

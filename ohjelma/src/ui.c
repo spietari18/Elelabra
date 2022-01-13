@@ -10,7 +10,7 @@ static struct button_state s;
 static uint8_t entry_now;
 static uint8_t entry_old;
 static uint8_t entry_last = ~0;
-static bool in_menu;
+bool in_menu;
 
 /* Piirrä valikko. */
 void menu_draw()
@@ -51,8 +51,8 @@ void menu_draw()
 	lcd_update();
 }
 
-#define CALLBACK(X) \
-	if (X) (X)();
+//#define CALLBACK(X) if (X) (X)()
+#define CALLBACK(X)
 
 /* Päivitä valikko. */
 void menu_update()

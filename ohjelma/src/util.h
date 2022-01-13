@@ -35,10 +35,10 @@ bool interval(uint16_t, uint32_t *);
 /* SPI alustus AD muuntimelle. */
 void adc_init();
 
-#define ADC_DF0 (0 << 6) // CH0 -> CH1
-#define ADC_DF1 (1 << 6) // CH1 -> CH0
-#define ADC_CH0 (2 << 6) // CH0 -> GND
-#define ADC_CH1 (3 << 6) // CH1 -> GND
+#define ADC_DF0 0 // CH0 -> CH1
+#define ADC_DF1 1 // CH1 -> CH0
+#define ADC_CH0 2 // CH0 -> GND
+#define ADC_CH1 3 // CH1 -> GND
 
 /* Lue näyte AD Muuntimelta. */
 uint16_t adc_sample(uint8_t);

@@ -135,29 +135,43 @@ static uint8_t spi_byte(uint8_t v)
 
 #define I2C_STAT (TWSR & 0xF8)
 
+#include "screen.h"
+
 /* Varaa I2C väylä. */
 static bool i2c_start(uint8_t packet)
 {
 	/* lähetä START */
-	TWCR = 0;
-	SET(TWCR, TWINT);
-	SET(TWCR, TWSTA);
-	SET(TWCR, TWEN);
+	//TWCR = 0;
+	//SET(TWCR, TWINT);
+	//SET(TWCR, TWSTA);
+	//SET(TWCR, TWEN);
+	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
 
+	lcd_put_P_const("1", 0, LEFT);
+	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 	
 	/* tarkista, että lähetys onnistui */
 	if (I2C_STAT != I2C_MR_STTX)
 		return false;
+	lcd_put_P_const("2", 0, LEFT);
+	lcd_update();
+	while (!GET(TWCR, TWINT)); // odota
 
 	/* lähetä osoitetavu */
 	TWDR = packet;
-	TWCR = 0;
-	SET(TWCR, TWINT);
-	SET(TWCR, TWEN);
+	//TWCR = 0;
+	//SET(TWCR, TWINT);
+	//SET(TWCR, TWEN);
+	TWCR = (1 << TWINT) | (1 << TWEN);
 
+	lcd_put_P_const("2", 0, LEFT);
+	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
+	lcd_put_uint(I2C_STAT, 4, 0, LEFT);
+	lcd_update();
+	while (1);
 	/* tarkista, että lähetys onnistui */
 	if ((I2C_STAT != I2C_MT_WACK) && (I2C_STAT != I2C_MR_RACK))
 		return false;
@@ -169,10 +183,11 @@ static bool i2c_start(uint8_t packet)
 static void i2c_stop()
 {
 	/* lähetä STOP */
-	TWCR = 0;
-	SET(TWCR, TWINT);
-	SET(TWCR, TWSTO);
-	SET(TWCR, TWEN);
+	//TWCR = 0;
+	//SET(TWCR, TWINT);
+	//SET(TWCR, TWSTO);
+	//SET(TWCR, TWEN);
+	TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
 }
 
 /* Lähetä tavu I2C väylään. */
@@ -180,11 +195,14 @@ static bool i2c_tx_byte(uint8_t src, bool ack)
 {
 	/* lähetä tavu */
 	TWDR = src;
-	TWCR = 0;
-	SET(TWCR, TWINT);
-	SET(TWCR, TWEN);
-	VAL(TWCR, TWEA, ack);
+	//TWCR = 0;
+	//SET(TWCR, TWINT);
+	//SET(TWCR, TWEN);
+	//VAL(TWCR, TWEA, ack);
+	TWCR = (1 << TWINT) | (ack << TWEA) | (1 << TWEN);
 
+	lcd_put_P_const("3", 0, LEFT);
+	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* tarkista, että lähetys onnistui */
@@ -198,11 +216,14 @@ static bool i2c_tx_byte(uint8_t src, bool ack)
 static bool i2c_rx_byte(uint8_t *dst, bool ack)
 {
 	/* vastaanota tavu */
-	TWCR = 0;
-	SET(TWCR, TWINT);
-	SET(TWCR, TWEN);
-	VAL(TWCR, TWEA, ack);
+	//TWCR = 0;
+	//SET(TWCR, TWINT);
+	//SET(TWCR, TWEN);
+	//VAL(TWCR, TWEA, ack);
+	TWCR = (1 << TWINT) | (ack << TWEA) | (1 << TWEN);
 
+	lcd_put_P_const("4", 0, LEFT);
+	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* tarkista, että vastaanotto onnistui */
@@ -229,14 +250,14 @@ void adc_init()
 }
 
 /* Lue näyte AD muuntimelta. */
-uint16_t adc_sample(uint8_t ch)
+uint16_t adc_sample(uint8_t channel)
 {
 	uint16_t tmp = 0;
 
 	/* lue näyte AD-muuntimelta */
 	WRITE(SPI_SS, LOW);
-	(void)spi_byte(0); // aloita
-	tmp |= (uint16_t)spi_byte(ch | 32) << 8; // valitse kanava
+	(void)spi_byte(1); // aloita
+	tmp |= (uint16_t)spi_byte((channel << 6) | 32) << 8; // valitse kanava
 	tmp |= spi_byte(0); // lue loput näytteen bitit
 	WRITE(SPI_SS, HIGH);
 
@@ -244,14 +265,17 @@ uint16_t adc_sample(uint8_t ch)
 	return tmp & ((1 << 12) - 1);
 }
 
-/* I2C alustus EERAM:ille
- * (main() alustaa SDA ja SCL pinnit PULLUP tilaan)
- */
+/* I2C alustus EERAM:ille */
 void eeram_init()
 {
 	TWSR = 0;
 	TWBR = 2;
-	SET(TWSR, TWPS0); // 500 kHz
+	SET(TWSR, TWPC5PS0);
+	SET(TWSR, TWPS1);
+	
+	/* ulkoiset pull-up vastukset */
+	PLUP(I2C_SDA, 0);
+	PLUP(I2C_SCL, 0);
 }
 
 #define EERAM_SRAM 0x50

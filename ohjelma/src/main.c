@@ -33,20 +33,22 @@ DEF_PSTR_PTR(CLBR_2, "CLBR");
 DEF_PSTR_PTR(OPTS_1, "OPTIONS");
 DEF_PSTR_PTR(OPTS_2, "OPTS");
 
+void callback() {}
+
 /* Valikon konfiguraatio. */
 MENU_CONFIG = {
 	MENU_ENTRY(
 		REF_PSTR_PTR(TEMP_1),
 		REF_PSTR_PTR(TEMP_2),
-		TEMP, &global_update, NULL, NULL),
+		TEMP, NULL, NULL, NULL),
 	MENU_ENTRY(
 		REF_PSTR_PTR(CLBR_1),
 		REF_PSTR_PTR(CLBR_2),
-		CLBR, &global_update, NULL, NULL), 
+		CLBR, NULL, NULL, NULL), 
 	MENU_ENTRY(
 		REF_PSTR_PTR(OPTS_1),
 		REF_PSTR_PTR(OPTS_2),
-		OPTS, &global_update, NULL, NULL), 
+		OPTS, NULL, NULL, NULL), 
 };
 
 /* lämpötila */
@@ -59,9 +61,6 @@ static float obs_max = -INF;
 /* asetetut rajat */
 static float lim_min = -INF;
 static float lim_max =  INF;
-
-// TEMP
-static const bool in_menu = true;
 
 bool common_update()
 {
@@ -164,6 +163,8 @@ int main()
 	struct button_state s = {};
 	uint16_t S_now = 0, S_old = 0;
 
+	uint8_t counter;
+
 	/* luku jota napeilla muutetaan */
 	//float *target;
 
@@ -181,7 +182,7 @@ int main()
 	CLR(PRR, PRTIM0); // TIMER0 päälle
 	CLR(PRR, PRTIM2); // TIMER2 päälle
 	CLR(PRR, PRSPI);  // SPI päälle
-	//CLR(PRR, PRTWI);  // I2C päälle
+	CLR(PRR, PRTWI);  // I2C päälle
 
 	/* alusta kaikki IO pinnit INPUT PULLUP tilaan
 	 * jotta käyttämättömät pinnit eivät kellu.
@@ -194,7 +195,7 @@ int main()
 	/* Alusta moduulit/tilat. */
 	lcd_init();
 	adc_init();
-	//eeram_init();
+	eeram_init();
 	timer_init();
 	alarm_init();
 	default_points();
@@ -241,7 +242,7 @@ main_loop:
 		}
 
 		/* Aseta tila oletusnäkymään. */
-		if (prog_pos >= MAX_SAMPLES)
+		if (prog_pos >= (MAX_SAMPLES - 1))
 			UI_SET_STATE(TEMP);
 
 		break;
@@ -376,13 +377,29 @@ main_loop:
 	case UI_SETUP(OPTS):
 		LCD_CLEAR;
 
-		lcd_put_P_const("<EMPTY>", 0, CENTER);
-		lcd_update();
+		//lcd_put_P_const("<EMPTY>", 0, CENTER);
+		//lcd_update();
+		
+		counter = 0;
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(OPTS):
+		INTERVAL(1000) {
+			uint8_t tmp;
+
+			if (!eeram_write(0, &counter, 1))
+				ERROR(TEST);
+			if (!eeram_read(0, &tmp, 1))
+				ERROR(TEST);
+
+			lcd_put_P_const("   ", 0, LEFT);
+			lcd_put_uint(tmp, 3, 0, LEFT);
+			lcd_update();
+
+			counter++;
+		}
 
 		switch (button_update(&s)) {
 		/* testi */

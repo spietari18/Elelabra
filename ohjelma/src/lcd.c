@@ -100,9 +100,9 @@ void lcd_mode(struct lcd *lcd, ...)
 			 * alustuksen, jos käynnistyksestä on kulunut
 			 * 5ms ja micros() laskuri ei ole ylivuotanut.
 			 */
-			while (micros() < 5000);
+			//while (micros() < 5000);
 			
-			//_delay_us(5000);
+			_delay_us(5000);
 
 			/* alustus tapahtuu näin datalehden mukaan */
 			if (tmp & LCD_8BIT) {
