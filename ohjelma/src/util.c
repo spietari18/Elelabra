@@ -165,11 +165,12 @@ static bool i2c_start(uint8_t packet)
 	//SET(TWCR, TWEN);
 	TWCR = (1 << TWINT) | (1 << TWEN);
 
-	lcd_put_P_const("2", 0, LEFT);
+	lcd_put_P_const("PACKET --> ", 0, LEFT);
+	lcd_put_uint(packet, 3, 0, RIGHT);
 	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
-	lcd_put_uint(I2C_STAT, 4, 0, LEFT);
+	lcd_put_uint(I2C_STAT, 4, 1, LEFT);
 	lcd_update();
 	while (1);
 	/* tarkista, että lähetys onnistui */
@@ -279,14 +280,14 @@ void eeram_init()
 }
 
 #define EERAM_SRAM 0x50
-#define EERAM_CREG 0x30
+#define EERAM_CREG 0x18
 
-#define EERAM_DEVA(A) (((A) >> 0xB) & 0xC)
+#define EERAM_DEVA(A) (((A) >> 0x9) & 0xC)
 
 #define EERAM_R 1
 #define EERAM_W 0
 
-#define EERAM_HGH(A) (((A) >> 8) & 0x07)
+#define EERAM_HGH(A) (((A) >> 0x8) & 0x7)
 #define EERAM_LOW(A) ((A) & 0xFF)
 
 static inline bool eeram_tx_addr(uint16_t addr)

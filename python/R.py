@@ -55,7 +55,7 @@ E192 = {100, 101, 102, 104, 105, 106, 107, 109, 110, 111,
 DEC = {-2, -1, 0, 1, 2, 3, 4, 5, 6, 7}
 
 # SI prefix (largest first)
-SI = [("G", 9), ("M", 6), ("k", 3), ("", 0), ("m", -3), ("u", -6), ("n", -9)]
+SI = (("G", 9), ("M", 6), ("k", 3), ("", 0), ("m", -3), ("u", -6), ("n", -9))
 
 def prefix(n, p=3, exact=False):
     s = n < 0
@@ -75,7 +75,7 @@ def prefix(n, p=3, exact=False):
     if not exact:
         if tmp < 1:
             return "%s<1%s" % ("-" if s else "", SI[-1][0])
-        elif tmp >= 1000:
+        elif tmp > 999:
             return "%s>999%s" % ("-" if s else "", SI[0][0])
 
     return "%s%.*g%s" % ("-" if s else "", p, tmp, pr)
