@@ -378,7 +378,7 @@ main_loop:
 		LCD_CLEAR;
 
 		//lcd_put_P_const("<EMPTY>", 0, CENTER);
-		//lcd_update();
+		lcd_update();
 		
 		counter = 0;
 
@@ -386,20 +386,6 @@ main_loop:
 		break;
 
 	case UI_LOOP(OPTS):
-		INTERVAL(1000) {
-			uint8_t tmp;
-
-			if (!eeram_write(0, &counter, 1))
-				ERROR(TEST);
-			if (!eeram_read(0, &tmp, 1))
-				ERROR(TEST);
-
-			lcd_put_P_const("   ", 0, LEFT);
-			lcd_put_uint(tmp, 3, 0, LEFT);
-			lcd_update();
-
-			counter++;
-		}
 
 		switch (button_update(&s)) {
 		/* testi */
@@ -408,7 +394,46 @@ main_loop:
 			break;
 
 		case RT|UP:
+
+			for (uint16_t i = 0; i < 2048; i++)
+			{
+				char c = i & 0xFF;
+
+				LCD_CLEAR;
+				lcd_put_uint(i, 6, 1, LEFT);
+				lcd_put_uint(c, 3, 1, RIGHT);
+				lcd_update();
+				_delay_ms(250);
+
+				if (!eeram_write(i, &c, 1)) {
+					lcd_put_P_const("WRITE FAILED", 0, LEFT);
+					lcd_update();
+					break;
+				}
+			}
+
+			beep_fast();
+			break;
+
 		case LT|UP:
+
+			for (uint16_t i = 0; i < 2048; i++)
+			{
+				char c;
+
+				if (!eeram_read(i, &c, 1)) {
+					lcd_put_P_const("READ FAILED", 0, LEFT);
+					lcd_update();
+					break;
+				}
+
+				LCD_CLEAR;
+				lcd_put_uint(i, 6, 1, LEFT);
+				lcd_put_uint(c, 3, 1, RIGHT);
+				lcd_update();
+				_delay_ms(250);
+			}
+
 			beep_fast();
 			break;
 

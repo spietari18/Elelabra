@@ -135,7 +135,7 @@ static uint8_t spi_byte(uint8_t v)
 
 #define I2C_STAT (TWSR & 0xF8)
 
-#include "screen.h"
+static void i2c_stop();
 
 /* Varaa I2C väylä. */
 static bool i2c_start(uint8_t packet)
@@ -147,15 +147,11 @@ static bool i2c_start(uint8_t packet)
 	//SET(TWCR, TWEN);
 	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
 
-	lcd_put_P_const("1", 0, LEFT);
-	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 	
 	/* tarkista, että lähetys onnistui */
 	if (I2C_STAT != I2C_MR_STTX)
 		return false;
-	lcd_put_P_const("2", 0, LEFT);
-	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* lähetä osoitetavu */
@@ -165,17 +161,13 @@ static bool i2c_start(uint8_t packet)
 	//SET(TWCR, TWEN);
 	TWCR = (1 << TWINT) | (1 << TWEN);
 
-	lcd_put_P_const("PACKET --> ", 0, LEFT);
-	lcd_put_uint(packet, 3, 0, RIGHT);
-	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
-	lcd_put_uint(I2C_STAT, 4, 1, LEFT);
-	lcd_update();
-	while (1);
 	/* tarkista, että lähetys onnistui */
-	if ((I2C_STAT != I2C_MT_WACK) && (I2C_STAT != I2C_MR_RACK))
+	if ((I2C_STAT != I2C_MT_WACK) && (I2C_STAT != I2C_MR_RACK)) {
+		i2c_stop();
 		return false;
+	}
 
 	return true;
 }
@@ -191,6 +183,8 @@ static void i2c_stop()
 	TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
 }
 
+uint8_t n_tx;
+
 /* Lähetä tavu I2C väylään. */
 static bool i2c_tx_byte(uint8_t src, bool ack)
 {
@@ -202,14 +196,12 @@ static bool i2c_tx_byte(uint8_t src, bool ack)
 	//VAL(TWCR, TWEA, ack);
 	TWCR = (1 << TWINT) | (ack << TWEA) | (1 << TWEN);
 
-	lcd_put_P_const("3", 0, LEFT);
-	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* tarkista, että lähetys onnistui */
 	if (I2C_STAT != I2C_MT_DACK)
 		return false;
-	
+
 	return true;
 }
 
@@ -223,8 +215,6 @@ static bool i2c_rx_byte(uint8_t *dst, bool ack)
 	//VAL(TWCR, TWEA, ack);
 	TWCR = (1 << TWINT) | (ack << TWEA) | (1 << TWEN);
 
-	lcd_put_P_const("4", 0, LEFT);
-	lcd_update();
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* tarkista, että vastaanotto onnistui */
@@ -271,7 +261,7 @@ void eeram_init()
 {
 	TWSR = 0;
 	TWBR = 2;
-	SET(TWSR, TWPC5PS0);
+	SET(TWSR, TWPS0);
 	SET(TWSR, TWPS1);
 	
 	/* ulkoiset pull-up vastukset */
@@ -279,8 +269,8 @@ void eeram_init()
 	PLUP(I2C_SCL, 0);
 }
 
-#define EERAM_SRAM 0x50
-#define EERAM_CREG 0x18
+#define EERAM_SRAM 0xA0
+#define EERAM_CREG 0x30
 
 #define EERAM_DEVA(A) (((A) >> 0x9) & 0xC)
 
@@ -292,18 +282,30 @@ void eeram_init()
 
 static inline bool eeram_tx_addr(uint16_t addr)
 {
+	bool result;
+
 	/* aloita I2C */
 	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_W))
-		return false;
+		return false;	_delay_ms(1000);
+
+
 
 	/* lähetä osoite */
-	return !(i2c_tx_byte(EERAM_HGH(addr), true)
-		&& i2c_tx_byte(EERAM_LOW(addr), true));
+	result = i2c_tx_byte(EERAM_HGH(addr), true)
+		&& i2c_tx_byte(EERAM_LOW(addr), true);
+
+	/* vapauta I2C väylä */
+	if (!result)
+		i2c_stop();
+
+	return result;
 }
 
 /* Lue tavu EERAM:ilta. */
 bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
 {
+	bool result;
+
 	/* jos ei käytetä nykyistä osoitetta, lähetä osoite */
 	if ((addr != EERAM_ADDR) && !eeram_tx_addr(addr))
 		return false;
@@ -317,21 +319,25 @@ bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
 	/* vastaanota kaikki tavut */
 	for (size_t i = 0; i < len; i++)
 		if (!i2c_rx_byte(&data[i], true))
-			return false;
+			goto fail;
 	
 	/* viimeinen tavu ei saa lähettää ACK bittiä */
 	if (!i2c_rx_byte(&data[len], false))
-		return false;
+		goto fail;
 
+	result = true;
+fail:
 	/* lopeta I2C */
 	i2c_stop();
 
-	return true;
+	return result;
 }
 
 /* Kirjoita tavu EERAM:ille. */
 bool eeram_write(uint16_t addr, uint8_t data[], uint8_t len)
 {
+	bool result = false;
+
 	/* lähetä osoite */
 	if (!eeram_tx_addr(addr))
 		return false;
@@ -339,12 +345,14 @@ bool eeram_write(uint16_t addr, uint8_t data[], uint8_t len)
 	/* lähetä kaikki tavut */
 	for (size_t i = 0; i < len; i++)
 		if (!i2c_tx_byte(data[i], true))
-			return false;
+			goto fail;
 
+	result = true;
+fail:
 	/* lopeta I2C */
 	i2c_stop();
 
-	return true;
+	return result;
 }
 
 bool eeram_reg_read(uint8_t addr, uint8_t *dst)
