@@ -1,0 +1,1269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<export version="E">
+  <design>
+    <source>/disk/SG2T/LUT Kurssit/ELATY-GIT/kicad/piirilevy/piirilevy.kicad_sch</source>
+    <date>Thu Jan 27 13:20:12 2022</date>
+    <tool>Eeschema 6.0.1</tool>
+    <sheet number="1" name="/" tstamps="/">
+      <title_block>
+        <title/>
+        <company/>
+        <rev/>
+        <date/>
+        <source>piirilevy.kicad_sch</source>
+        <comment number="1" value=""/>
+        <comment number="2" value=""/>
+        <comment number="3" value=""/>
+        <comment number="4" value=""/>
+        <comment number="5" value=""/>
+        <comment number="6" value=""/>
+        <comment number="7" value=""/>
+        <comment number="8" value=""/>
+        <comment number="9" value=""/>
+      </title_block>
+    </sheet>
+  </design>
+  <components>
+    <comp ref="BZ1">
+      <value>Buzzer</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x02_P2.00mm_Vertical</footprint>
+      <libsource lib="Device" part="Buzzer" description="Buzzer, polarized"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>0c7bc691-9622-4b2f-a7f4-8e1c77e17d4d</tstamps>
+    </comp>
+    <comp ref="C1">
+      <value>47u</value>
+      <footprint>Capacitor_THT:C_Radial_D5.0mm_H7.0mm_P2.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>3fa05934-8ad1-40a9-af5c-98ad298eb412</tstamps>
+    </comp>
+    <comp ref="C2">
+      <value>100n</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>ea4f0afc-785b-40cf-8ef1-cbe20404c18b</tstamps>
+    </comp>
+    <comp ref="C3">
+      <value>20n</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>c47b134b-4a06-4b40-9015-d1abef925da5</tstamps>
+    </comp>
+    <comp ref="C4">
+      <value>10n</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>fb1c9655-6c6f-4668-981a-2472c1f87067</tstamps>
+    </comp>
+    <comp ref="C5">
+      <value>100n</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>49fec31e-3712-4229-8142-b191d90a97d0</tstamps>
+    </comp>
+    <comp ref="C6">
+      <value>1m</value>
+      <footprint>Capacitor_THT:C_Radial_D10.0mm_H16.0mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>d1c19c11-0a13-4237-b6b4-fb2ef1db7c6d</tstamps>
+    </comp>
+    <comp ref="C7">
+      <value>10n</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>572fd832-043a-4479-ba66-950e4cf186a4</tstamps>
+    </comp>
+    <comp ref="C8">
+      <value>10n</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>9586f0dd-0000-4b42-abee-c69f7c7df23b</tstamps>
+    </comp>
+    <comp ref="C9">
+      <value>22u</value>
+      <footprint>Capacitor_THT:C_Radial_D5.0mm_H7.0mm_P2.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>de4bd0e7-1d23-43d7-aaa4-a8df3b9080a1</tstamps>
+    </comp>
+    <comp ref="C10">
+      <value>22pF</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>32d4c26d-1b77-483f-999b-04b4e8bb7704</tstamps>
+    </comp>
+    <comp ref="C11">
+      <value>22pF</value>
+      <footprint>Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>c6723d34-eeb5-4b51-880b-537ef8ad10e5</tstamps>
+    </comp>
+    <comp ref="C12">
+      <value>22u</value>
+      <footprint>Capacitor_THT:C_Radial_D5.0mm_H7.0mm_P2.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>8f616ce0-61aa-4dde-a2cd-cb09a93b5a82</tstamps>
+    </comp>
+    <comp ref="C13">
+      <value>22u</value>
+      <footprint>Capacitor_THT:C_Radial_D5.0mm_H7.0mm_P2.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>a6c5e7f6-9bfd-4ea1-88f2-12abf15c43f3</tstamps>
+    </comp>
+    <comp ref="C14">
+      <value>1u</value>
+      <footprint>Capacitor_THT:C_Radial_D4.0mm_H5.0mm_P1.50mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>dfa9d16e-b764-4909-bfa8-e9e8bb5e3046</tstamps>
+    </comp>
+    <comp ref="C15">
+      <value>22n</value>
+      <footprint>Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>0acc56b2-06ae-463f-8585-f554732c8061</tstamps>
+    </comp>
+    <comp ref="C16">
+      <value>22n</value>
+      <footprint>Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>2ca01c33-e841-4b2a-9b0d-ae7494e57d9e</tstamps>
+    </comp>
+    <comp ref="C17">
+      <value>22n</value>
+      <footprint>Capacitor_THT:C_Rect_L7.0mm_W2.5mm_P5.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>51c0bea4-227e-44c6-878d-31d0300d8ad8</tstamps>
+    </comp>
+    <comp ref="C18">
+      <value>22u</value>
+      <footprint>Capacitor_THT:C_Radial_D5.0mm_H7.0mm_P2.00mm</footprint>
+      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>1b6f2d94-2a89-413f-bc47-4d0e7d19a501</tstamps>
+    </comp>
+    <comp ref="D1">
+      <value>1N4148</value>
+      <footprint>Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal</footprint>
+      <datasheet>https://assets.nexperia.com/documents/data-sheet/1N4148_1N4448.pdf</datasheet>
+      <libsource lib="Diode" part="1N4148" description="100V 0.15A standard switching diode, DO-35"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>9208ea78-8dde-4b3d-91e9-5755ab5efd9a</tstamps>
+    </comp>
+    <comp ref="DS1">
+      <value>MC21605H6W</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x12_P2.00mm_Vertical</footprint>
+      <datasheet>http://www.wincomlcd.com/pdf/WC1602A-SFYLYHTC06.pdf</datasheet>
+      <libsource lib="Display_Character" part="WC1602A" description="LCD 16x2 Alphanumeric , 8 bit parallel bus, 5V VDD"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>3f7e104d-d8c3-4e24-9861-272420f53c2b</tstamps>
+    </comp>
+    <comp ref="L1">
+      <value>220u</value>
+      <footprint>Inductor_THT:L_Radial_D8.7mm_P5.00mm_Fastron_07HCP</footprint>
+      <libsource lib="Device" part="L" description="Inductor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>2102c637-9f11-48f1-aae6-b4139dc22be2</tstamps>
+    </comp>
+    <comp ref="R1">
+      <value>390k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>1bd8bbf7-ab8a-476a-a905-5c29b1fb5cc3</tstamps>
+    </comp>
+    <comp ref="R2">
+      <value>3.3k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>574c3ee6-5a2a-49d9-b9b4-bc2fecfa5216</tstamps>
+    </comp>
+    <comp ref="R3">
+      <value>1.2k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>9d23b66e-1bb5-4a6f-9772-b8d25945affb</tstamps>
+    </comp>
+    <comp ref="R4">
+      <value>150k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>ccba6c56-052d-4a08-a168-ad04f80b560f</tstamps>
+    </comp>
+    <comp ref="R5">
+      <value>5.6k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>f822618c-677b-4e53-892f-f12f4c49f858</tstamps>
+    </comp>
+    <comp ref="R6">
+      <value>5.6k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>300cf290-1813-403c-9e41-229a9395e2b8</tstamps>
+    </comp>
+    <comp ref="R7">
+      <value>680</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>d04360f7-ee42-46cd-b4ae-6754d4eaff7e</tstamps>
+    </comp>
+    <comp ref="R8">
+      <value>8.2k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>96679445-85d5-4286-9cc1-6cfe447cd281</tstamps>
+    </comp>
+    <comp ref="R9">
+      <value>8.2k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>78b9c1f9-e8b7-44f3-8f69-6931cf401344</tstamps>
+    </comp>
+    <comp ref="R10">
+      <value>1k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>fcfb3f77-487d-44de-bd4e-948fbeca3220</tstamps>
+    </comp>
+    <comp ref="R11">
+      <value>33k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>728ba05c-7334-4064-9520-97bdb4f97950</tstamps>
+    </comp>
+    <comp ref="R12">
+      <value>1k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>363189af-2faa-46a4-b025-5a779d801f2e</tstamps>
+    </comp>
+    <comp ref="R13">
+      <value>33k</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>cc16a96b-0dad-4cfe-b8dc-c513388cc4ea</tstamps>
+    </comp>
+    <comp ref="R14">
+      <value>1M</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>450dba92-a99c-4303-95b2-e5aed8ffef0f</tstamps>
+    </comp>
+    <comp ref="R15">
+      <value>1M</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>522d2894-498b-4554-b552-bc779f62dbd8</tstamps>
+    </comp>
+    <comp ref="R16">
+      <value>5M</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>c75ec281-fee8-4545-8116-e633fc4de5bf</tstamps>
+    </comp>
+    <comp ref="R17">
+      <value>1M</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>e39d87c5-11aa-4fb2-9237-1672c4a56c7d</tstamps>
+    </comp>
+    <comp ref="R18">
+      <value>100</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>b6b0213a-7a3f-499b-b9b4-dac6c495ac86</tstamps>
+    </comp>
+    <comp ref="R19">
+      <value>220</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>11f94995-fd71-4a51-a0c9-7e8d28c94289</tstamps>
+    </comp>
+    <comp ref="R20">
+      <value>4.7K</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>6e28af15-c267-416e-8f23-a1b6ed49fdd9</tstamps>
+    </comp>
+    <comp ref="R21">
+      <value>4.7K</value>
+      <footprint>Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P7.62mm_Horizontal</footprint>
+      <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>e8c54866-8d2f-4f7c-9a50-76775f84118c</tstamps>
+    </comp>
+    <comp ref="RV1">
+      <value>10k</value>
+      <footprint>Potentiometer_THT:Potentiometer_ACP_CA9-H3,8_Horizontal</footprint>
+      <libsource lib="Device" part="R_POT" description=""/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>f477e48c-ee20-474b-b17e-bd5e976db4c5</tstamps>
+    </comp>
+    <comp ref="SW1">
+      <value>SW_SPST</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x02_P2.00mm_Vertical</footprint>
+      <libsource lib="Switch" part="SW_SPST" description="Single Pole Single Throw (SPST) switch"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>ea28e946-b74f-4ba8-ac7b-b1884c5e7296</tstamps>
+    </comp>
+    <comp ref="SW2">
+      <value>SW_Push</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x02_P2.00mm_Vertical</footprint>
+      <libsource lib="Switch" part="SW_Push" description="Push button switch, generic, two pins"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>4c3a50b5-eb83-4643-83b7-5afc4d4328c2</tstamps>
+    </comp>
+    <comp ref="SW3">
+      <value>SW_Push</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x02_P2.00mm_Vertical</footprint>
+      <libsource lib="Switch" part="SW_Push" description="Push button switch, generic, two pins"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>d43b03fb-d0ae-4442-bec0-b7dbbb81f244</tstamps>
+    </comp>
+    <comp ref="SW4">
+      <value>SW_Push</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x02_P2.00mm_Vertical</footprint>
+      <libsource lib="Switch" part="SW_Push" description="Push button switch, generic, two pins"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>dec44ed0-5941-478f-92b7-4fe8657a0f9b</tstamps>
+    </comp>
+    <comp ref="TH1">
+      <value>PT100</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x02_P2.00mm_Vertical</footprint>
+      <datasheet>https://www.heraeus.com/media/media/group/doc_group/products_1/hst/sot_to/de_15/to_92_d.pdf</datasheet>
+      <libsource lib="Sensor_Temperature" part="PT100" description="PT100 platinum temperature sensor (RTD)"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>f3a6b616-bd30-468e-a60c-ec2c78b0a48d</tstamps>
+    </comp>
+    <comp ref="U1">
+      <value>LM324</value>
+      <footprint>Package_DIP:DIP-14_W7.62mm_LongPads</footprint>
+      <datasheet>http://www.ti.com/lit/ds/symlink/lm2902-n.pdf</datasheet>
+      <libsource lib="Amplifier_Operational" part="LM324" description="Low-Power, Quad-Operational Amplifiers, DIP-14/SOIC-14/SSOP-14"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>de0d0b26-5dbb-4b0b-8931-3a9405d7e432 722961b3-5a98-40db-a589-9b4d67cfff60 d674ea40-4701-4f3e-93d0-02b0a7afdc20 0345509e-dbff-4fb5-9059-bc7781b5488b</tstamps>
+    </comp>
+    <comp ref="U2">
+      <value>uA7805</value>
+      <footprint>Package_TO_SOT_THT:TO-220-3_Horizontal_TabDown</footprint>
+      <datasheet>http://www.ti.com/lit/ds/symlink/ua78.pdf</datasheet>
+      <libsource lib="Regulator_Linear" part="uA7805" description="Positive 1A 35V Linear Regulator, Fixed Output 5V, TO-220/TO-263"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>b3ed1808-38b3-403b-99a9-68a2b023b131</tstamps>
+    </comp>
+    <comp ref="U3">
+      <value>ATmega328P</value>
+      <footprint>Package_DIP:DIP-28_W7.62mm_LongPads</footprint>
+      <datasheet>http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega328_P%20AVR%20MCU%20with%20picoPower%20Technology%20Data%20Sheet%2040001984A.pdf</datasheet>
+      <libsource lib="MCU_Microchip_ATmega" part="ATmega328P-PU" description=""/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>7777dc6e-3b73-4e0a-9057-01bbcecb3cce</tstamps>
+    </comp>
+    <comp ref="U4">
+      <value>MAX5033B</value>
+      <footprint>Package_DIP:DIP-8_W7.62mm_LongPads</footprint>
+      <datasheet>http://datasheets.maximintegrated.com/en/ds/MAX5035.pdf</datasheet>
+      <libsource lib="Regulator_Switching" part="MAX5035AUPA" description="1A, High-Efficiency Step-Down DC-DC Converter, 3.3V fixed output voltage, Vin 76V, PDIP-8"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>b456cffc-d9d7-4c91-91f2-36ec9a65dd1b</tstamps>
+    </comp>
+    <comp ref="U5">
+      <value>MCP3202</value>
+      <footprint>Package_DIP:DIP-8_W7.62mm_LongPads</footprint>
+      <datasheet>http://ww1.microchip.com/downloads/en/DeviceDoc/21034D.pdf</datasheet>
+      <libsource lib="Analog_ADC" part="MCP3202" description="A/D Converter, 12-Bit, 2-Channel, SPI Interface, 2.7V-5.5V"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>6ce2eb83-1ad7-4b58-b318-1484dfbdc531</tstamps>
+    </comp>
+    <comp ref="U6">
+      <value>47C16</value>
+      <footprint>Package_DIP:DIP-8_W7.62mm_LongPads</footprint>
+      <datasheet>http://ww1.microchip.com/downloads/en/DeviceDoc/20005371C.pdf</datasheet>
+      <libsource lib="Memory_NVRAM" part="47C16" description="16kbit I2C serial EERAM, SRAM with EEPROM backup, 4.5-5.5V, DIP-8/SOIC-8/TSSOP-8"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>853831f7-1d73-4822-a902-4d8f4785bc90</tstamps>
+    </comp>
+    <comp ref="V1">
+      <value>12V</value>
+      <footprint>Connector_PinHeader_2.00mm:PinHeader_1x02_P2.00mm_Vertical</footprint>
+      <fields>
+        <field name="Spice_Model">dc(1)</field>
+        <field name="Spice_Netlist_Enabled">Y</field>
+        <field name="Spice_Primitive">V</field>
+      </fields>
+      <libsource lib="Simulation_SPICE" part="VDC" description="Voltage source, DC"/>
+      <property name="Spice_Netlist_Enabled" value="Y"/>
+      <property name="Spice_Primitive" value="V"/>
+      <property name="Spice_Model" value="dc(1)"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>4fb2577d-2e1c-480c-9060-124510b35053</tstamps>
+    </comp>
+    <comp ref="Y1">
+      <value>16MHz</value>
+      <footprint>Crystal:Crystal_HC18-U_Vertical</footprint>
+      <libsource lib="Device" part="Crystal" description="Two pin crystal"/>
+      <property name="Sheetname" value=""/>
+      <property name="Sheetfile" value="piirilevy.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>37830f51-20a5-4832-8567-ca1d894501fc</tstamps>
+    </comp>
+  </components>
+  <libparts>
+    <libpart lib="Amplifier_Operational" part="LM324">
+      <description>Low-Power, Quad-Operational Amplifiers, DIP-14/SOIC-14/SSOP-14</description>
+      <docs>http://www.ti.com/lit/ds/symlink/lm2902-n.pdf</docs>
+      <footprints>
+        <fp>SOIC*3.9x8.7mm*P1.27mm*</fp>
+        <fp>DIP*W7.62mm*</fp>
+        <fp>TSSOP*4.4x5mm*P0.65mm*</fp>
+        <fp>SSOP*5.3x6.2mm*P0.65mm*</fp>
+        <fp>MSOP*3x3mm*P0.5mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">LM324</field>
+        <field name="Datasheet">http://www.ti.com/lit/ds/symlink/lm2902-n.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="output"/>
+        <pin num="2" name="-" type="input"/>
+        <pin num="3" name="+" type="input"/>
+        <pin num="4" name="V+" type="power_in"/>
+        <pin num="5" name="+" type="input"/>
+        <pin num="6" name="-" type="input"/>
+        <pin num="7" name="" type="output"/>
+        <pin num="8" name="" type="output"/>
+        <pin num="9" name="-" type="input"/>
+        <pin num="10" name="+" type="input"/>
+        <pin num="11" name="V-" type="power_in"/>
+        <pin num="12" name="+" type="input"/>
+        <pin num="13" name="-" type="input"/>
+        <pin num="14" name="" type="output"/>
+      </pins>
+    </libpart>
+    <libpart lib="Analog_ADC" part="MCP3202">
+      <description>A/D Converter, 12-Bit, 2-Channel, SPI Interface, 2.7V-5.5V</description>
+      <docs>http://ww1.microchip.com/downloads/en/DeviceDoc/21034D.pdf</docs>
+      <footprints>
+        <fp>DIP*W7.62mm**</fp>
+        <fp>SOIC*3.9x4.9mm*P1.27mm*</fp>
+        <fp>TSSOP*3x3mm*P0.65mm*</fp>
+        <fp>MSOP*3x3mm*P0.65mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">MCP3202</field>
+        <field name="Datasheet">http://ww1.microchip.com/downloads/en/DeviceDoc/21034D.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~{CS}/SHDN" type="input"/>
+        <pin num="2" name="CH0" type="passive"/>
+        <pin num="3" name="CH1" type="passive"/>
+        <pin num="4" name="VSS" type="power_in"/>
+        <pin num="5" name="DIN" type="input"/>
+        <pin num="6" name="DOUT" type="output"/>
+        <pin num="7" name="CLK" type="input"/>
+        <pin num="8" name="VDD/VREF" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="Buzzer">
+      <description>Buzzer, polarized</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>*Buzzer*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">BZ</field>
+        <field name="Value">Buzzer</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="-" type="passive"/>
+        <pin num="2" name="+" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="C">
+      <description>Unpolarized capacitor</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>C_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">C</field>
+        <field name="Value">C</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="Crystal">
+      <description>Two pin crystal</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>Crystal*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">Y</field>
+        <field name="Value">Crystal</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+        <pin num="2" name="2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="L">
+      <description>Inductor</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>Choke_*</fp>
+        <fp>*Coil*</fp>
+        <fp>Inductor_*</fp>
+        <fp>L_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">L</field>
+        <field name="Value">L</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+        <pin num="2" name="2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="R">
+      <description>Resistor</description>
+      <docs>~</docs>
+      <footprints>
+        <fp>R_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">R</field>
+        <field name="Value">R</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Device" part="R_POT">
+      <footprints>
+        <fp>Potentiometer*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">RV</field>
+        <field name="Value">Device_R_POT</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+        <pin num="2" name="2" type="passive"/>
+        <pin num="3" name="3" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Diode" part="1N4148">
+      <description>100V 0.15A standard switching diode, DO-35</description>
+      <docs>https://assets.nexperia.com/documents/data-sheet/1N4148_1N4448.pdf</docs>
+      <footprints>
+        <fp>D*DO?35*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">D</field>
+        <field name="Value">1N4148</field>
+        <field name="Footprint">Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal</field>
+        <field name="Datasheet">https://assets.nexperia.com/documents/data-sheet/1N4148_1N4448.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="K" type="passive"/>
+        <pin num="2" name="A" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Display_Character" part="WC1602A">
+      <description>LCD 16x2 Alphanumeric , 8 bit parallel bus, 5V VDD</description>
+      <docs>http://www.wincomlcd.com/pdf/WC1602A-SFYLYHTC06.pdf</docs>
+      <footprints>
+        <fp>*WC*1602A*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">DS1</field>
+        <field name="Value">MC21605H6W</field>
+        <field name="Footprint">Connector_PinHeader_2.00mm:PinHeader_1x12_P2.00mm_Vertical</field>
+        <field name="Datasheet">http://www.wincomlcd.com/pdf/WC1602A-SFYLYHTC06.pdf</field>
+      </fields>
+      <pins>
+        <pin num="-1" name="D0" type="input"/>
+        <pin num="-2" name="D1" type="input"/>
+        <pin num="-3" name="D2" type="input"/>
+        <pin num="-4" name="D3" type="input"/>
+        <pin num="1" name="VSS" type="power_in"/>
+        <pin num="2" name="VDD" type="power_in"/>
+        <pin num="3" name="VO" type="input"/>
+        <pin num="4" name="RS" type="input"/>
+        <pin num="5" name="R/W" type="input"/>
+        <pin num="6" name="E" type="input"/>
+        <pin num="7" name="D4" type="input"/>
+        <pin num="8" name="D5" type="input"/>
+        <pin num="9" name="D6" type="input"/>
+        <pin num="10" name="D7" type="input"/>
+        <pin num="11" name="LED(+)" type="power_in"/>
+        <pin num="12" name="LED(-)" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="MCU_Microchip_ATmega" part="ATmega328P-PU">
+      <footprints>
+        <fp>DIP*W7.62mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">MCU_Microchip_ATmega_ATmega328P-PU</field>
+        <field name="Footprint">Package_DIP:DIP-28_W7.62mm</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~{RESET}/PC6" type="bidirectional"/>
+        <pin num="2" name="PD0" type="bidirectional"/>
+        <pin num="3" name="PD1" type="bidirectional"/>
+        <pin num="4" name="PD2" type="bidirectional"/>
+        <pin num="5" name="PD3" type="bidirectional"/>
+        <pin num="6" name="PD4" type="bidirectional"/>
+        <pin num="7" name="VCC" type="power_in"/>
+        <pin num="8" name="GND" type="power_in"/>
+        <pin num="9" name="XTAL1/PB6" type="bidirectional"/>
+        <pin num="10" name="XTAL2/PB7" type="bidirectional"/>
+        <pin num="11" name="PD5" type="bidirectional"/>
+        <pin num="12" name="PD6" type="bidirectional"/>
+        <pin num="13" name="PD7" type="bidirectional"/>
+        <pin num="14" name="PB0" type="bidirectional"/>
+        <pin num="15" name="PB1" type="bidirectional"/>
+        <pin num="16" name="PB2" type="bidirectional"/>
+        <pin num="17" name="PB3" type="bidirectional"/>
+        <pin num="18" name="PB4" type="bidirectional"/>
+        <pin num="19" name="PB5" type="bidirectional"/>
+        <pin num="20" name="AVCC" type="power_in"/>
+        <pin num="21" name="AREF" type="passive"/>
+        <pin num="22" name="GND" type="passive"/>
+        <pin num="23" name="PC0" type="bidirectional"/>
+        <pin num="24" name="PC1" type="bidirectional"/>
+        <pin num="25" name="PC2" type="bidirectional"/>
+        <pin num="26" name="PC3" type="bidirectional"/>
+        <pin num="27" name="PC4" type="bidirectional"/>
+        <pin num="28" name="PC5" type="bidirectional"/>
+      </pins>
+    </libpart>
+    <libpart lib="Memory_NVRAM" part="47C16">
+      <description>16kbit I2C serial EERAM, SRAM with EEPROM backup, 4.5-5.5V, DIP-8/SOIC-8/TSSOP-8</description>
+      <docs>http://ww1.microchip.com/downloads/en/DeviceDoc/20005371C.pdf</docs>
+      <footprints>
+        <fp>DIP*W7.62mm*</fp>
+        <fp>SOIC*3.9x4.9mm*P1.27mm*</fp>
+        <fp>TSSOP*4.4x3mm*P0.65mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">47C16</field>
+        <field name="Datasheet">http://ww1.microchip.com/downloads/en/DeviceDoc/20005371C.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="VCAP" type="power_in"/>
+        <pin num="2" name="A1" type="input"/>
+        <pin num="3" name="A2" type="input"/>
+        <pin num="4" name="VSS" type="power_in"/>
+        <pin num="5" name="SDA" type="bidirectional"/>
+        <pin num="6" name="SCL" type="input"/>
+        <pin num="7" name="HS" type="input"/>
+        <pin num="8" name="VCC" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="Regulator_Linear" part="uA7805">
+      <description>Positive 1A 35V Linear Regulator, Fixed Output 5V, TO-220/TO-263</description>
+      <docs>http://www.ti.com/lit/ds/symlink/ua78.pdf</docs>
+      <footprints>
+        <fp>TO?263*</fp>
+        <fp>TO?220*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">uA7805</field>
+        <field name="Datasheet">http://www.ti.com/lit/ds/symlink/ua78.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="IN" type="power_in"/>
+        <pin num="2" name="GND" type="power_in"/>
+        <pin num="3" name="OUT" type="power_out"/>
+      </pins>
+    </libpart>
+    <libpart lib="Regulator_Switching" part="MAX5035AUPA">
+      <description>1A, High-Efficiency Step-Down DC-DC Converter, 3.3V fixed output voltage, Vin 76V, PDIP-8</description>
+      <docs>http://datasheets.maximintegrated.com/en/ds/MAX5035.pdf</docs>
+      <footprints>
+        <fp>DIP*W7.62mm*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">MAX5035AUPA</field>
+        <field name="Footprint">Package_DIP:DIP-8_W7.62mm</field>
+        <field name="Datasheet">http://datasheets.maximintegrated.com/en/ds/MAX5035.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="BST" type="passive"/>
+        <pin num="2" name="VD" type="passive"/>
+        <pin num="3" name="SGND" type="power_in"/>
+        <pin num="4" name="FB" type="input"/>
+        <pin num="5" name="ON/~{OFF}" type="input"/>
+        <pin num="6" name="GND" type="power_in"/>
+        <pin num="7" name="VIN" type="power_in"/>
+        <pin num="8" name="LX" type="output"/>
+      </pins>
+    </libpart>
+    <libpart lib="Sensor_Temperature" part="PT100">
+      <description>PT100 platinum temperature sensor (RTD)</description>
+      <docs>https://www.heraeus.com/media/media/group/doc_group/products_1/hst/sot_to/de_15/to_92_d.pdf</docs>
+      <footprints>
+        <fp>TO?92*</fp>
+        <fp>PIN?ARRAY*</fp>
+        <fp>bornier*</fp>
+        <fp>Terminal?Block*</fp>
+        <fp>SOD70*</fp>
+        <fp>R*1206*</fp>
+        <fp>R*0805*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">TH</field>
+        <field name="Value">PT100</field>
+        <field name="Datasheet">https://www.heraeus.com/media/media/group/doc_group/products_1/hst/sot_to/de_15/to_92_d.pdf</field>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Simulation_SPICE" part="VDC">
+      <description>Voltage source, DC</description>
+      <docs>~</docs>
+      <fields>
+        <field name="Reference">V</field>
+        <field name="Value">VDC</field>
+        <field name="Datasheet">~</field>
+        <field name="Spice_Netlist_Enabled">Y</field>
+        <field name="Spice_Primitive">V</field>
+        <field name="Spice_Model">dc(1)</field>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Switch" part="SW_Push">
+      <description>Push button switch, generic, two pins</description>
+      <docs>~</docs>
+      <fields>
+        <field name="Reference">SW</field>
+        <field name="Value">SW_Push</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+        <pin num="2" name="2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="Switch" part="SW_SPST">
+      <description>Single Pole Single Throw (SPST) switch</description>
+      <docs>~</docs>
+      <fields>
+        <field name="Reference">SW</field>
+        <field name="Value">SW_SPST</field>
+        <field name="Datasheet">~</field>
+      </fields>
+      <pins>
+        <pin num="1" name="A" type="passive"/>
+        <pin num="2" name="B" type="passive"/>
+      </pins>
+    </libpart>
+  </libparts>
+  <libraries>
+    <library logical="Amplifier_Operational">
+      <uri>/usr/share/kicad/symbols//Amplifier_Operational.kicad_sym</uri>
+    </library>
+    <library logical="Analog_ADC">
+      <uri>/usr/share/kicad/symbols//Analog_ADC.kicad_sym</uri>
+    </library>
+    <library logical="Device">
+      <uri>/usr/share/kicad/symbols//Device.kicad_sym</uri>
+    </library>
+    <library logical="Diode">
+      <uri>/usr/share/kicad/symbols//Diode.kicad_sym</uri>
+    </library>
+    <library logical="Display_Character">
+      <uri>/usr/share/kicad/symbols//Display_Character.kicad_sym</uri>
+    </library>
+    <library logical="MCU_Microchip_ATmega">
+      <uri>/usr/share/kicad/symbols//MCU_Microchip_ATmega.kicad_sym</uri>
+    </library>
+    <library logical="Memory_NVRAM">
+      <uri>/usr/share/kicad/symbols//Memory_NVRAM.kicad_sym</uri>
+    </library>
+    <library logical="Regulator_Linear">
+      <uri>/usr/share/kicad/symbols//Regulator_Linear.kicad_sym</uri>
+    </library>
+    <library logical="Regulator_Switching">
+      <uri>/usr/share/kicad/symbols//Regulator_Switching.kicad_sym</uri>
+    </library>
+    <library logical="Sensor_Temperature">
+      <uri>/usr/share/kicad/symbols//Sensor_Temperature.kicad_sym</uri>
+    </library>
+    <library logical="Simulation_SPICE">
+      <uri>/usr/share/kicad/symbols//Simulation_SPICE.kicad_sym</uri>
+    </library>
+    <library logical="Switch">
+      <uri>/usr/share/kicad/symbols//Switch.kicad_sym</uri>
+    </library>
+  </libraries>
+  <nets>
+    <net code="1" name="BUZZER">
+      <node ref="R18" pin="1" pintype="passive"/>
+      <node ref="U3" pin="5" pinfunction="PD3" pintype="bidirectional"/>
+    </net>
+    <net code="2" name="GND">
+      <node ref="BZ1" pin="2" pinfunction="+" pintype="passive"/>
+      <node ref="C1" pin="1" pintype="passive"/>
+      <node ref="C10" pin="1" pintype="passive"/>
+      <node ref="C11" pin="2" pintype="passive"/>
+      <node ref="C12" pin="2" pintype="passive"/>
+      <node ref="C13" pin="1" pintype="passive"/>
+      <node ref="C15" pin="1" pintype="passive"/>
+      <node ref="C16" pin="1" pintype="passive"/>
+      <node ref="C17" pin="1" pintype="passive"/>
+      <node ref="C18" pin="1" pintype="passive"/>
+      <node ref="C2" pin="2" pintype="passive"/>
+      <node ref="C4" pin="2" pintype="passive"/>
+      <node ref="C6" pin="2" pintype="passive"/>
+      <node ref="C7" pin="2" pintype="passive"/>
+      <node ref="C8" pin="2" pintype="passive"/>
+      <node ref="C9" pin="2" pintype="passive"/>
+      <node ref="D1" pin="2" pinfunction="A" pintype="passive"/>
+      <node ref="DS1" pin="1" pinfunction="VSS" pintype="power_in"/>
+      <node ref="DS1" pin="5" pinfunction="R/W" pintype="input"/>
+      <node ref="R11" pin="1" pintype="passive"/>
+      <node ref="R12" pin="2" pintype="passive"/>
+      <node ref="R17" pin="2" pintype="passive"/>
+      <node ref="R19" pin="1" pintype="passive"/>
+      <node ref="R3" pin="1" pintype="passive"/>
+      <node ref="R4" pin="2" pintype="passive"/>
+      <node ref="RV1" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="SW1" pin="1" pinfunction="A" pintype="passive"/>
+      <node ref="SW2" pin="2" pinfunction="2" pintype="passive"/>
+      <node ref="SW3" pin="2" pinfunction="2" pintype="passive"/>
+      <node ref="SW4" pin="2" pinfunction="2" pintype="passive"/>
+      <node ref="U2" pin="2" pinfunction="GND" pintype="power_in"/>
+      <node ref="U3" pin="21" pinfunction="AREF" pintype="passive"/>
+      <node ref="U3" pin="22" pinfunction="GND" pintype="passive"/>
+      <node ref="U3" pin="8" pinfunction="GND" pintype="power_in"/>
+      <node ref="U4" pin="3" pinfunction="SGND" pintype="power_in"/>
+      <node ref="U4" pin="6" pinfunction="GND" pintype="power_in"/>
+      <node ref="U5" pin="4" pinfunction="VSS" pintype="power_in"/>
+      <node ref="U6" pin="4" pinfunction="VSS" pintype="power_in"/>
+      <node ref="V1" pin="2" pintype="passive"/>
+    </net>
+    <net code="3" name="I2C_SCL">
+      <node ref="R20" pin="2" pintype="passive"/>
+      <node ref="U3" pin="28" pinfunction="PC5" pintype="bidirectional"/>
+      <node ref="U6" pin="6" pinfunction="SCL" pintype="input"/>
+    </net>
+    <net code="4" name="I2C_SDA">
+      <node ref="R21" pin="1" pintype="passive"/>
+      <node ref="U3" pin="27" pinfunction="PC4" pintype="bidirectional"/>
+      <node ref="U6" pin="5" pinfunction="SDA" pintype="bidirectional"/>
+    </net>
+    <net code="5" name="LCD_AN">
+      <node ref="DS1" pin="11" pinfunction="LED(+)" pintype="power_in"/>
+      <node ref="U3" pin="6" pinfunction="PD4" pintype="bidirectional"/>
+    </net>
+    <net code="6" name="LCD_CL">
+      <node ref="DS1" pin="6" pinfunction="E" pintype="input"/>
+      <node ref="U3" pin="14" pinfunction="PB0" pintype="bidirectional"/>
+    </net>
+    <net code="7" name="LCD_D4">
+      <node ref="DS1" pin="7" pinfunction="D4" pintype="input"/>
+      <node ref="U3" pin="23" pinfunction="PC0" pintype="bidirectional"/>
+    </net>
+    <net code="8" name="LCD_D5">
+      <node ref="DS1" pin="8" pinfunction="D5" pintype="input"/>
+      <node ref="U3" pin="24" pinfunction="PC1" pintype="bidirectional"/>
+    </net>
+    <net code="9" name="LCD_D6">
+      <node ref="DS1" pin="9" pinfunction="D6" pintype="input"/>
+      <node ref="U3" pin="25" pinfunction="PC2" pintype="bidirectional"/>
+    </net>
+    <net code="10" name="LCD_D7">
+      <node ref="DS1" pin="10" pinfunction="D7" pintype="input"/>
+      <node ref="U3" pin="26" pinfunction="PC3" pintype="bidirectional"/>
+    </net>
+    <net code="11" name="LCD_RS">
+      <node ref="DS1" pin="4" pinfunction="RS" pintype="input"/>
+      <node ref="U3" pin="13" pinfunction="PD7" pintype="bidirectional"/>
+    </net>
+    <net code="12" name="Net-(BZ1-Pad1)">
+      <node ref="BZ1" pin="1" pinfunction="-" pintype="passive"/>
+      <node ref="C14" pin="2" pintype="passive"/>
+    </net>
+    <net code="13" name="Net-(C2-Pad1)">
+      <node ref="C2" pin="1" pintype="passive"/>
+      <node ref="U4" pin="2" pinfunction="VD" pintype="passive"/>
+    </net>
+    <net code="14" name="Net-(C3-Pad1)">
+      <node ref="C3" pin="1" pintype="passive"/>
+      <node ref="R14" pin="2" pintype="passive"/>
+      <node ref="R15" pin="1" pintype="passive"/>
+    </net>
+    <net code="15" name="Net-(C4-Pad1)">
+      <node ref="C4" pin="1" pintype="passive"/>
+      <node ref="R15" pin="2" pintype="passive"/>
+      <node ref="U1" pin="10" pinfunction="+" pintype="input"/>
+    </net>
+    <net code="16" name="Net-(C5-Pad1)">
+      <node ref="C5" pin="1" pintype="passive"/>
+      <node ref="D1" pin="1" pinfunction="K" pintype="passive"/>
+      <node ref="L1" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="U4" pin="8" pinfunction="LX" pintype="output"/>
+    </net>
+    <net code="17" name="Net-(C5-Pad2)">
+      <node ref="C5" pin="2" pintype="passive"/>
+      <node ref="U4" pin="1" pinfunction="BST" pintype="passive"/>
+    </net>
+    <net code="18" name="Net-(C7-Pad1)">
+      <node ref="C7" pin="1" pintype="passive"/>
+      <node ref="R16" pin="2" pintype="passive"/>
+      <node ref="R17" pin="1" pintype="passive"/>
+      <node ref="U2" pin="1" pinfunction="IN" pintype="power_in"/>
+    </net>
+    <net code="19" name="Net-(C8-Pad1)">
+      <node ref="C8" pin="1" pintype="passive"/>
+      <node ref="U2" pin="3" pinfunction="OUT" pintype="power_out"/>
+      <node ref="U5" pin="3" pinfunction="CH1" pintype="passive"/>
+    </net>
+    <net code="20" name="Net-(C13-Pad2)">
+      <node ref="C13" pin="2" pintype="passive"/>
+      <node ref="U6" pin="1" pinfunction="VCAP" pintype="power_in"/>
+    </net>
+    <net code="21" name="Net-(C14-Pad1)">
+      <node ref="C14" pin="1" pintype="passive"/>
+      <node ref="R18" pin="2" pintype="passive"/>
+    </net>
+    <net code="22" name="Net-(DS1-Pad3)">
+      <node ref="DS1" pin="3" pinfunction="VO" pintype="input"/>
+      <node ref="RV1" pin="2" pinfunction="2" pintype="passive"/>
+    </net>
+    <net code="23" name="Net-(DS1-Pad12)">
+      <node ref="DS1" pin="12" pinfunction="LED(-)" pintype="power_in"/>
+      <node ref="R19" pin="2" pintype="passive"/>
+    </net>
+    <net code="24" name="Net-(R1-Pad1)">
+      <node ref="R1" pin="1" pintype="passive"/>
+      <node ref="R4" pin="1" pintype="passive"/>
+      <node ref="U1" pin="3" pinfunction="+" pintype="input"/>
+    </net>
+    <net code="25" name="Net-(R2-Pad1)">
+      <node ref="R2" pin="1" pintype="passive"/>
+      <node ref="TH1" pin="1" pintype="passive"/>
+      <node ref="U1" pin="12" pinfunction="+" pintype="input"/>
+    </net>
+    <net code="26" name="Net-(R3-Pad2)">
+      <node ref="R3" pin="2" pintype="passive"/>
+      <node ref="TH1" pin="2" pintype="passive"/>
+    </net>
+    <net code="27" name="Net-(R5-Pad1)">
+      <node ref="R5" pin="1" pintype="passive"/>
+      <node ref="U1" pin="2" pinfunction="-" pintype="input"/>
+    </net>
+    <net code="28" name="Net-(R5-Pad2)">
+      <node ref="R5" pin="2" pintype="passive"/>
+      <node ref="R7" pin="2" pintype="passive"/>
+      <node ref="R8" pin="2" pintype="passive"/>
+      <node ref="U1" pin="1" pintype="output"/>
+    </net>
+    <net code="29" name="Net-(R6-Pad1)">
+      <node ref="R6" pin="1" pintype="passive"/>
+      <node ref="U1" pin="13" pinfunction="-" pintype="input"/>
+    </net>
+    <net code="30" name="Net-(R6-Pad2)">
+      <node ref="R6" pin="2" pintype="passive"/>
+      <node ref="R7" pin="1" pintype="passive"/>
+      <node ref="R9" pin="1" pintype="passive"/>
+      <node ref="U1" pin="14" pintype="output"/>
+    </net>
+    <net code="31" name="Net-(R10-Pad2)">
+      <node ref="R10" pin="2" pintype="passive"/>
+      <node ref="R12" pin="1" pintype="passive"/>
+      <node ref="SW1" pin="2" pinfunction="B" pintype="passive"/>
+      <node ref="U4" pin="5" pinfunction="ON/~{OFF}" pintype="input"/>
+    </net>
+    <net code="32" name="Net-(R11-Pad2)">
+      <node ref="R11" pin="2" pintype="passive"/>
+      <node ref="R9" pin="2" pintype="passive"/>
+      <node ref="U1" pin="5" pinfunction="+" pintype="input"/>
+    </net>
+    <net code="33" name="Net-(R13-Pad1)">
+      <node ref="R13" pin="1" pintype="passive"/>
+      <node ref="R8" pin="1" pintype="passive"/>
+      <node ref="U1" pin="6" pinfunction="-" pintype="input"/>
+    </net>
+    <net code="34" name="Net-(R13-Pad2)">
+      <node ref="R13" pin="2" pintype="passive"/>
+      <node ref="R14" pin="1" pintype="passive"/>
+      <node ref="U1" pin="7" pintype="output"/>
+    </net>
+    <net code="35" name="SPI_MISO">
+      <node ref="U3" pin="18" pinfunction="PB4" pintype="bidirectional"/>
+      <node ref="U5" pin="6" pinfunction="DOUT" pintype="output"/>
+    </net>
+    <net code="36" name="SPI_MOSI">
+      <node ref="U3" pin="17" pinfunction="PB3" pintype="bidirectional"/>
+      <node ref="U5" pin="5" pinfunction="DIN" pintype="input"/>
+    </net>
+    <net code="37" name="SPI_SCK">
+      <node ref="U3" pin="19" pinfunction="PB5" pintype="bidirectional"/>
+      <node ref="U5" pin="7" pinfunction="CLK" pintype="input"/>
+    </net>
+    <net code="38" name="SPI_SS">
+      <node ref="U3" pin="16" pinfunction="PB2" pintype="bidirectional"/>
+      <node ref="U5" pin="1" pinfunction="~{CS}/SHDN" pintype="input"/>
+    </net>
+    <net code="39" name="SW_1">
+      <node ref="C17" pin="2" pintype="passive"/>
+      <node ref="SW4" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="U3" pin="2" pinfunction="PD0" pintype="bidirectional"/>
+    </net>
+    <net code="40" name="SW_2">
+      <node ref="C16" pin="2" pintype="passive"/>
+      <node ref="SW3" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="U3" pin="3" pinfunction="PD1" pintype="bidirectional"/>
+    </net>
+    <net code="41" name="SW_3">
+      <node ref="C15" pin="2" pintype="passive"/>
+      <node ref="SW2" pin="1" pinfunction="1" pintype="passive"/>
+      <node ref="U3" pin="1" pinfunction="~{RESET}/PC6" pintype="bidirectional"/>
+    </net>
+    <net code="42" name="VAHVISTIN_LÄHTÖ">
+      <node ref="C3" pin="2" pintype="passive"/>
+      <node ref="U1" pin="8" pintype="output"/>
+      <node ref="U1" pin="9" pinfunction="-" pintype="input"/>
+      <node ref="U5" pin="2" pinfunction="CH0" pintype="passive"/>
+    </net>
+    <net code="43" name="VCC">
+      <node ref="C12" pin="1" pintype="passive"/>
+      <node ref="C18" pin="2" pintype="passive"/>
+      <node ref="C6" pin="1" pintype="passive"/>
+      <node ref="C9" pin="1" pintype="passive"/>
+      <node ref="DS1" pin="2" pinfunction="VDD" pintype="power_in"/>
+      <node ref="L1" pin="2" pinfunction="2" pintype="passive"/>
+      <node ref="R1" pin="2" pintype="passive"/>
+      <node ref="R2" pin="2" pintype="passive"/>
+      <node ref="R20" pin="1" pintype="passive"/>
+      <node ref="R21" pin="2" pintype="passive"/>
+      <node ref="RV1" pin="3" pinfunction="3" pintype="passive"/>
+      <node ref="U3" pin="20" pinfunction="AVCC" pintype="power_in"/>
+      <node ref="U3" pin="7" pinfunction="VCC" pintype="power_in"/>
+      <node ref="U4" pin="4" pinfunction="FB" pintype="input"/>
+      <node ref="U5" pin="8" pinfunction="VDD/VREF" pintype="power_in"/>
+      <node ref="U6" pin="8" pinfunction="VCC" pintype="power_in"/>
+    </net>
+    <net code="44" name="V_KÄYTTÖ">
+      <node ref="C1" pin="2" pintype="passive"/>
+      <node ref="R10" pin="1" pintype="passive"/>
+      <node ref="R16" pin="1" pintype="passive"/>
+      <node ref="U4" pin="7" pinfunction="VIN" pintype="power_in"/>
+      <node ref="V1" pin="1" pintype="passive"/>
+    </net>
+    <net code="45" name="XTAL_1">
+      <node ref="C11" pin="1" pintype="passive"/>
+      <node ref="U3" pin="9" pinfunction="XTAL1/PB6" pintype="bidirectional"/>
+      <node ref="Y1" pin="2" pinfunction="2" pintype="passive"/>
+    </net>
+    <net code="46" name="XTAL_2">
+      <node ref="C10" pin="2" pintype="passive"/>
+      <node ref="U3" pin="10" pinfunction="XTAL2/PB7" pintype="bidirectional"/>
+      <node ref="Y1" pin="1" pinfunction="1" pintype="passive"/>
+    </net>
+    <net code="47" name="unconnected-(DS1-Pad-1)">
+      <node ref="DS1" pin="-1" pinfunction="D0" pintype="input+no_connect"/>
+    </net>
+    <net code="48" name="unconnected-(DS1-Pad-2)">
+      <node ref="DS1" pin="-2" pinfunction="D1" pintype="input+no_connect"/>
+    </net>
+    <net code="49" name="unconnected-(DS1-Pad-3)">
+      <node ref="DS1" pin="-3" pinfunction="D2" pintype="input+no_connect"/>
+    </net>
+    <net code="50" name="unconnected-(DS1-Pad-4)">
+      <node ref="DS1" pin="-4" pinfunction="D3" pintype="input+no_connect"/>
+    </net>
+    <net code="51" name="unconnected-(U3-Pad4)">
+      <node ref="U3" pin="4" pinfunction="PD2" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="52" name="unconnected-(U3-Pad11)">
+      <node ref="U3" pin="11" pinfunction="PD5" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="53" name="unconnected-(U3-Pad12)">
+      <node ref="U3" pin="12" pinfunction="PD6" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="54" name="unconnected-(U3-Pad15)">
+      <node ref="U3" pin="15" pinfunction="PB1" pintype="bidirectional+no_connect"/>
+    </net>
+    <net code="55" name="unconnected-(U6-Pad2)">
+      <node ref="U6" pin="2" pinfunction="A1" pintype="input+no_connect"/>
+    </net>
+    <net code="56" name="unconnected-(U6-Pad3)">
+      <node ref="U6" pin="3" pinfunction="A2" pintype="input+no_connect"/>
+    </net>
+    <net code="57" name="unconnected-(U6-Pad7)">
+      <node ref="U6" pin="7" pinfunction="HS" pintype="input+no_connect"/>
+    </net>
+  </nets>
+</export>
