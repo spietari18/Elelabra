@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "piirilevy")(type "KiCad")(uri "${KIPRJMOD}/piirilevy.pretty")(options "")(descr ""))
+)
