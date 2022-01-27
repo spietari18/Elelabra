@@ -1383,7 +1383,6 @@
     )
   )
 
-
   (junction (at 31.75 67.31) (diameter 0) (color 0 0 0 0)
     (uuid 015d0d94-1edd-4685-b5dd-490d0b3cdff9)
   )
@@ -2714,7 +2713,7 @@
     )
   )
 
-  (symbol (lib_id "Amplifier_Operational:LM324") (at 73.66 74.93 0) (mirror x) (unit 1)
+  (symbol (lib_id "Amplifier_Operational:LM324") (at 73.66 74.93 0) (mirror x) (unit 3)
     (in_bom yes) (on_board yes)
     (uuid 0345509e-dbff-4fb5-9059-bc7781b5488b)
     (property "Reference" "U3" (id 0) (at 73.66 80.01 0))
@@ -2725,9 +2724,9 @@
     (property "Datasheet" "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" (id 3) (at 74.93 80.01 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid a583de23-3c74-4007-bdce-ecc6f9dbe010))
-    (pin "2" (uuid 5d13afac-813d-4f65-bcff-86304a918ac8))
-    (pin "3" (uuid b0a2c2d9-f034-4f20-bc70-cf94a7a35e01))
+    (pin "10" (uuid c2e901e5-a4cd-4374-af38-0566255ecbea))
+    (pin "8" (uuid 844f01a0-ac23-4a99-910e-4e91c579bb2b))
+    (pin "9" (uuid 1cbbfee4-06dd-44ee-af91-d336edf2459c))
   )
 
   (symbol (lib_id "power:VCC") (at 194.31 111.76 0) (unit 1)
@@ -4000,7 +3999,7 @@
     (pin "2" (uuid 4beffe65-3203-42bd-af27-7f34bde75ba7))
   )
 
-  (symbol (lib_id "Amplifier_Operational:LM324") (at 111.76 72.39 0) (mirror x) (unit 1)
+  (symbol (lib_id "Amplifier_Operational:LM324") (at 111.76 72.39 0) (mirror x) (unit 4)
     (in_bom yes) (on_board yes)
     (uuid d674ea40-4701-4f3e-93d0-02b0a7afdc20)
     (property "Reference" "U5" (id 0) (at 111.76 77.47 0))
@@ -4011,9 +4010,9 @@
     (property "Datasheet" "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" (id 3) (at 113.03 77.47 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 6ce87132-7ae8-477a-86b8-866f02c6b020))
-    (pin "2" (uuid d8462d3a-47c4-42d5-aafb-3491f37253a1))
-    (pin "3" (uuid 9d9824d5-4b8a-47cb-8d92-223ebc595e33))
+    (pin "12" (uuid 1c7ec62e-d96c-4a0d-ac32-e919b90a3c5b))
+    (pin "13" (uuid c2079b33-906e-4c67-b0b6-7e228acc166b))
+    (pin "14" (uuid 9ad8e352-005c-4299-8beb-56f3b58c96b7))
   )
 
   (symbol (lib_id "power:GND") (at 110.49 187.96 0) (unit 1)
@@ -4032,7 +4031,7 @@
     (pin "1" (uuid bdd1c635-9dfb-4bc3-8ccf-d0f33d451f43))
   )
 
-  (symbol (lib_id "Amplifier_Operational:LM324") (at 45.72 85.09 0) (unit 1)
+  (symbol (lib_id "Amplifier_Operational:LM324") (at 45.72 85.09 0) (unit 2)
     (in_bom yes) (on_board yes)
     (uuid de0d0b26-5dbb-4b0b-8931-3a9405d7e432)
     (property "Reference" "U2" (id 0) (at 45.72 75.7682 0))
@@ -4043,9 +4042,9 @@
     (property "Datasheet" "http://www.ti.com/lit/ds/symlink/lm2902-n.pdf" (id 3) (at 46.99 80.01 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 4bd34a04-cb3c-4334-90d6-77fb2fa784a6))
-    (pin "2" (uuid 1b0c5fd8-a989-44f7-b2c5-f4dd62106fa2))
-    (pin "3" (uuid d540f930-f1b1-4dbe-a658-53337bc671f7))
+    (pin "5" (uuid 0e18138e-f1a3-4288-bb34-3b6bcfb64ff6))
+    (pin "6" (uuid d9198b20-68ab-4f03-9039-95a74aeba0d6))
+    (pin "7" (uuid e6cd2cdd-d49b-4491-8a15-4c46254b5c0a))
   )
 
   (symbol (lib_id "Device:C") (at 127 158.75 270) (unit 1)
@@ -4592,16 +4591,16 @@
       (reference "U1") (unit 1) (value "LM324") (footprint "Package_DIP:DIP-14_W10.16mm_LongPads")
     )
     (path "/de0d0b26-5dbb-4b0b-8931-3a9405d7e432"
-      (reference "U2") (unit 1) (value "LM324") (footprint "")
+      (reference "U2") (unit 2) (value "LM324") (footprint "")
     )
     (path "/0345509e-dbff-4fb5-9059-bc7781b5488b"
-      (reference "U3") (unit 1) (value "LM324") (footprint "")
+      (reference "U3") (unit 3) (value "LM324") (footprint "")
     )
     (path "/b456cffc-d9d7-4c91-91f2-36ec9a65dd1b"
       (reference "U4") (unit 1) (value "MAX5033B") (footprint "Package_DIP:DIP-8_W7.62mm_LongPads")
     )
     (path "/d674ea40-4701-4f3e-93d0-02b0a7afdc20"
-      (reference "U5") (unit 1) (value "LM324") (footprint "")
+      (reference "U5") (unit 4) (value "LM324") (footprint "")
     )
     (path "/b3ed1808-38b3-403b-99a9-68a2b023b131"
       (reference "U6") (unit 1) (value "uA7805") (footprint "")
