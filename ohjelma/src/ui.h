@@ -147,13 +147,13 @@ void submenu_text(const struct submenu_entry *);
 
 bool __yesno(const char *);
 
-bool __select_bool(const char *, bool);
+void __select_bool(const char *, bool *);
 
-float __select_float(const char *,
-	float, float, float, float);
+void __select_float(const char *,
+	float *, float, float, float);
 
-uint16_t __select_uint(const char *,
-	uint16_t, uint16_t, uint16_t, uint16_t);
+void __select_uint(const char *,
+	uint16_t *, uint16_t, uint16_t, uint16_t);
 
 #define yesno(msg) \
 	__yesno(PSTR(msg))

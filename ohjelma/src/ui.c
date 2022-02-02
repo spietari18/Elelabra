@@ -424,11 +424,10 @@ static bool s_bool_right(bool *target)
 	return false;
 }
 
-bool __select_bool(const char *msg, bool target)
+void __select_bool(const char *msg, bool *target)
 {
-	user_select(&target, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
+	user_select(target, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_bool_value, &s_bool_left, &s_bool_right, &s_done, NULL, NULL);
-	return target;
 }
 
 struct sfarg
@@ -480,16 +479,16 @@ static void s_float_hright(struct sfarg *target)
 	s_float_value(target);
 }
 
-float __select_float(const char *msg,
-	float value, float min, float max, float step)
+void __select_float(const char *msg,
+	float *target, float min, float max, float step)
 {
-	struct sfarg arg = {value, min, max, step};
+	struct sfarg arg = {*target, min, max, step};
 
 	user_select(&arg, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_float_value, &s_float_left, &s_float_right, &s_done,
 		&s_float_hleft, &s_float_hright);
 
-	return arg.value;
+	*target = arg.value;
 }
 
 struct siarg
@@ -549,14 +548,14 @@ static void s_uint_hright(struct sfarg *target)
 	s_uint_value(target);
 }
 
-uint16_t __select_uint(const char *msg, uint16_t value,
+void __select_uint(const char *msg, uint16_t *target,
 	uint16_t min, uint16_t max, uint16_t step)
 {
-	struct siarg arg = {value, min, max, step};
+	struct siarg arg = {*target, min, max, step};
 
 	user_select(&arg, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_uint_value, &s_uint_left, &s_uint_right, &s_done,
 		&s_uint_hleft, &s_uint_hright);
 
-	return arg.value;
+	*target = arg.value;
 }

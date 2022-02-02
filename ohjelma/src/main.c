@@ -40,11 +40,13 @@ static bool S_change;
 static float T_obs_max = -INF;
 static float T_obs_min =  INF;
 
-static float T_lim_max =  INF;
-static float T_lim_min = -INF;
+static float T_lim_max =  20.0;
+static float T_lim_min = -20.0;
 
 static bool alarm_on;
-static bool alarm_enabled = true;
+static bool alarm_enabled = false;
+static bool buzzer_enabled = true;
+static bool flash_backlight = true;
 
 void task_temperature()
 {
@@ -120,7 +122,7 @@ void task_voltage()
 
 /* globaalit taskit */
 static struct interval_task global_tasks[] = {
-	//DEF_TASK(&task_voltage, 1000),
+	DEF_TASK(&task_voltage, 1000),
 	//DEF_TASK(&test_task, 500)
 };
 
@@ -249,17 +251,17 @@ static void v_menu_loop() { menu_loop(); }
 
 static void a_create()
 {
-
+	// lisää piste
 }
 
 static void a_delete()
 {
-
+	// poista piste
 }
 
 static void a_edit()
 {
-
+	// muokkaa pistettä
 }
 
 static void a_empty()
@@ -278,27 +280,39 @@ static void a_restore()
 
 static void o_alarm_high()
 {
-	select_float("ALARM HIGH", 0.0, -20.0, 20.0, 0.1);
+	select_float("ALARM HIGH", &T_lim_max, T_lim_min, 30.0, 0.1);
 }
 
 static void o_alarm_low()
 {
-	select_float("ALARM LOW", 0.0, -20.0, 20.0, 0.1);
+	select_float("ALARM LOW", &T_lim_min, -30.0, T_lim_max, 0.1);
 }
 
 static void o_alarm_enable()
 {
-	select_bool("ENABLE ALARM", true);
+	select_bool("ENABLE ALARM", &alarm_enabled);
 }
 
 static void o_buzzer()
 {
-	select_uint("TEST", 20, 0, 32, 1);
+	select_bool("ENABLE BUZZER", &buzzer_enabled);
 }
 
 static void o_backlight()
 {
-	select_bool("FLASH BACKLIGHT", false);
+	select_bool("FLASH BACKLIGHT", &flash_backlight);
+}
+
+static void menu_enter_and_commit()
+{
+	/* laske PNS kertoimet uudelleen */
+	compute_lss_coefs();
+
+	// tässä välissä uudet pisteet voi
+	// kirjoittaa EERAM:iin
+	
+	/* valikkoon */
+	menu_enter();
 }
 
 DEF_PSTR_PTR(CREA, "CREATE");
@@ -327,7 +341,7 @@ DEF_SUBMENU(actions) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(EDIT), NULL, NULL, &a_edit),
 	SUBMENU_ENTRY(REF_PSTR_PTR(EMPT), NULL, NULL, &a_empty),
 	SUBMENU_ENTRY(REF_PSTR_PTR(REST), NULL, NULL, &a_restore),
-	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter),
+	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter_and_commit),
 };
 
 DEF_SUBMENU(options) = {
