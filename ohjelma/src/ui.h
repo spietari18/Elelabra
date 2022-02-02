@@ -15,6 +15,8 @@
 #define UI_OPTS 4
 #define UI_ERRR 5
 
+#define UI_STATE_COUNT 6
+
 /* Monta bittiä tilassa on. */
 #define UI_BITS \
 	(8*sizeof(int) - __builtin_clz(UI_ERRR))
@@ -111,5 +113,34 @@ void prog_dec();
 
 /* Suurenna edistymispalkkia yhdellä. */
 void prog_inc();
+
+struct submenu_entry
+{
+	const void *name;
+	callback_t init;
+	callback_t loop;
+	callback_t click;
+};
+
+#define SM_INIT 0
+#define SM_LOOP 1
+#define SM_CLCK 2
+
+void submenu_init(const struct submenu_entry *, uint8_t);
+void submenu_poll(const struct submenu_entry *, uint8_t);
+void submenu_docb(const struct submenu_entry *, uint8_t);
+void submenu_text(const struct submenu_entry *);
+
+#define DEF_SUBMENU(name) \
+	static const struct submenu_entry name[] PROGMEM
+
+#define SUBMENU_ENTRY(name, init, loop, click) \
+	{(void *)(name), (init), (loop), (click)}
+
+#define SUBMENU_INIT(name) \
+	submenu_init((name), ARRAY_SIZE(name))
+
+#define SUBMENU_POLL(name) \
+	submenu_poll((name), ARRAY_SIZE(name))
 
 #endif // !UI_H

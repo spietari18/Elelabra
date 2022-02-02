@@ -92,8 +92,11 @@ uint32_t micros()
 	return ((tmp << 8) | cnt)*(64*CLK_US);
 }
 
+/* tämä on INTERVAL() makrolle */
+uint32_t interval_ts;
+
 /* Palauttaa true tiettynä ajanjaksona. */
-bool interval(uint16_t ms_int, uint32_t *ts)
+bool interval(uint32_t ms_int, uint32_t *ts)
 {
 	uint32_t tmp;
 
@@ -104,6 +107,24 @@ bool interval(uint16_t ms_int, uint32_t *ts)
 	}
 
 	return false;
+}
+
+/* Kutsu interval_task:eja niille määritetyin väliajoin. */
+void interval_tasks(struct interval_task *tasks, uint8_t n_tasks)
+{
+	uint32_t tmp;
+
+	while (n_tasks--)
+	{
+		tmp = millis();
+
+		/* suoritetaanko tämä taski nyt */
+		if ((tmp - tasks[n_tasks].last) < tasks[n_tasks].ival)
+			continue;
+
+		tasks[n_tasks].func();
+		tasks[n_tasks].last = tmp;
+	}
 }
 
 /* Lue ja lähetä yksi tavu SPI:llä. */
@@ -304,7 +325,7 @@ static inline bool eeram_tx_addr(uint16_t addr)
 /* Lue tavu EERAM:ilta. */
 bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
 {
-	bool result;
+	bool result = false;
 
 	/* jos ei käytetä nykyistä osoitetta, lähetä osoite */
 	if ((addr != EERAM_ADDR) && !eeram_tx_addr(addr))
@@ -410,4 +431,10 @@ void noreturn reset()
 	WDTCSR = 0;
 	SET(WDTCSR, WDE);
 	while (1);
+}
+
+/* Liian alhainen jännite? */
+bool undervolt()
+{
+	return false;
 }

@@ -4,26 +4,7 @@
 #include "button.h"
 #include "temp_util.h"
 
-static uint32_t ts;
-#define INTERVAL(F) \
-	if (interval((F), &ts))
-
-uint16_t updates;
-
-/* Taustalla kutsuttava päivitysfunktio.
- * Ideana se, että lämpötilaa päivitetään
- * myös valikossa TEMP näkymän lisäksi.
- */
-void global_update()
-{
-	// TESTIKOODI
-	INTERVAL(100) {
-		lcd_put_P_const("      ", 0, LEFT);
-		lcd_put_uint(updates, 6, 0, LEFT);
-		lcd_update();
-		updates++;
-	}
-}
+static struct button_state s;
 
 /* Valikon teksti. */
 DEF_PSTR_PTR(TEMP_1, "TEMPERATURE");
@@ -32,8 +13,6 @@ DEF_PSTR_PTR(CLBR_1, "CALIBRATION");
 DEF_PSTR_PTR(CLBR_2, "CLBR");
 DEF_PSTR_PTR(OPTS_1, "OPTIONS");
 DEF_PSTR_PTR(OPTS_2, "OPTS");
-
-void callback() {}
 
 /* Valikon konfiguraatio. */
 MENU_CONFIG = {
@@ -51,129 +30,262 @@ MENU_CONFIG = {
 		OPTS, NULL, NULL, NULL), 
 };
 
-/* lämpötila */
 static float T;
 
-/* lämpömittarin näkemä minimi- ja maksimilämpötila */
-static float obs_min =  INF;
-static float obs_max = -INF;
+static uint16_t S;
 
-/* asetetut rajat */
-static float lim_min = -INF;
-static float lim_max =  INF;
+static bool T_change;
+static bool S_change;
 
-bool common_update()
+static float T_obs_max = -INF;
+static float T_obs_min =  INF;
+
+static float T_lim_max =  INF;
+static float T_lim_min = -INF;
+
+static bool alarm_on;
+static bool alarm_enabled = true;
+
+void task_temperature()
 {
-	INTERVAL(1000/SAMPLE_RATE) {
+	float old = T; 
+
+	/* PNS sovitus tarvitsee vähintään 2 pistettä */
+	if (unlikely(n_data_points < 2)) {
+		/* tämän voi tarkastaa isfinite():llä */
+		T = INF;
+
+	} else {
 		/* päivitä lämpötila */
 		T = read_temp();
-	
+
 		/* päivitä nähdyt maksimi ja minimi */
-		if (unlikely(T > obs_max))
-			obs_max = T;
-		else if (unlikely(T < obs_min))
-			obs_min = T;
+		if (unlikely(T > T_obs_max))
+			T_obs_max = T;
+		else if (unlikely(T < T_obs_min))
+			T_obs_min = T;
+	}
 
-		/* päivitä lämpötilat näytöllä */
-		if (!in_menu)
+	if (T != old)
+		T_change = true;
+}
+
+void task_sample()
+{
+	uint16_t old = S;
+
+	/* lue näyte AD-muuntimelta */
+	S = adc_sample(ADC_CH0);
+
+	if (S != old)
+		S_change = true;
+}
+
+void task_alarm()
+{
+	if (!alarm_enabled) {
+		if (unlikely(alarm_on))
+			goto alarm_off;
+
+		return;
+	}
+
+	if (unlikely((T < T_lim_min) || (T > T_lim_max))) {
+		blink_begin();
+		beep_begin();
+
+		alarm_on = true;
+	} else {
+alarm_off:
+		blink_end();
+		beep_end();
+
+		alarm_on = false;
+	}
+}
+
+void task_voltage()
+{
+	if (unlikely(undervolt()))
+		ERROR(TEST);
+}
+
+//uint8_t count;
+
+//void test_task()
+//{
+//	lcd_put_uint(count++, 3, 0, CENTER);
+//	lcd_update();
+//}
+
+/* globaalit taskit */
+static struct interval_task global_tasks[] = {
+	//DEF_TASK(&task_voltage, 1000),
+	//DEF_TASK(&test_task, 500)
+};
+
+/* nämä on pakko laittaa RAM muistiin, koska
+ * interval_tasks() kirjoittaa structeihin
+ */
+#define DEF_TASKS(state) \
+	static struct interval_task tasks_##state[]
+
+#define REF_TASKS(state) \
+	[state] = tasks_##state
+
+#define CNT_TASKS(state) \
+	ARRAY_SIZE(tasks_##state)
+
+#define SAMPLE_INTERVAL (1000/SAMPLE_RATE)
+#define ALARM_INTERVAL  1000
+
+DEF_TASKS(UI_SPLH) = {};
+
+DEF_TASKS(UI_MENU) = {
+	DEF_TASK(&task_temperature, SAMPLE_INTERVAL),
+	DEF_TASK(&task_alarm, ALARM_INTERVAL)
+};
+
+DEF_TASKS(UI_TEMP) = {
+	DEF_TASK(&task_temperature, SAMPLE_INTERVAL),
+	DEF_TASK(&task_alarm, ALARM_INTERVAL)
+};
+
+DEF_TASKS(UI_CLBR) = {
+	DEF_TASK(&task_sample, SAMPLE_INTERVAL)
+};
+
+DEF_TASKS(UI_OPTS) = {
+	DEF_TASK(&task_temperature, SAMPLE_INTERVAL),
+	DEF_TASK(&task_alarm, ALARM_INTERVAL)
+};
+
+DEF_TASKS(UI_ERRR) = {};
+
+static struct interval_task *const ui_tasks[UI_STATE_COUNT] PROGMEM = {
+	REF_TASKS(UI_SPLH),
+	REF_TASKS(UI_MENU),
+	REF_TASKS(UI_TEMP),
+	REF_TASKS(UI_CLBR),
+	REF_TASKS(UI_OPTS),
+	REF_TASKS(UI_ERRR)
+};
+
+static const uint8_t ui_task_count[UI_STATE_COUNT] PROGMEM = {
+	CNT_TASKS(UI_SPLH),
+	CNT_TASKS(UI_MENU),
+	CNT_TASKS(UI_TEMP),
+	CNT_TASKS(UI_CLBR),
+	CNT_TASKS(UI_OPTS),
+	CNT_TASKS(UI_ERRR)
+};
+
+static callback_t menu_loop;
+
+static bool v_common_loop()
+{
+	if (T_change) {
+		/* lämpötila näytölle */
+		if (likely(isfinite(T)))
 			lcd_put_temp(T, 2, 6, 0, CENTER);
-	
-		// TÄHÄN VÄLIIN HÄLYTYSKOODI
 
+		/* ei tarpeeksi pisteitä PNS sovitukseen */
+		else
+			lcd_put_P_const("PTS<2!", 0, CENTER);
+
+		lcd_update();
+
+		T_change = false;
 		return false;
 	}
 
 	return true;
 }
 
-
-void view_limit_init()
+static void v_limit_loop()
 {
-	/* näytön staattinen teksti */
-	if (!in_menu) {
-		lcd_put_P_const("MIN", 0, LEFT);
-		lcd_put_P_const("MAX", 0, RIGHT);
-	}
-}
-
-void view_limit_loop()
-{
-	/* jos mikään ei päivity, palaa */
-	if (common_update())
+	/* jos lämpötila ei muutu, niin luetut
+	 * maksimi ja minimikään eivät muutu
+	 */
+	if (v_common_loop())
 		return;
 
-	/* näkymäkohtainen info */
-	if (!in_menu) {
-		lcd_put_temp(obs_min, 1, 5, 1, LEFT);
-		lcd_put_temp(obs_max, 1, 5, 1, RIGHT);
-		lcd_update();
-	}
+	lcd_put_temp(T_obs_min, 1, 5, 1, LEFT);
+	lcd_put_temp(T_obs_max, 1, 5, 1, RIGHT);
+	lcd_update();
 }
 
-void view_alarm_init()
+static void v_limit_init()
 {
-	/* näytön staattinen teksti */
-	if (!in_menu) {
-		lcd_put_P_const("AL-", 0, LEFT);
-		lcd_put_P_const("AL+", 0, RIGHT);
-	}
+	LCD_CLEAR;
+
+	/* staattinen teksti */
+	lcd_put_P_const("MIN", 0, LEFT);
+	lcd_put_P_const("MAX", 0, RIGHT);
+
+	menu_loop = &v_limit_loop;
+
+	T_change = true;
 }
 
-void view_alarm_loop()
+static void v_alarm_init()
 {
-	/* jos mikään ei päivity, palaa */
-	if (common_update())
-		return;
+	LCD_CLEAR;
 
-	/* näkymäkohtainen info */
-	if (!in_menu) {
-		lcd_put_temp(lim_min, 1, 5, 1, LEFT);
-		lcd_put_temp(lim_max, 1, 5, 1, RIGHT);
-		lcd_update();
-	}
+	/* staattinen teksti, rajat eivät
+	 * voi muuttua TEMP näkymässä
+	 */
+	lcd_put_P_const("AL-", 0, LEFT);
+	lcd_put_P_const("AL+", 0, RIGHT);
+	lcd_put_temp(T_lim_min, 1, 5, 1, LEFT);
+	lcd_put_temp(T_lim_max, 1, 5, 1, RIGHT);
+
+	menu_loop = &v_common_loop;
+
+	T_change = true;
 }
 
+static void v_menu_loop() { menu_loop(); }
+
+static void a_empty()
+{
+	/* näitä ei tarvitse tämän kummemmin poistaa */
+	n_data_points = 0;
+}
+
+DEF_PSTR_PTR(CREA, "CREA");
+DEF_PSTR_PTR(DELE, "DELE");
+DEF_PSTR_PTR(EDIT, "EDIT");
+DEF_PSTR_PTR(EMPT, "EMPT");
+DEF_PSTR_PTR(REST, "REST");
+DEF_PSTR_PTR(MENU, "MENU");
 DEF_PSTR_PTR(LIMT, "LIMT");
 DEF_PSTR_PTR(ALRM, "ALRM");
 
-/* TEMP näkymien takaisinkutsut. */
-static const struct {
-	const void *name;
-	callback_t init;
-	callback_t loop;
-} packed views[] PROGMEM = {
-	{REF_PSTR_PTR(LIMT), &view_limit_init, &view_limit_loop},
-	{REF_PSTR_PTR(ALRM), &view_alarm_init, &view_alarm_loop}
+DEF_SUBMENU(views) = {
+	SUBMENU_ENTRY(REF_PSTR_PTR(LIMT), &v_limit_init, &v_limit_loop, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(ALRM), &v_alarm_init, &v_common_loop, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, &v_menu_loop, &menu_enter)
 };
 
-#define view_name \
-	((const char *)pgm_read_ptr(&views[view].name))
+DEF_SUBMENU(actions) = {
+	SUBMENU_ENTRY(REF_PSTR_PTR(CREA), NULL, NULL, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(DELE), NULL, NULL, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(EDIT), NULL, NULL, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(EMPT), NULL, NULL, &a_empty),
+	SUBMENU_ENTRY(REF_PSTR_PTR(REST), NULL, NULL, &default_points),
+	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter),
+};
 
-#define view_init \
-	((callback_t)pgm_read_ptr(&views[view].init))
-
-#define view_loop \
-	((callback_t)pgm_read_ptr(&views[view].loop))
+DEF_SUBMENU(options) = {
+	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter)
+};
 
 /* noreturn ei toimi tässä, mutta viimeistään
  * linkkeri optimoi paluukoodin pois
  */
 int main()
 {
-	struct button_state s = {};
-	uint16_t S_now = 0, S_old = 0;
-
-	uint8_t counter;
-
-	/* luku jota napeilla muutetaan */
-	//float *target;
-
-	/* mikä näkymä DEFAULT näytössä on päällä */
-	uint8_t view = 0;
-
-	/* pitääkö näkymän indikaattori piirtää uudelleen */
-	bool view_redraw;
-
 	/* näppäimet lukittu */
 	bool is_locked = false;
 
@@ -206,6 +318,13 @@ int main()
 	/* ERROR() palaa tähän mistä tahansa. */
 	ERROR_RETURN;
 main_loop:
+	/* valikkotilakohtaiset taskit */
+	interval_tasks(
+		pgm_read_ptr(&ui_tasks[UI_GET_STATE & UI_MASK_NOW]),
+		pgm_read_byte(&ui_task_count[UI_GET_STATE & UI_MASK_NOW]));
+
+	/* globaalit taskit */
+	INTERVAL_TASKS(global_tasks);
 
 	switch (UI_GET_STATE) {
 	case UI_SETUP(SPLH):
@@ -261,74 +380,31 @@ main_loop:
 		/* tyhjennä näyttö */
 		LCD_CLEAR;
 
-		/* näkymän alustus */
-		view_init();
-		view_redraw = true;
+		SUBMENU_INIT(views);
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(TEMP):
-		/* näkymän päivitys */
-		view_loop();
+		/* jos näppäimet ovat lukossa, pitää kutsua
+		 * loop takaisunkutsua manuaalisesti, koska
+		 * SUBMENU_POLL() katsoo näppäinten tilan.
+		 */
+		if (is_locked)
+			submenu_docb(views, SM_LOOP);
+		else
+			SUBMENU_POLL(views);
 
-		/* piirrä näkymän indikaattoriteksti */
-		if (unlikely(view_redraw)) {
-			lcd_put_P(view_name, 4, 1, CENTER);
-			view_redraw = false;
-			lcd_update();
-		}
-
-		/* pois valikosta */
 		switch (button_update(&s)) {
 		/* näppäinten lukitus */
 		case BOTH|HOLD:
-			is_locked = !is_locked;
-
-			if (is_locked) {
+			if ((is_locked = !is_locked))
 				lcd_put_P_const("LOCK", 1, CENTER);
-				view_redraw = false;
-			} else {
-				view_redraw = true;
-			}
+			else
+				submenu_text(views);
+			lcd_update();
 
 			beep_slow();
-
-			lcd_update();
-			break;
-
-		/* näkymä eteen päin */
-		case RT|UP:
-			if (is_locked)
-				break;
-
-			beep_fast();
-
-			INC_MOD(view, ARRAY_SIZE(views));
-			view_redraw = true;
-
-			UI_SET_STATE(TEMP);
-			break;
-
-		/* näkymä taakse päin */
-		case LT|UP:
-			if (is_locked)
-				break;
-
-			beep_fast();
-
-			DEC_MOD(view, ARRAY_SIZE(views));
-			view_redraw = true;
-
-			UI_SET_STATE(TEMP);
-			break;
-
-		/* takaisin valikkoon */
-		case BOTH|UP:
-			if (is_locked)
-				break;
-			
-			menu_enter();
 			break;
 		}
 		break;
@@ -336,112 +412,34 @@ main_loop:
 	case UI_SETUP(CLBR):
 		LCD_CLEAR;
 
-		lcd_put_P_const("<EMPTY>", 0, CENTER);
-		lcd_update();
+		S_change = true;
+
+		SUBMENU_INIT(actions);
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(CLBR):
-		/* lue uusi näyte */
-		INTERVAL(1000/SAMPLE_RATE) {
-			S_now = (uint16_t)(read_sample() + 0.5);
+		if (unlikely(S_change)) {
+			lcd_put_uint(S, 4, 0, CENTER);
+			lcd_update();
 
-			/* päivitä näyte */
-			if (S_now != S_old) {
-				lcd_put_uint(S_now, 4, 1, CENTER);
-				lcd_update();
-
-				S_old = S_now;
-			}
+			S_change = false;
 		}
 
-		switch (button_update(&s)) {
-		/* testi */
-		case BOTH|HOLD:
-			ERROR(TEST);
-			break;
-
-		case RT|UP:
-		case LT|UP:
-			beep_fast();
-			break;
-
-		/* takaisin valikkoon */
-		case BOTH|UP:
-			menu_enter();
-			break;
-		}
+		SUBMENU_POLL(actions);
 		break;
 
 	case UI_SETUP(OPTS):
 		LCD_CLEAR;
 
-		//lcd_put_P_const("<EMPTY>", 0, CENTER);
-		lcd_update();
+		SUBMENU_INIT(options);
 		
-		counter = 0;
-
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(OPTS):
-
-		switch (button_update(&s)) {
-		/* testi */
-		case BOTH|HOLD:
-			ERROR(TEST);
-			break;
-
-		case RT|UP:
-
-			for (uint16_t i = 0; i < 2048; i++)
-			{
-				char c = i & 0xFF;
-
-				LCD_CLEAR;
-				lcd_put_uint(i, 6, 1, LEFT);
-				lcd_put_uint(c, 3, 1, RIGHT);
-				lcd_update();
-				_delay_ms(250);
-
-				if (!eeram_write(i, &c, 1)) {
-					lcd_put_P_const("WRITE FAILED", 0, LEFT);
-					lcd_update();
-					break;
-				}
-			}
-
-			beep_fast();
-			break;
-
-		case LT|UP:
-
-			for (uint16_t i = 0; i < 2048; i++)
-			{
-				char c;
-
-				if (!eeram_read(i, &c, 1)) {
-					lcd_put_P_const("READ FAILED", 0, LEFT);
-					lcd_update();
-					break;
-				}
-
-				LCD_CLEAR;
-				lcd_put_uint(i, 6, 1, LEFT);
-				lcd_put_uint(c, 3, 1, RIGHT);
-				lcd_update();
-				_delay_ms(250);
-			}
-
-			beep_fast();
-			break;
-
-		/* takaisin valikkoon */
-		case BOTH|UP:
-			menu_enter();
-			break;
-		}
+		SUBMENU_POLL(options);
 		break;
 	
 	case UI_SETUP(ERRR):

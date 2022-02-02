@@ -51,9 +51,6 @@ void menu_draw()
 	lcd_update();
 }
 
-//#define CALLBACK(X) if (X) (X)()
-#define CALLBACK(X)
-
 /* Päivitä valikko. */
 void menu_update()
 {
@@ -75,8 +72,8 @@ void menu_update()
 		beep_slow();
 
 		/* siirtymisen takaisinkutsu */
-		CALLBACK((callback_t)pgm_read_ptr(
-			&menu_config[entry_now].enter));
+		//CALLBACK((callback_t)pgm_read_ptr(
+		//	&menu_config[entry_now].enter));
 
 		/* aseta tila */
 		__UI_SET_STATE(pgm_read_word(
@@ -93,8 +90,8 @@ void menu_update()
 	menu_draw();
 
 	/* taustatilan päivitystakaisinkutsu */
-	CALLBACK((callback_t)pgm_read_ptr(
-		&menu_config[entry_now].update));
+	//CALLBACK((callback_t)pgm_read_ptr(
+	//	&menu_config[entry_now].update));
 
 	entry_old = entry_now;
 }
@@ -103,9 +100,9 @@ void menu_update()
 void menu_enter()
 {
 	/* poistumisen takaisinkutsu */
-	if (likely(entry_old != (uint8_t)~0))
-		CALLBACK((callback_t)pgm_read_ptr(
-			&menu_config[entry_last].exit));
+	//if (likely(entry_old != (uint8_t)~0))
+	//	CALLBACK((callback_t)pgm_read_ptr(
+	//		&menu_config[entry_last].exit));
 
 	beep_slow();
 
@@ -214,4 +211,58 @@ void prog_inc()
 	/* täytä skipatut kirjaimet */
 	while (i < k)
 		dst[i++] = pgm_read_byte(&prg[1]);
+}
+
+static uint8_t submenu_now;
+static uint8_t submenu_old;
+
+void submenu_init(const __unused struct submenu_entry *entries,
+	__unused uint8_t n_entries)
+{
+	submenu_now =  0;
+	submenu_old = ~0;
+}
+
+void submenu_poll(const struct submenu_entry *entries, uint8_t n_entries)
+{
+	switch (button_update(&s)) {
+	case RT|UP:
+		beep_fast();
+		INC_MOD(submenu_now, n_entries);
+		break;
+	
+	case LT|UP:
+		beep_fast();
+		DEC_MOD(submenu_now, n_entries);
+		break;
+	
+	case BOTH|UP:
+		beep_slow();
+		CALLBACK(pgm_read_ptr(&entries[submenu_now].click));
+		return;
+	}
+
+	if (unlikely(submenu_now != submenu_old)) {
+		CALLBACK(pgm_read_ptr(&entries[submenu_now].init));
+
+		lcd_put_P(pgm_read_ptr(
+			&entries[submenu_now].name), 4, 1, CENTER);
+
+		lcd_update();
+
+		submenu_old = submenu_now;
+	}
+
+	CALLBACK(pgm_read_ptr(&entries[submenu_now].loop));
+}
+
+void submenu_docb(const struct submenu_entry *entries, uint8_t cb)
+{
+	CALLBACK(pgm_read_ptr(&((callback_t *)&entries[entry_now].init)[cb]));
+}
+
+void submenu_text(const struct submenu_entry *entries)
+{
+	lcd_put_P(pgm_read_ptr(
+			&entries[submenu_now].name), 4, 1, CENTER);
 }

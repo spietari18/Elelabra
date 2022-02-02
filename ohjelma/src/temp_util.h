@@ -10,7 +10,7 @@
 #define MAX_SAMPLES 128
 
 /* AD muuntimen näytteistystaajuus. */
-#define SAMPLE_RATE 32 // [Hz]
+#define SAMPLE_RATE 64 // [Hz]
 
 /* Kuinka paljon näytteet saavat enintään
  * muuttua näytepuskurin mediaani.
@@ -22,6 +22,12 @@
  */
 #define T_ABS_MIN -50.0
 #define T_ABS_MAX  80.0
+
+/* nämä ovat globaaleja, jotta niitä voi manipuloida
+ * temp_util.c:n ulkopuolella
+ */
+extern uint8_t n_data_points;
+extern float data_points[MAX_POINTS][2];
 
 /* Aseta sisäänrakennetut kalibrointipisteet. */
 void default_points();

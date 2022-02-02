@@ -6,6 +6,7 @@
 
 /* GCC:n extra ominaisuudet muuttujille. */
 #define noreturn    __attribute__((noreturn))
+#define __unused    __attribute__((unused))
 #define packed      __attribute__((packed))
 #define may_alias   __attribute__((__may_alias__))
 #define fallthrough __attribute__((fallthrough))

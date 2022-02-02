@@ -10,8 +10,8 @@
 #include <avr/pgmspace.h>
 
 /* kalibrointipisteet */
-static uint8_t num_points;
-static float points[MAX_POINTS][2];
+uint8_t n_data_points;
+float data_points[MAX_POINTS][2];
 
 /* sisäänrakennetut kalibrointipisteet
  * (Laitettu ROM:iin koska säästää RAM muistia)
@@ -34,24 +34,24 @@ static void compute_lss_coefs()
 {
 	float Sx = 0, Sy = 0, Sxx = 0, Sxy = 0, Syy = 0;
 
-	for (uint8_t i = 0; i < num_points; i++)
+	for (uint8_t i = 0; i < n_data_points; i++)
 	{
-		Sx  += points[i][0];
-		Sy  += points[i][1];
-		Sxy += points[i][0]*points[i][1];
-		Sxx += points[i][0]*points[i][0];
-		Syy += points[i][1]*points[i][1];
+		Sx  += data_points[i][0];
+		Sy  += data_points[i][1];
+		Sxy += data_points[i][0]*data_points[i][1];
+		Sxx += data_points[i][0]*data_points[i][0];
+		Syy += data_points[i][1]*data_points[i][1];
 	}
 
-	lss_coefs[0] = (Sxx*Sy - Sx*Sxy)/(num_points*Sxx - Sx*Sx);
-	lss_coefs[1] = (num_points*Sxy - Sx*Sy)/(num_points*Sxx - Sx*Sx);
+	lss_coefs[0] = (Sxx*Sy - Sx*Sxy)/(n_data_points*Sxx - Sx*Sx);
+	lss_coefs[1] = (n_data_points*Sxy - Sx*Sy)/(n_data_points*Sxx - Sx*Sx);
 }
 
 /* Aseta sisäänrakennetut kalibrointipisteet. */
 void default_points()
 {
-	num_points = sizeof(points_builtin)/sizeof(points_builtin[0]);
-	(void)memcpy_P(points, points_builtin, sizeof(points_builtin));
+	n_data_points = sizeof(points_builtin)/sizeof(points_builtin[0]);
+	(void)memcpy_P(data_points, points_builtin, sizeof(points_builtin));
 	compute_lss_coefs();
 }
 

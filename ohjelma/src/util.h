@@ -20,6 +20,13 @@
 
 typedef void (*callback_t)();
 
+#define CALLBACK(X) \
+	do { \
+		callback_t tmp = (X); \
+		if (tmp) \
+			tmp(); \
+	} while (0)
+
 /* Alusta ajastin. */
 void timer_init();
 
@@ -29,8 +36,29 @@ uint32_t millis();
 /* Arduino tyylinen micros() */
 uint32_t micros();
 
+extern uint32_t interval_ts;
+
 /* Palauttaa true tiettynä ajanjaksona. */
-bool interval(uint16_t, uint32_t *);
+bool interval(uint32_t, uint32_t *);
+
+#define INTERVAL(ival) \
+	if (interval((ival), &interval_ts))
+
+struct interval_task
+{
+	callback_t func;
+	uint32_t   ival;
+	uint32_t   last;
+} packed;
+
+#define DEF_TASK(func, ival) \
+	{ (callback_t)(func), (ival), 0 }
+
+#define INTERVAL_TASKS(tasks) \
+	interval_tasks((tasks), ARRAY_SIZE(tasks))
+
+/* Kutsu interval_task:eja niille määritetyin väliajoin. */
+void interval_tasks(struct interval_task *, uint8_t);
 
 /* SPI alustus AD muuntimelle. */
 void adc_init();
@@ -78,5 +106,8 @@ bool eeram_reg_write(uint8_t, uint8_t, uint8_t);
 
 /* Nollaa mikrokontrolleri watchdog ajastimella. */
 void noreturn reset();
+
+/* Liian alhainen jännite? */
+bool undervolt();
 
 #endif // !UTIL_H
