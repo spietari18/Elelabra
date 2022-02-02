@@ -247,73 +247,20 @@ static void v_alarm_init()
 
 static void v_menu_loop() { menu_loop(); }
 
-static void a_create()
-{
-
-}
-
-static void a_delete()
-{
-
-}
-
-static void a_edit()
-{
-
-}
-
 static void a_empty()
 {
-	if (yesno("CLEAR POINTS"))
-		/* näitä ei tarvitse tämän kummemmin poistaa */
-		n_data_points = 0;
-}
-
-static void a_restore()
-{
-	if (yesno("RESTORE BUILTINS"))
-		/* ROM:issa olevat PNS pisteet. */
-		default_points();
-}
-
-static void o_alarm_high()
-{
-	select_float("ALARM HIGH", 0.0, -20.0, 20.0, 0.1);
-}
-
-static void o_alarm_low()
-{
-	select_float("ALARM LOW", 0.0, -20.0, 20.0, 0.1);
-}
-
-static void o_alarm_enable()
-{
-	select_bool("ENABLE ALARM", true);
-}
-
-static void o_buzzer()
-{
-	select_uint("TEST", 20, 0, 32, 1);
-}
-
-static void o_backlight()
-{
-	select_bool("FLASH BACKLIGHT", false);
+	/* näitä ei tarvitse tämän kummemmin poistaa */
+	n_data_points = 0;
 }
 
 DEF_PSTR_PTR(CREA, "CREATE");
 DEF_PSTR_PTR(DELE, "DELETE");
 DEF_PSTR_PTR(EDIT, "MODIFY");
 DEF_PSTR_PTR(EMPT, "REMALL");
-DEF_PSTR_PTR(REST, "BLTINS");
-DEF_PSTR_PTR(AHGH, "ALARM+");
-DEF_PSTR_PTR(ALOW, "ALARM-");
-DEF_PSTR_PTR(ALEN, "ALRMEN");
-DEF_PSTR_PTR(BEEP, "BUZZER");
-DEF_PSTR_PTR(BKLT, "BACKLT");
-DEF_PSTR_PTR(MENU, " MENU ");
-DEF_PSTR_PTR(LIMT, " LIMT ");
-DEF_PSTR_PTR(ALRM, " ALRM ");
+DEF_PSTR_PTR(REST, "");
+DEF_PSTR_PTR(MENU, "MENU");
+DEF_PSTR_PTR(LIMT, "LIMT");
+DEF_PSTR_PTR(ALRM, "ALRM");
 
 DEF_SUBMENU(views) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(LIMT), &v_limit_init, &v_limit_loop, NULL),
@@ -322,20 +269,15 @@ DEF_SUBMENU(views) = {
 };
 
 DEF_SUBMENU(actions) = {
-	SUBMENU_ENTRY(REF_PSTR_PTR(CREA), NULL, NULL, &a_create),
-	SUBMENU_ENTRY(REF_PSTR_PTR(DELE), NULL, NULL, &a_delete),
-	SUBMENU_ENTRY(REF_PSTR_PTR(EDIT), NULL, NULL, &a_edit),
+	SUBMENU_ENTRY(REF_PSTR_PTR(CREA), NULL, NULL, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(DELE), NULL, NULL, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(EDIT), NULL, NULL, NULL),
 	SUBMENU_ENTRY(REF_PSTR_PTR(EMPT), NULL, NULL, &a_empty),
-	SUBMENU_ENTRY(REF_PSTR_PTR(REST), NULL, NULL, &a_restore),
+	SUBMENU_ENTRY(REF_PSTR_PTR(REST), NULL, NULL, &default_points),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter),
 };
 
 DEF_SUBMENU(options) = {
-	SUBMENU_ENTRY(REF_PSTR_PTR(AHGH), NULL, NULL, &o_alarm_high),
-	SUBMENU_ENTRY(REF_PSTR_PTR(ALOW), NULL, NULL, &o_alarm_low),
-	SUBMENU_ENTRY(REF_PSTR_PTR(ALEN), NULL, NULL, &o_alarm_enable),
-	SUBMENU_ENTRY(REF_PSTR_PTR(BEEP), NULL, NULL, &o_buzzer),
-	SUBMENU_ENTRY(REF_PSTR_PTR(BKLT), NULL, NULL, &o_backlight),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter)
 };
 

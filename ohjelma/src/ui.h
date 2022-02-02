@@ -143,4 +143,28 @@ void submenu_text(const struct submenu_entry *);
 #define SUBMENU_POLL(name) \
 	submenu_poll((name), ARRAY_SIZE(name))
 
+#define HOLD_DELAY 50 // [ms]
+
+bool __yesno(const char *);
+
+bool __select_bool(const char *, bool);
+
+float __select_float(const char *,
+	float, float, float, float);
+
+uint16_t __select_uint(const char *,
+	uint16_t, uint16_t, uint16_t, uint16_t);
+
+#define yesno(msg) \
+	__yesno(PSTR(msg))
+
+#define select_bool(msg, target) \
+	__select_bool(PSTR(msg), (target))
+
+#define select_float(msg, target, min, max, step) \
+	__select_float(PSTR(msg), (target), (min), (max), (step))
+
+#define select_uint(msg, target, min, max, step) \
+	__select_uint(PSTR(msg), (target), (min), (max), (step))
+
 #endif // !UI_H

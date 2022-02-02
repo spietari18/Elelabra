@@ -246,7 +246,7 @@ void submenu_poll(const struct submenu_entry *entries, uint8_t n_entries)
 		CALLBACK(pgm_read_ptr(&entries[submenu_now].init));
 
 		lcd_put_P(pgm_read_ptr(
-			&entries[submenu_now].name), 4, 1, CENTER);
+			&entries[submenu_now].name), NULLTERM, 1, CENTER);
 
 		lcd_update();
 
@@ -264,5 +264,299 @@ void submenu_docb(const struct submenu_entry *entries, uint8_t cb)
 void submenu_text(const struct submenu_entry *entries)
 {
 	lcd_put_P(pgm_read_ptr(
-			&entries[submenu_now].name), 4, 1, CENTER);
+			&entries[submenu_now].name), NULLTERM, 1, CENTER);
+}
+
+typedef bool (*click_t)(void *);
+typedef void (*hold_t)(void *);
+
+#define US_LT (1 << 0)
+#define US_RT (1 << 1)
+#define US_BT (1 << 2)
+
+static void user_select(void *target, const char *msg, const char *left,
+	const char *right, hold_t value, click_t click_left, click_t click_right,
+	click_t click_both, hold_t hold_left, hold_t hold_right)
+{
+	char tmp[LCD_ROWS][LCD_COLS];
+	uint8_t hold = 0;
+
+	/* tallenna vanha näyttö */
+	(void)memcpy(tmp, lcd_buffer, LCD_ROWS*LCD_COLS);
+	LCD_CLEAR;
+	
+	/* näppäimet ja otsikko */
+	lcd_put_P(msg, NULLTERM, 0, CENTER);
+	lcd_put_P(left, NULLTERM, 1, LEFT);
+	lcd_put_P(right, NULLTERM, 1, RIGHT);
+
+	/* muuttujan alkuarvo */
+	if (value)
+		value(target);
+
+	lcd_update();
+
+	while (1)
+	{
+		if (unlikely(hold_left && GET(hold, US_LT)))
+			hold_left(target);
+
+		else if (unlikely(hold_right && GET(hold, US_RT)))
+			hold_right(target);
+
+		switch (button_update(&s)) {
+		case RT|UP:
+			if (!click_right)
+				break;
+
+			beep_fast();
+			if (click_right(target))
+				goto _break;
+			if (value)
+				value(target);
+
+			break;
+		case LT|UP:
+			if (!click_left)
+				break;
+
+			beep_fast();
+			if (click_left(target))
+				goto _break;
+			if (value)
+				value(target);
+
+			break;
+
+		case BOTH|UP:
+			if (!click_both)
+				break;
+
+			beep_fast();
+			if (click_both(target))
+				goto _break;
+			if (value)
+				value(target);
+
+			break;
+
+		case RT|HOLD:
+			beep_slow();
+			SET(hold, US_RT);
+			break;
+
+		case LT|HOLD:
+			beep_slow();
+			SET(hold, US_LT);
+			break;
+
+		case RT|HLUP:
+			beep_fast();
+			if (value)
+				value(target);
+			CLR(hold, US_RT);
+			break;
+
+		case LT|HLUP:
+			beep_fast();
+			if (value)
+				value(target);
+			CLR(hold, US_LT);
+			break;
+		}
+	}
+_break:
+	/* palauta vanha näyttö */
+	(void)memcpy(lcd_buffer, tmp, LCD_ROWS*LCD_COLS);
+	lcd_update();
+}
+
+DEF_PSTR_PTR(YS, "[Y]  ");
+DEF_PSTR_PTR(NO, "  [N]");
+DEF_PSTR_PTR(IN, "[+] ");
+DEF_PSTR_PTR(DC, " [-]");
+
+static bool yn_left(void *target)
+{
+	*(bool *)target = false;
+	return true;
+}
+
+static bool yn_right(void *target)
+{
+	*(bool *)target = true;
+	return true;
+}
+
+bool __yesno(const char *msg)
+{
+	bool target;
+
+	user_select(&target, msg, *REF_PSTR_PTR(NO), *REF_PSTR_PTR(YS),
+		NULL, &yn_left, &yn_right, NULL, NULL, NULL);
+
+	return target;
+}
+
+static bool s_done(__unused void *target)
+{
+	return true;
+}
+
+static void s_bool_value(bool *target)
+{
+	if (*target)
+		lcd_put_P_const("ENABLE", 1, CENTER);
+	else
+		lcd_put_P_const("DISBLE", 1, CENTER);
+	lcd_update();
+}
+
+static bool s_bool_left(bool *target)
+{
+	*target = false;
+	return false;
+}
+
+static bool s_bool_right(bool *target)
+{
+	*target = true;
+	return false;
+}
+
+bool __select_bool(const char *msg, bool target)
+{
+	user_select(&target, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
+		&s_bool_value, &s_bool_left, &s_bool_right, &s_done, NULL, NULL);
+	return target;
+}
+
+struct sfarg
+{
+	float value;
+	float min;
+	float max;
+	float step;
+};
+
+static void s_float_value(struct sfarg *target)
+{
+	lcd_put_float(target->value, 2, true, 6, 1, CENTER);
+	lcd_update();
+}
+
+static bool s_float_left(struct sfarg *target)
+{
+	float tmp;
+
+	tmp = target->value - target->step;
+	target->value = MAX(tmp, target->min);
+
+	return false;
+}
+
+static bool s_float_right(struct sfarg *target)
+{
+
+	float tmp;
+
+	tmp = target->value + target->step;
+	target->value = MIN(tmp, target->max);
+
+	return false;
+}
+
+static void s_float_hleft(struct sfarg *target)
+{
+	(void)s_float_left(target);
+	_delay_ms(HOLD_DELAY);
+	s_float_value(target);
+}
+
+static void s_float_hright(struct sfarg *target)
+{
+	(void)s_float_right(target);
+	_delay_ms(HOLD_DELAY);
+	s_float_value(target);
+}
+
+float __select_float(const char *msg,
+	float value, float min, float max, float step)
+{
+	struct sfarg arg = {value, min, max, step};
+
+	user_select(&arg, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
+		&s_float_value, &s_float_left, &s_float_right, &s_done,
+		&s_float_hleft, &s_float_hright);
+
+	return arg.value;
+}
+
+struct siarg
+{
+	uint16_t value;
+	uint16_t min;
+	uint16_t max;
+	uint16_t step;
+};
+
+static void s_uint_value(struct siarg *target)
+{
+	lcd_put_P_const("      ", 1, CENTER);
+	lcd_put_uint(target->value, 6, 1, CENTER);
+	lcd_update();
+}
+
+static bool s_uint_left(struct siarg *target)
+{
+	uint16_t tmp;
+
+	/* tämä alivuotaa muuten */
+	if (target->value < 1)
+		return false;
+
+	tmp = target->value - (int16_t)(target->step & 0x7FFF);
+	target->value = MAX(tmp, target->min);
+
+	return false;
+}
+
+static bool s_uint_right(struct siarg *target)
+{
+	uint16_t tmp;
+
+	/* tämä ylivuotaa muuten */
+	if (target->value == 0xFFFF)
+		return false;
+
+	tmp = target->value + (int16_t)(target->step & 0x7FFF);
+	target->value = MIN(tmp, target->max);
+
+	return false;
+}
+
+static void s_uint_hleft(struct sfarg *target)
+{
+	(void)s_uint_left(target);
+	_delay_ms(HOLD_DELAY);
+	s_uint_value(target);
+}
+
+static void s_uint_hright(struct sfarg *target)
+{
+	(void)s_uint_right(target);
+	_delay_ms(HOLD_DELAY);
+	s_uint_value(target);
+}
+
+uint16_t __select_uint(const char *msg, uint16_t value,
+	uint16_t min, uint16_t max, uint16_t step)
+{
+	struct siarg arg = {value, min, max, step};
+
+	user_select(&arg, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
+		&s_uint_value, &s_uint_left, &s_uint_right, &s_done,
+		&s_uint_hleft, &s_uint_hright);
+
+	return arg.value;
 }
