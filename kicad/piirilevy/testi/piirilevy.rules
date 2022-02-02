@@ -11,12 +11,12 @@
     (via_costs 50)
     (plane_via_costs 5)
     (start_ripup_costs 100)
-    (start_pass_no 1767)
+    (start_pass_no 1067)
     (layer_rule F.Cu
       (active on)
       (preferred_direction vertical)
       (preferred_direction_trace_costs 1.0)
-      (against_preferred_direction_trace_costs 2.6)
+      (against_preferred_direction_trace_costs 2.8)
     )
     (layer_rule B.Cu
       (active on)
@@ -53,8 +53,8 @@
     "kicad_default" "Via[0-1]_800:400_um-kicad_default"
   )
   (class default
-    "Net-(BZ1-Pad1)" GND "V_KÄYTTÖ" "Net-(C2-Pad1)" "Net-(C3-Pad1)" "VAHVISTIN_LÄHTÖ" "Net-(C4-Pad1)" "Net-(C5-Pad1)"
-    "Net-(C5-Pad2)" VCC "Net-(C7-Pad1)" "Net-(C8-Pad1)" "XTAL_2" "XTAL_1" "Net-(C13-Pad2)" "Net-(C14-Pad1)"
+    VCC GND "Net-(BZ1-Pad1)" "V_KÄYTTÖ" "Net-(C2-Pad1)" "Net-(C3-Pad1)" "VAHVISTIN_LÄHTÖ" "Net-(C4-Pad1)"
+    "Net-(C5-Pad1)" "Net-(C5-Pad2)" "Net-(C7-Pad1)" "Net-(C8-Pad1)" "XTAL_2" "XTAL_1" "Net-(C13-Pad2)" "Net-(C14-Pad1)"
     RESET "SW_2" "SW_1" "Net-(DS1-Pad3)" "LCD_RS" "LCD_CL" "Net-(DS1-Pad12)" "unconnected-(U3-Pad4)"
     "unconnected-(U3-Pad11)" "unconnected-(U3-Pad12)" "LCD_D4" "LCD_D5" "Net-(R1-Pad1)" "Net-(R2-Pad1)" "Net-(R3-Pad2)" "Net-(R5-Pad1)"
     "Net-(R5-Pad2)" "Net-(R6-Pad1)" "Net-(R6-Pad2)" "Net-(R13-Pad1)" "Net-(R11-Pad2)" "Net-(R10-Pad2)" "Net-(R13-Pad2)" BUZZER
