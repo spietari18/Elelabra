@@ -1,9 +1,10 @@
-holes_back.png on back.png:n suhteen. (reiät pitää porata takapuolen
-jyrsimisen jälkeen)
+holes.png on front.png:n suhteen, eli reiät pitää porata etupuoli ulöspäin.
+back.png on peilattu pystyakselin suhteen, jotta sen voi jyrsiä yläpuolelta.
 
-front.png on peilikuvattu pystyakselin suhteen (piirilevyä pitää kääntää 180
-astetta pituusakselin suunnassa kun vaihdetaan jyrsintäpuolta)
-
-ETUPUOLI ON JYRSITTÄVÄ ENSIN!
+Järjestys:
+- jyrsi takapuoli (back.rml)
+- kääntö ympäri
+- jyrsi etupuoli  (front.rml)
+- jyrsi reiät     (holes.rml)
 
 DPI = 1441
