@@ -251,56 +251,88 @@ static void v_menu_loop() { menu_loop(); }
 
 static void a_create()
 {
-	// lisää piste
+	float temp;
+
+	if (n_data_points >= MAX_POINTS) {
+		// virhe
+		return;
+	}
+
+	select_float_P_const("TEMPERATURE", &temp, T_ABS_MIN, T_ABS_MAX, 0.01);	
+
+	data_points[n_data_points][0]   = S;
+	data_points[n_data_points++][1] = temp;
 }
 
 static void a_delete()
 {
-	// poista piste
+	uint16_t point;
+
+	select_uint_P_const("SELECT POINT", &point, 1, n_data_points, 1);
+
+	if (point == n_data_points)
+		n_data_points--;
+	else
+		(void)memcpy(&data_points[point - 1],
+				&data_points[point], n_data_points - point);
 }
 
 static void a_edit()
 {
-	// muokkaa pistettä
+	float (*target)[2];
+	float temp;
+	uint16_t sample;
+
+	select_uint_P_const("SELECT POINT", &sample, 1, n_data_points, 1);
+
+	target = &data_points[sample];
+
+	select_uint_P_const("SET SAMPLE", &sample, 0, (1 << 12) - 1, 1);
+	select_float_P_const("SET TEMP", &temp, T_ABS_MIN, T_ABS_MAX, 0.01);
+	
+	*target[0] = sample;
+	*target[1] = temp;
 }
 
 static void a_empty()
 {
-	if (yesno("CLEAR POINTS"))
+	if (yesno_P_const("CLEAR POINTS"))
 		/* näitä ei tarvitse tämän kummemmin poistaa */
 		n_data_points = 0;
 }
 
 static void a_restore()
 {
-	if (yesno("RESTORE BUILTINS"))
+	if (yesno_P_const("RESTORE BUILTINS"))
 		/* ROM:issa olevat PNS pisteet. */
 		default_points();
 }
 
 static void o_alarm_high()
 {
-	select_float("ALARM HIGH", &T_lim_max, T_lim_min, 30.0, 0.1);
+	select_float_P_const("ALARM HIGH", &T_lim_max, T_lim_min, 30.0, 0.1);
 }
 
 static void o_alarm_low()
 {
-	select_float("ALARM LOW", &T_lim_min, -30.0, T_lim_max, 0.1);
+	select_float_P_const("ALARM LOW", &T_lim_min, -30.0, T_lim_max, 0.1);
 }
 
 static void o_alarm_enable()
 {
-	select_bool("ENABLE ALARM", &alarm_enabled);
+	select_bool_P_const("ENABLE ALARM", &alarm_enabled);
 }
 
 static void o_buzzer()
 {
-	select_bool("ENABLE BUZZER", &buzzer_enabled);
+	// ei tee mitään
+	select_bool_P_const("ENABLE BUZZER", &buzzer_enabled);
 }
 
 static void o_backlight()
 {
-	select_bool("FLASH BACKLIGHT", &flash_backlight);
+	// ei tee mitään
+	select_bool_P_const("FLASH BACKLIGHT", &flash_backlight);
 }
 
 static void menu_enter_and_commit()

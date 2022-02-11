@@ -30,7 +30,7 @@ static uint8_t sample_pos;
 static float samples[MAX_SAMPLES];
 
 /* Laske PNS kertoimet. */
-static void compute_lss_coefs()
+void compute_lss_coefs()
 {
 	float Sx = 0, Sy = 0, Sxx = 0, Sxy = 0, Syy = 0;
 

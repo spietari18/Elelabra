@@ -73,10 +73,26 @@ ISR(TIMER2_COMPA_vect)
 {
 	uint32_t now;
 
-	/* jos mikään ei ole päällä, pysäytä ajastin */
-	if (unlikely(!(GET(state, BEEPENBL)
-		|| GET(state, BLNKENBL)))) {
+	now =  (!GET(state, BEEPENBL)) | (!GET(state, BLNKENBL) << 1);
+	if (unlikely(now)) {
+		switch (now) {
+		case 1:
+			WRITE(BUZZER, LOW);
+			break;
+		case 2:
+			WRITE(LCD_AN, HIGH);
+			break;
+		case 3:
+			WRITE(BUZZER, LOW);
+			WRITE(LCD_AN, HIGH);
+			break;
+		default:
+			unreachable;
+		}
+
+		// ajastin pois päältä
 		CLR(TIMSK2, OCIE2A);
+
 		return;
 	}
 	

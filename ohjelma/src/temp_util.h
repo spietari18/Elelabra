@@ -29,6 +29,9 @@
 extern uint8_t n_data_points;
 extern float data_points[MAX_POINTS][2];
 
+/* Laske PNS kertoimet. */
+void compute_lss_coefs();
+
 /* Aseta sisäänrakennetut kalibrointipisteet. */
 void default_points();
 

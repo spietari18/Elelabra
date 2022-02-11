@@ -274,9 +274,12 @@ typedef void (*hold_t)(void *);
 #define US_RT (1 << 1)
 #define US_BT (1 << 2)
 
-static void user_select(void *target, const char *msg, const char *left,
-	const char *right, hold_t value, click_t click_left, click_t click_right,
-	click_t click_both, hold_t hold_left, hold_t hold_right)
+static void user_select(void *target, const void *msg, uint8_t size,
+	const void *left, const void *right, hold_t value,
+	click_t click_left, click_t click_right, click_t click_both,
+	hold_t hold_left, hold_t hold_right, 
+	void *(*cpy)(void *, const void *, size_t),
+	size_t (*len)(const char *))
 {
 	char tmp[LCD_ROWS][LCD_COLS];
 	uint8_t hold = 0;
@@ -286,7 +289,7 @@ static void user_select(void *target, const char *msg, const char *left,
 	LCD_CLEAR;
 	
 	/* näppäimet ja otsikko */
-	lcd_put_P(msg, NULLTERM, 0, CENTER);
+	__lcd_put(msg, size, 0, CENTER, cpy, len);
 	lcd_put_P(left, NULLTERM, 1, LEFT);
 	lcd_put_P(right, NULLTERM, 1, RIGHT);
 
@@ -388,12 +391,14 @@ static bool yn_right(void *target)
 	return true;
 }
 
-bool __yesno(const char *msg)
+bool __yesno(const void *msg, uint8_t size,
+	void *(*cpy)(void *, const void *, size_t),
+	size_t (*len)(const char *))
 {
 	bool target;
 
-	user_select(&target, msg, *REF_PSTR_PTR(NO), *REF_PSTR_PTR(YS),
-		NULL, &yn_left, &yn_right, NULL, NULL, NULL);
+	user_select(&target, msg, size, *REF_PSTR_PTR(NO), *REF_PSTR_PTR(YS),
+		NULL, &yn_left, &yn_right, NULL, NULL, NULL, cpy, len);
 
 	return target;
 }
@@ -424,10 +429,13 @@ static bool s_bool_right(bool *target)
 	return false;
 }
 
-void __select_bool(const char *msg, bool *target)
+void __select_bool(const void *msg, uint8_t size, bool *target,
+	void *(*cpy)(void *, const void *, size_t),
+	size_t (*len)(const char *))
 {
-	user_select(target, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
-		&s_bool_value, &s_bool_left, &s_bool_right, &s_done, NULL, NULL);
+	user_select(target, msg, size, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
+		&s_bool_value, &s_bool_left, &s_bool_right, &s_done,
+		NULL, NULL, cpy, len);
 }
 
 struct sfarg
@@ -479,14 +487,16 @@ static void s_float_hright(struct sfarg *target)
 	s_float_value(target);
 }
 
-void __select_float(const char *msg,
-	float *target, float min, float max, float step)
+void __select_float(const void *msg, uint8_t size,
+	float *target, float min, float max, float step,
+	void *(*cpy)(void *, const void *, size_t),
+	size_t (*len)(const char *))
 {
 	struct sfarg arg = {*target, min, max, step};
 
-	user_select(&arg, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
+	user_select(&arg, msg, size, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_float_value, &s_float_left, &s_float_right, &s_done,
-		&s_float_hleft, &s_float_hright);
+		&s_float_hleft, &s_float_hright, cpy, len);
 
 	*target = arg.value;
 }
@@ -548,14 +558,16 @@ static void s_uint_hright(struct sfarg *target)
 	s_uint_value(target);
 }
 
-void __select_uint(const char *msg, uint16_t *target,
-	uint16_t min, uint16_t max, uint16_t step)
+void __select_uint(const void *msg, uint8_t size, uint16_t *target,
+	uint16_t min, uint16_t max, uint16_t step,
+	void *(*cpy)(void *, const void *, size_t),
+	size_t (*len)(const char *))
 {
 	struct siarg arg = {*target, min, max, step};
 
-	user_select(&arg, msg, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
+	user_select(&arg, msg, size, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_uint_value, &s_uint_left, &s_uint_right, &s_done,
-		&s_uint_hleft, &s_uint_hright);
+		&s_uint_hleft, &s_uint_hright, cpy, len);
 
 	*target = arg.value;
 }

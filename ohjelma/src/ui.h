@@ -145,26 +145,76 @@ void submenu_text(const struct submenu_entry *);
 
 #define HOLD_DELAY 50 // [ms]
 
-bool __yesno(const char *);
+bool __yesno(const void *, uint8_t, void *(*)(void *,
+	const void *, size_t), size_t (*)(const char *));
 
-void __select_bool(const char *, bool *);
+void __select_bool(const void *, uint8_t, bool *,
+	void *(*)(void *, const void *, size_t),
+	size_t (*)(const char *));
 
-void __select_float(const char *,
-	float *, float, float, float);
+void __select_float(const void *, uint8_t,
+	float *, float, float, float, void *(*)(void *,
+	const void *, size_t), size_t (*)(const char *));
 
-void __select_uint(const char *,
-	uint16_t *, uint16_t, uint16_t, uint16_t);
+void __select_uint(const void *, uint8_t,
+	uint16_t *, uint16_t, uint16_t, uint16_t,
+	void *(*)(void *, const void *, size_t),
+	size_t (*)(const char *));
 
-#define yesno(msg) \
-	__yesno(PSTR(msg))
+#define yesno(msg, size) \
+	__yesno((msg), (size), &memcpy, &strlen)
 
-#define select_bool(msg, target) \
-	__select_bool(PSTR(msg), (target))
+#define yesno_P(msg, size) \
+	__yesno((msg), (size), &memcpy_P, &strlen_P)
 
-#define select_float(msg, target, min, max, step) \
-	__select_float(PSTR(msg), (target), (min), (max), (step))
+#define yesno_const(msg) \
+	__yesno((msg), sizeof(msg) - 1, &memcpy_P, NULL)
 
-#define select_uint(msg, target, min, max, step) \
-	__select_uint(PSTR(msg), (target), (min), (max), (step))
+#define yesno_P_const(msg) \
+	__yesno(PSTR(msg), sizeof(msg) - 1, &memcpy, NULL)
+
+#define select_bool(msg, size, target) \
+	__select_bool((msg), (size), (target), &memcpy, &strlen)
+
+#define select_bool_P(msg, size, target) \
+	__select_bool(PSTR(msg), (size), (target), &memcpy_P, &strlen_P)
+
+#define select_bool_const(msg, target) \
+	__select_bool((msg), sizeof(msg) - 1, (target), &memcpy, NULL)
+
+#define select_bool_P_const(msg, target) \
+	__select_bool(PSTR(msg), sizeof(msg) - 1, (target), &memcpy_P, NULL)
+
+#define select_float(msg, size, target, min, max, step) \
+	__select_float((msg), (size), (target), (min), (max), (step), \
+		&memcpy, &strlen)
+
+#define select_float_P(msg, size, target, min, max, step) \
+	__select_float((msg), (size), (target), (min), (max), (step), \
+		&memcpy_P, &strlen_P)
+
+#define select_float_const(msg, target, min, max, step) \
+	__select_float((msg), sizeof(msg) - 1 (target), (min), (max), \
+		(step), &memcpy, NULL)
+
+#define select_float_P_const(msg, target, min, max, step) \
+	__select_float(PSTR(msg), sizeof(msg) - 1, (target), (min), \
+		(max), (step), &memcpy_P, NULL)
+
+#define select_uint(msg, size, target, min, max, step) \
+	__select_uint((msg), (size), (target), (min), (max), (step), \
+		&memcpy, &strlen)
+
+#define select_uint_P(msg, size, target, min, max, step) \
+	__select_uint((msg), (size), (target), (min), (max), (step), \
+		&memcpy_P, &strlen_P)
+
+#define select_uint_const(msg, target, min, max, step) \
+	__select_uint((msg), sizeof(msg) - 1, (target), (min), (max), \
+		(step), &memcpy, NULL)
+
+#define select_uint_P_const(msg, target, min, max, step) \
+	__select_uint(PSTR(msg), sizeof(msg) - 1, (target), (min), \
+		(max), (step), &memcpy_P, NULL)
 
 #endif // !UI_H
