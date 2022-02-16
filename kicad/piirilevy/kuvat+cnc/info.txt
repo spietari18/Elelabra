@@ -1,0 +1,3 @@
+DPI = 975 
+58.420mm x  99.060mm (reiät)
+66.162mm x 106.767mm (reunat)
