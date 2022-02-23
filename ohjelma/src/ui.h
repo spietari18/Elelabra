@@ -13,13 +13,12 @@
 #define UI_TEMP 2
 #define UI_CLBR 3
 #define UI_OPTS 4
-#define UI_ERRR 5
 
-#define UI_STATE_COUNT 6
+#define UI_STATE_COUNT 5
 
 /* Monta bittiä tilassa on. */
 #define UI_BITS \
-	(8*sizeof(int) - __builtin_clz(UI_ERRR))
+	(8*sizeof(int) - __builtin_clz(UI_OPTS))
 
 #define UI_MASK_NOW \
 	((1 << UI_BITS) - 1)

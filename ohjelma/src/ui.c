@@ -9,7 +9,6 @@ uint8_t ui_state;
 static struct button_state s;
 static uint8_t entry_now;
 static uint8_t entry_old;
-static uint8_t entry_last = ~0;
 bool in_menu;
 
 /* Piirrä valikko. */
@@ -72,8 +71,7 @@ void menu_update()
 		beep_slow();
 
 		/* siirtymisen takaisinkutsu */
-		//CALLBACK((callback_t)pgm_read_ptr(
-		//	&menu_config[entry_now].enter));
+		CALLBACK(pgm_read_ptr(&menu_config[entry_now].enter));
 
 		/* aseta tila */
 		__UI_SET_STATE(pgm_read_word(
@@ -90,8 +88,7 @@ void menu_update()
 	menu_draw();
 
 	/* taustatilan päivitystakaisinkutsu */
-	//CALLBACK((callback_t)pgm_read_ptr(
-	//	&menu_config[entry_now].update));
+	CALLBACK(pgm_read_ptr(&menu_config[entry_now].update));
 
 	entry_old = entry_now;
 }
@@ -100,9 +97,8 @@ void menu_update()
 void menu_enter()
 {
 	/* poistumisen takaisinkutsu */
-	//if (likely(entry_old != (uint8_t)~0))
-	//	CALLBACK((callback_t)pgm_read_ptr(
-	//		&menu_config[entry_last].exit));
+	if (likely(entry_old != (uint8_t)~0))
+		CALLBACK(pgm_read_ptr(&menu_config[entry_old].exit));
 
 	beep_slow();
 

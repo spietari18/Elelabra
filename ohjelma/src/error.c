@@ -1,21 +1,54 @@
+#include "ui.h"
+#include "alarm.h"
 #include "error.h"
 
-/* jos näiden sijaan haluaisi käyttää util.h:n
- * DEF_PSTR_PTR() ja REF_PSTR_PTR() funktioita
- * errstr jäsenet tulee olle järjestyksessä.
- */
-#define ERROR_STR(A, B) \
-	static const char ERROR_STR_##A[] PROGMEM = (B)
-#define ERROR_PTR(A) \
-	[ERR_##A] = ERROR_STR_##A
+void __error(const void *msg, bool (*cb)())
+{
+	beep_begin();
 
-ERROR_STR(OK, "NO ERROR");
-ERROR_STR(TEST, "TEST ERROR");
+	/* virheviesti */
+	LCD_CLEAR;
+	lcd_put_P_const("ERROR:", 0, CENTER);
+	lcd_put_P(msg, NULLTERM, 1, CENTER);
+	lcd_update();
 
-const char *const errstr[] PROGMEM = {
-	ERROR_PTR(OK),
-	ERROR_PTR(TEST)
-};
+	/* odota */
+	_delay_ms(ERROR_SHOW);
 
-jmp_buf error_return;
-uint8_t error_code;
+	beep_end();
+
+	if (cb)
+		while (cb());
+	else
+		while (1);
+}
+
+
+#define PROG_SEGS 192
+
+noreturn bool __reboot()
+{
+	/* tulosta uudelleenkäynnistysviesti */
+	LCD_CLEAR;
+	lcd_put_P_const("REBOOT", 0, CENTER);
+	prog_init(PROG_SEGS, PROG_SEGS);
+	lcd_update();
+
+loop:
+	/* edistymispalkki */
+	INTERVAL(ERROR_WAIT/PROG_SEGS) {
+		prog_dec();
+		lcd_update();
+	}
+
+	/* uudelleenkäynnistys */
+	if (prog_pos >= PROG_SEGS) {
+		_delay_ms(10);
+		reset();
+	}
+
+	goto loop;
+
+	unreachable;
+	return false;
+}

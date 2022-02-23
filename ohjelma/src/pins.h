@@ -15,18 +15,18 @@ DEFINE_PIN(I2C_SCL, C, 5); // PC5
 
 #if 0
 /* LCD näyttö. */
-DEFINE_PIN(_LCD_RS, D, 7); // PD7
-DEFINE_PIN(_LCD_EN, B, 0); // PB0
+DEFINE_PIN(_LCD_RS, D, 6); // PD6
+DEFINE_PIN(_LCD_EN, D, 5); // PD5
 DEFINE_PIN(_LCD_B5, C, 0); // PC0
 DEFINE_PIN(_LCD_B6, C, 1); // PC1
 DEFINE_PIN(_LCD_B7, C, 2); // PC2
 DEFINE_PIN(_LCD_B8, C, 3); // PC3
 
 /* Summeri. */
-DEFINE_PIN(BUZZER, D, 3); // PD3
+DEFINE_PIN(BUZZER, D, 4); // PD4
 
 /* LCD:n taustavalon anodi. */
-DEFINE_PIN(LCD_AN, D, 4); // PD4
+DEFINE_PIN(LCD_AN, D, 3); // PD3
 
 /* Napit. */
 DEFINE_PIN(BTN_LT, D, 1); // PD1, (vasen)

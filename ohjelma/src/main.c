@@ -6,6 +6,22 @@
 
 #include <stdio.h>
 
+/* asetukset */
+struct {
+	float alarm_low;
+	float alarm_high;
+
+	bool alarm_enabled;
+	bool buzzer_enabled;
+	bool flash_backlight;
+
+/* tähän oletukset, kun EERAM ei toimi */
+} opts = {
+	-20.0, 20.0,
+	false, true, true
+};
+
+/* main.c:n lokaali nappitila */
 static struct button_state s;
 
 /* Valikon teksti. */
@@ -42,13 +58,10 @@ static bool S_change;
 static float T_obs_max = -INF;
 static float T_obs_min =  INF;
 
-static float T_lim_max =  20.0;
-static float T_lim_min = -20.0;
+//static float opts.alarm_high =  20.0;
+//static float opts.alarm_low = -20.0;
 
 static bool alarm_on;
-static bool alarm_enabled = false;
-static bool buzzer_enabled = true;
-static bool flash_backlight = true;
 
 void task_temperature()
 {
@@ -87,15 +100,15 @@ void task_sample()
 
 void task_alarm()
 {
-	if (!alarm_enabled) {
+	if (!opts.alarm_enabled) {
 		if (unlikely(alarm_on))
 			goto alarm_off;
 
 		return;
 	}
 
-	if (unlikely(((T < T_lim_min) ||
-		(T > T_lim_max)) && isfinite(T))) {
+	if (unlikely(((T < opts.alarm_low) ||
+		(T > opts.alarm_high)) && isfinite(T))) {
 		blink_begin();
 		beep_begin();
 
@@ -109,24 +122,21 @@ alarm_off:
 	}
 }
 
+bool undervolt_recover()
+{
+	_delay_ms(1000);
+	return undervolt();
+}
+
 void task_voltage()
 {
 	if (unlikely(undervolt()))
-		ERROR(TEST);
+		error("LOW VOLTAGE", &undervolt_recover);
 }
-
-//uint8_t count;
-
-//void test_task()
-//{
-//	lcd_put_uint(count++, 3, 0, CENTER);
-//	lcd_update();
-//}
 
 /* globaalit taskit */
 static struct interval_task global_tasks[] = {
-	DEF_TASK(&task_voltage, 1000),
-	//DEF_TASK(&test_task, 500)
+	DEF_TASK(&task_voltage, 1000)
 };
 
 /* nämä on pakko laittaa RAM muistiin, koska
@@ -165,15 +175,12 @@ DEF_TASKS(UI_OPTS) = {
 	DEF_TASK(&task_alarm, ALARM_INTERVAL)
 };
 
-DEF_TASKS(UI_ERRR) = {};
-
 static struct interval_task *const ui_tasks[UI_STATE_COUNT] PROGMEM = {
 	REF_TASKS(UI_SPLH),
 	REF_TASKS(UI_MENU),
 	REF_TASKS(UI_TEMP),
 	REF_TASKS(UI_CLBR),
-	REF_TASKS(UI_OPTS),
-	REF_TASKS(UI_ERRR)
+	REF_TASKS(UI_OPTS)
 };
 
 static const uint8_t ui_task_count[UI_STATE_COUNT] PROGMEM = {
@@ -181,8 +188,7 @@ static const uint8_t ui_task_count[UI_STATE_COUNT] PROGMEM = {
 	CNT_TASKS(UI_MENU),
 	CNT_TASKS(UI_TEMP),
 	CNT_TASKS(UI_CLBR),
-	CNT_TASKS(UI_OPTS),
-	CNT_TASKS(UI_ERRR)
+	CNT_TASKS(UI_OPTS)
 };
 
 static callback_t menu_loop;
@@ -242,8 +248,8 @@ static void v_alarm_init()
 	 */
 	lcd_put_P_const("AL-", 0, LEFT);
 	lcd_put_P_const("AL+", 0, RIGHT);
-	lcd_put_temp(T_lim_min, 1, 5, 1, LEFT);
-	lcd_put_temp(T_lim_max, 1, 5, 1, RIGHT);
+	lcd_put_temp(opts.alarm_low, 1, 5, 1, LEFT);
+	lcd_put_temp(opts.alarm_high, 1, 5, 1, RIGHT);
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
@@ -371,39 +377,43 @@ static void a_restore()
 
 static void o_alarm_high()
 {
-	select_float_P_const("ALARM HIGH", &T_lim_max, T_lim_min, 30.0, 0.1);
+	select_float_P_const("ALARM HIGH",
+		&opts.alarm_high, opts.alarm_low, 30.0, 0.1);
 }
 
 static void o_alarm_low()
 {
-	select_float_P_const("ALARM LOW", &T_lim_min, -30.0, T_lim_max, 0.1);
+	reboot("TESTI");
+
+	select_float_P_const("ALARM LOW",
+		&opts.alarm_low, -30.0, opts.alarm_high, 0.1);
 }
 
 static void o_alarm_enable()
 {
-	select_bool_P_const("ENABLE ALARM", &alarm_enabled);
+	select_bool_P_const("ENABLE ALARM", &opts.alarm_enabled);
 }
 
 static void o_buzzer()
 {
 	/* jos flash_backlight on false, tätä ei voi poistaa päältä */
-	if (!flash_backlight) {
+	if (!opts.flash_backlight) {
 		msg_P_const("CAN'T DISABLE\nBLIGHT DISABLED");
 		return;
 	}
 
-	select_bool_P_const("ENABLE BUZZER", &buzzer_enabled);
+	select_bool_P_const("ENABLE BUZZER", &opts.buzzer_enabled);
 }
 
 static void o_backlight()
 {
 	/* jos buzzer_enabled on false, tätä ei voi poistaa päältä */
-	if (!buzzer_enabled) {
+	if (!opts.buzzer_enabled) {
 		msg_P_const("CAN'T DISABLE\nBUZZER DISABLED");
 		return;
 	}
 
-	select_bool_P_const("FLASH BACKLIGHT", &flash_backlight);
+	select_bool_P_const("FLASH BACKLIGHT", &opts.flash_backlight);
 }
 
 static void menu_commit_acts()
@@ -500,8 +510,6 @@ int main()
 	/* käyttöliittymä alkaa splash näytöstä */
 	UI_SET_STATE(SPLH);
 
-	/* ERROR() palaa tähän mistä tahansa. */
-	ERROR_RETURN;
 main_loop:
 	/* valikkotilakohtaiset taskit */
 	interval_tasks(
@@ -642,52 +650,6 @@ main_loop:
 
 	case UI_LOOP(OPTS):
 		submenu_poll();
-		break;
-	
-	case UI_SETUP(ERRR):
-
-#define ERROR_SHOW 3000 // [ms]
-#define ERROR_WAIT 1000 // [ms]
-
-		LCD_CLEAR;
-
-		beep_begin();
-
-		/* tulosta virhe */
-		lcd_put_fmt(LCD_COLS, 0, CENTER, "VIRHE (%u):", ERROR_CODE);
-		lcd_put_P(ERROR_MSG, NULLTERM, 1, CENTER);
-		lcd_update();
-
-		/* näytä virhe ERROR_SHOW millisekuntia */
-		_delay_ms(ERROR_SHOW);
-
-		beep_end();
-
-		LCD_CLEAR;
-
-#define PROG_SEGS 192
-
-		/* tulosta uudelleenkäynnistysviesti */
-		lcd_put_P_const("REBOOT", 0, CENTER);
-		prog_init(PROG_SEGS, PROG_SEGS);
-		lcd_update();
-
-		UI_SETUP_END;
-		break;
-
-	case UI_LOOP(ERRR):
-		/* edistymispalkki */
-		INTERVAL(ERROR_WAIT/PROG_SEGS) {
-			prog_dec();
-			lcd_update();
-		}
-
-		/* uudelleenkäynnistys */
-		if (prog_pos >= PROG_SEGS) {
-			_delay_ms(10);
-			reset();
-		}
-
 		break;
 
 	default:
