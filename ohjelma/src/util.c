@@ -16,7 +16,7 @@
 
 static volatile uint32_t timer0_ovfs;
 static volatile uint32_t timer0_ms;
-static uint16_t timer0_us;
+static uint32_t timer0_us;
 
 ISR(TIMER0_OVF_vect) {
 	register uint32_t ms = timer0_ms;

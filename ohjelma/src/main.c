@@ -4,6 +4,8 @@
 #include "button.h"
 #include "temp_util.h"
 
+#include <stdio.h>
+
 static struct button_state s;
 
 /* Valikon teksti. */
@@ -92,7 +94,8 @@ void task_alarm()
 		return;
 	}
 
-	if (unlikely((T < T_lim_min) || (T > T_lim_max))) {
+	if (unlikely(((T < T_lim_min) ||
+		(T > T_lim_max)) && isfinite(T))) {
 		blink_begin();
 		beep_begin();
 
@@ -242,7 +245,10 @@ static void v_alarm_init()
 	lcd_put_temp(T_lim_min, 1, 5, 1, LEFT);
 	lcd_put_temp(T_lim_max, 1, 5, 1, RIGHT);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 	menu_loop = &v_common_loop;
+#pragma GCC diagnostic pop
 
 	T_change = true;
 }
@@ -251,54 +257,109 @@ static void v_menu_loop() { menu_loop(); }
 
 static void a_create()
 {
-	float temp;
+	float (*target)[2];
+	uint16_t tmp;
 
 	if (n_data_points >= MAX_POINTS) {
-		// virhe
+		msg_P_const("CAN'T CREATE\nPOINTS FULL");
 		return;
 	}
 
-	select_float_P_const("TEMPERATURE", &temp, T_ABS_MIN, T_ABS_MAX, 0.01);	
+	if (!yesno_P_const("CREATE POINT?"))
+		return;
 
-	data_points[n_data_points][0]   = S;
-	data_points[n_data_points++][1] = temp;
+	target = &data_points[n_data_points++];
+
+	/* käytä nykyisiä arvoja alkuarvoina */
+	(*target)[0] = S;
+	(*target)[1] = T;
+
+	select_float_P_const("TEMPERATURE",
+		&((*target)[0]), T_ABS_MIN, T_ABS_MAX, 0.01);	
+	tmp = (*target)[0];
+	select_uint_P_const("SAMPLE",
+		&tmp, S_ABS_MIN, S_ABS_MAX, 1);
+	(*target)[0] = tmp;
+
+	compute_lss_coefs();
 }
 
 static void a_delete()
 {
 	uint16_t point;
+	char msg[13]; // sprintf() kirjoittaa nollaterminaattorin
 
-	select_uint_P_const("SELECT POINT", &point, 1, n_data_points, 1);
+	if (n_data_points < 1) {
+		msg_P_const("CAN'T DELETE\nNO POINTS");
+		return;
+	}
 
-	if (point == n_data_points)
+	if (!yesno_P_const("REMOVE POINT?"))
+		return;
+
+	(void)snprintf_P(msg, sizeof(msg),
+		PSTR("WHICH (1-%-2u)"), n_data_points);
+
+	point = 1;
+	select_uint_const(msg, &point, 1, n_data_points, 1);
+
+	if (point == n_data_points) {
 		n_data_points--;
-	else
-		(void)memcpy(&data_points[point - 1],
-				&data_points[point], n_data_points - point);
+	} else {
+		(void)memcpy(&data_points[point - 1], &data_points[point],
+			(n_data_points - point)*sizeof(*data_points));
+	}
+
+	compute_lss_coefs();
 }
 
 static void a_edit()
 {
 	float (*target)[2];
-	float temp;
-	uint16_t sample;
+	uint16_t point;
+	char msg[13]; // sprintf() kirjoittaa nollaterminaattorin
 
-	select_uint_P_const("SELECT POINT", &sample, 1, n_data_points, 1);
+	if (n_data_points < 1) {
+		msg_P_const("CAN'T MODIFY\nNO POINTS");
+		return;
+	}
 
-	target = &data_points[sample];
+	if (!yesno_P_const("MODIFY POINT?"))
+		return;
 
-	select_uint_P_const("SET SAMPLE", &sample, 0, (1 << 12) - 1, 1);
-	select_float_P_const("SET TEMP", &temp, T_ABS_MIN, T_ABS_MAX, 0.01);
-	
-	*target[0] = sample;
-	*target[1] = temp;
+	point = 1;
+	(void)snprintf_P(msg, sizeof(msg), PSTR("WHICH (1-%-2u)"), n_data_points);
+
+	select_uint_const(msg, &point, 1, n_data_points, 1);
+
+	target = &data_points[point - 1];
+
+	select_float_P_const("TEMPERATURE",
+		&((*target)[1]), T_ABS_MIN, T_ABS_MAX, 0.01);
+	point = (*target)[0];
+	select_uint_P_const("SAMPLE",
+		&point, S_ABS_MIN, S_ABS_MAX, 1);
+	(*target)[0] = point;
+
+	compute_lss_coefs();
 }
 
 static void a_empty()
 {
-	if (yesno_P_const("CLEAR POINTS"))
+	char msg[11]; // snprintf() kirjoittaa nollaterminaattorin
+
+	if (n_data_points < 1) {
+		msg_P_const("CAN'T CLEAR\nNO POINTS");
+		return;
+	}
+
+	(void)snprintf_P(msg, sizeof(msg), PSTR("CLEAR (%2u)"), n_data_points);
+
+	if (yesno_const(msg))
 		/* näitä ei tarvitse tämän kummemmin poistaa */
 		n_data_points = 0;
+
+	compute_lss_coefs();
 }
 
 static void a_restore()
@@ -325,25 +386,37 @@ static void o_alarm_enable()
 
 static void o_buzzer()
 {
-	// ei tee mitään
+	/* jos flash_backlight on false, tätä ei voi poistaa päältä */
+	if (!flash_backlight) {
+		msg_P_const("CAN'T DISABLE\nBLIGHT DISABLED");
+		return;
+	}
+
 	select_bool_P_const("ENABLE BUZZER", &buzzer_enabled);
 }
 
 static void o_backlight()
 {
-	// ei tee mitään
+	/* jos buzzer_enabled on false, tätä ei voi poistaa päältä */
+	if (!buzzer_enabled) {
+		msg_P_const("CAN'T DISABLE\nBUZZER DISABLED");
+		return;
+	}
+
 	select_bool_P_const("FLASH BACKLIGHT", &flash_backlight);
 }
 
-static void menu_enter_and_commit()
+static void menu_commit_acts()
 {
-	/* laske PNS kertoimet uudelleen */
-	compute_lss_coefs();
+	// uudet pisteet EERAM:iin
 
-	// tässä välissä uudet pisteet voi
-	// kirjoittaa EERAM:iin
+	menu_enter();
+}
+
+static void menu_commit_opts()
+{
+	// asetukset EERAM:iin
 	
-	/* valikkoon */
 	menu_enter();
 }
 
@@ -361,6 +434,8 @@ DEF_PSTR_PTR(MENU, " MENU ");
 DEF_PSTR_PTR(LIMT, " LIMT ");
 DEF_PSTR_PTR(ALRM, " ALRM ");
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 DEF_SUBMENU(views) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(LIMT), &v_limit_init, &v_limit_loop, NULL),
 	SUBMENU_ENTRY(REF_PSTR_PTR(ALRM), &v_alarm_init, &v_common_loop, NULL),
@@ -373,7 +448,7 @@ DEF_SUBMENU(actions) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(EDIT), NULL, NULL, &a_edit),
 	SUBMENU_ENTRY(REF_PSTR_PTR(EMPT), NULL, NULL, &a_empty),
 	SUBMENU_ENTRY(REF_PSTR_PTR(REST), NULL, NULL, &a_restore),
-	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter_and_commit),
+	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_commit_acts),
 };
 
 DEF_SUBMENU(options) = {
@@ -382,8 +457,12 @@ DEF_SUBMENU(options) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(ALEN), NULL, NULL, &o_alarm_enable),
 	SUBMENU_ENTRY(REF_PSTR_PTR(BEEP), NULL, NULL, &o_buzzer),
 	SUBMENU_ENTRY(REF_PSTR_PTR(BKLT), NULL, NULL, &o_backlight),
-	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_enter)
+	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_commit_opts)
 };
+#pragma GCC diagnostic pop
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclobbered"
 
 /* noreturn ei toimi tässä, mutta viimeistään
  * linkkeri optimoi paluukoodin pois
@@ -392,6 +471,8 @@ int main()
 {
 	/* näppäimet lukittu */
 	bool is_locked = false;
+
+	bool do_update;
 
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
@@ -484,7 +565,7 @@ main_loop:
 		/* tyhjennä näyttö */
 		LCD_CLEAR;
 
-		SUBMENU_INIT(views);
+		SUBMENU_INIT(views, SM_NONE);
 
 		UI_SETUP_END;
 		break;
@@ -492,12 +573,12 @@ main_loop:
 	case UI_LOOP(TEMP):
 		/* jos näppäimet ovat lukossa, pitää kutsua
 		 * loop takaisunkutsua manuaalisesti, koska
-		 * SUBMENU_POLL() katsoo näppäinten tilan.
+		 * submenu_poll() katsoo näppäinten tilan.
 		 */
 		if (is_locked)
-			submenu_docb(views, SM_LOOP);
+			submenu_docb(SM_LOOP);
 		else
-			SUBMENU_POLL(views);
+			submenu_poll();
 
 		switch (button_update(&s)) {
 		/* näppäinten lukitus */
@@ -505,7 +586,7 @@ main_loop:
 			if ((is_locked = !is_locked))
 				lcd_put_P_const("LOCK", 1, CENTER);
 			else
-				submenu_text(views);
+				submenu_text();
 			lcd_update();
 
 			beep_slow();
@@ -518,32 +599,49 @@ main_loop:
 
 		S_change = true;
 
-		SUBMENU_INIT(actions);
+		SUBMENU_INIT(actions, SM_1ROW);
+
+		lcd_put_P_const("->", 0, CENTER);
 
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(CLBR):
-		if (unlikely(S_change)) {
-			lcd_put_uint(S, 4, 0, CENTER);
-			lcd_update();
+		do_update = false;
 
+		if (unlikely(S_change)) {
+			(void)memset(&lcd_buffer[0][0], ' ', 4);
+			lcd_put_uint(S, 4, 0, LEFT);
+
+			do_update = true;
 			S_change = false;
 		}
 
-		SUBMENU_POLL(actions);
+		if (unlikely(T_change)) {
+			lcd_put_temp(T, 2, 6, 0, RIGHT);
+
+			do_update = true;
+			T_change = false;
+		}
+
+		if (unlikely(do_update)) {
+			lcd_update();
+			do_update = false;
+		}
+
+		submenu_poll();
 		break;
 
 	case UI_SETUP(OPTS):
 		LCD_CLEAR;
 
-		SUBMENU_INIT(options);
+		SUBMENU_INIT(options, SM_2ROW);
 		
 		UI_SETUP_END;
 		break;
 
 	case UI_LOOP(OPTS):
-		SUBMENU_POLL(options);
+		submenu_poll();
 		break;
 	
 	case UI_SETUP(ERRR):
@@ -603,3 +701,5 @@ main_loop:
 
 	unreachable;
 }
+
+#pragma GCC diagnostic pop

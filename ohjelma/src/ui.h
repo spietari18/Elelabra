@@ -126,10 +126,14 @@ struct submenu_entry
 #define SM_LOOP 1
 #define SM_CLCK 2
 
-void submenu_init(const struct submenu_entry *, uint8_t);
-void submenu_poll(const struct submenu_entry *, uint8_t);
-void submenu_docb(const struct submenu_entry *, uint8_t);
-void submenu_text(const struct submenu_entry *);
+#define SM_NONE 0
+#define SM_1ROW 1
+#define SM_2ROW 2
+
+void submenu_init(const struct submenu_entry *, uint8_t, uint8_t);
+void submenu_poll();
+void submenu_docb(uint8_t);
+void submenu_text();
 
 #define DEF_SUBMENU(name) \
 	static const struct submenu_entry name[] PROGMEM
@@ -137,11 +141,8 @@ void submenu_text(const struct submenu_entry *);
 #define SUBMENU_ENTRY(name, init, loop, click) \
 	{(void *)(name), (init), (loop), (click)}
 
-#define SUBMENU_INIT(name) \
-	submenu_init((name), ARRAY_SIZE(name))
-
-#define SUBMENU_POLL(name) \
-	submenu_poll((name), ARRAY_SIZE(name))
+#define SUBMENU_INIT(name, mode) \
+	submenu_init((name), ARRAY_SIZE(name), (mode))
 
 #define HOLD_DELAY 50 // [ms]
 
@@ -168,10 +169,10 @@ void __select_uint(const void *, uint8_t,
 	__yesno((msg), (size), &memcpy_P, &strlen_P)
 
 #define yesno_const(msg) \
-	__yesno((msg), sizeof(msg) - 1, &memcpy_P, NULL)
+	__yesno((msg), sizeof(msg) - 1, &memcpy, NULL)
 
 #define yesno_P_const(msg) \
-	__yesno(PSTR(msg), sizeof(msg) - 1, &memcpy, NULL)
+	__yesno(PSTR(msg), sizeof(msg) - 1, &memcpy_P, NULL)
 
 #define select_bool(msg, size, target) \
 	__select_bool((msg), (size), (target), &memcpy, &strlen)
@@ -216,5 +217,22 @@ void __select_uint(const void *, uint8_t,
 #define select_uint_P_const(msg, target, min, max, step) \
 	__select_uint(PSTR(msg), sizeof(msg) - 1, (target), (min), \
 		(max), (step), &memcpy_P, NULL)
+
+#define MSG_WAIT 1800 // [ms]
+
+void __msg(const void *, uint8_t, enum text_align,
+	void *(*)(void *, const void *, size_t), size_t (*)(const char *));
+
+#define msg(msg, size) \
+	__msg((msg), (size), CENTER, &memcpy, &strlen)
+
+#define msg_P(msg, size) \
+	__msg((msg), (size), CENTER, &memcpy_P, &strlen_P)
+
+#define msg_const(msg) \
+	__msg((msg), sizeof(msg) - 1, CENTER, &memcpy, NULL)
+
+#define msg_P_const(msg) \
+	__msg(PSTR(msg), sizeof(msg) - 1, CENTER, &memcpy_P, NULL)
 
 #endif // !UI_H

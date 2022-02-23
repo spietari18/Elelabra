@@ -68,7 +68,11 @@ void adc_init();
 #define ADC_CH0 2 // CH0 -> GND
 #define ADC_CH1 3 // CH1 -> GND
 
-/* Lue näyte AD Muuntimelta. */
+/* AD muunnin on 12-bittinen. */
+#define S_ABS_MIN 0
+#define S_ABS_MAX ((1 << 12) - 1)
+
+/* Lue näyte AD muuntimelta. */
 uint16_t adc_sample(uint8_t);
 
 /* I2C alustus EERAM:ille */

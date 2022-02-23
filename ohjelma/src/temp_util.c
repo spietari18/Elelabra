@@ -103,9 +103,14 @@ float read_sample()
 	return tmp;
 }
 
+/* PNS sovitus. */
+float calc_temp(uint16_t S)
+{
+	return lss_coefs[0] + lss_coefs[1]*S;
+}
+
 /* Lue lämpötila AD-muuntimelta. */
 float read_temp()
 {
-	/* lineaarinen PNS sovitus */
-	return lss_coefs[0] + lss_coefs[1]*read_sample();
+	return calc_temp(read_sample());
 }

@@ -38,6 +38,9 @@ void default_points();
 /* Lue suodatettu näyte AD-muuntimelta. */
 float read_sample();
 
+/* PNS sovitus. */
+float calc_temp(uint16_t);
+
 /* Lue lämpötila AD-muuntimelta. */
 float read_temp();
 

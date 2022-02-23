@@ -213,58 +213,114 @@ void prog_inc()
 		dst[i++] = pgm_read_byte(&prg[1]);
 }
 
-static uint8_t submenu_now;
-static uint8_t submenu_old;
+static uint8_t sm_now;
+static uint8_t sm_old;
 
-void submenu_init(const __unused struct submenu_entry *entries,
-	__unused uint8_t n_entries)
+static const struct submenu_entry *sm_entries;
+static uint8_t sm_n_entries;
+static uint8_t sm_mode;
+
+void submenu_init(const struct submenu_entry *entries,
+	uint8_t n_entries, uint8_t mode)
 {
-	submenu_now =  0;
-	submenu_old = ~0;
+	sm_now =  0;
+	sm_old = ~0;
+
+	switch (mode) {
+	/* ei ylimääräistä tekstiä */
+	case SM_NONE:
+		break;
+
+	case SM_2ROW:
+		lcd_put_P_const("<>", 0, CENTER);
+		fallthrough;
+		
+	case SM_1ROW:
+		lcd_put_P_const("  ->", 1, LEFT);
+		lcd_put_P_const("->  ", 1, RIGHT);
+
+		break;
+
+	default:
+		unreachable;
+	}
+
+	sm_entries = entries;
+	sm_n_entries = n_entries;
+	sm_mode = mode;
 }
 
-void submenu_poll(const struct submenu_entry *entries, uint8_t n_entries)
+void submenu_poll()
 {
 	switch (button_update(&s)) {
 	case RT|UP:
 		beep_fast();
-		INC_MOD(submenu_now, n_entries);
+		INC_MOD(sm_now, sm_n_entries);
 		break;
 	
 	case LT|UP:
 		beep_fast();
-		DEC_MOD(submenu_now, n_entries);
+		DEC_MOD(sm_now, sm_n_entries);
 		break;
 	
 	case BOTH|UP:
 		beep_slow();
-		CALLBACK(pgm_read_ptr(&entries[submenu_now].click));
+		CALLBACK(pgm_read_ptr(&sm_entries[sm_now].click));
 		return;
 	}
 
-	if (unlikely(submenu_now != submenu_old)) {
-		CALLBACK(pgm_read_ptr(&entries[submenu_now].init));
+	if (unlikely(sm_now != sm_old)) {
+		CALLBACK(pgm_read_ptr(&sm_entries[sm_now].init));
 
 		lcd_put_P(pgm_read_ptr(
-			&entries[submenu_now].name), NULLTERM, 1, CENTER);
+			&sm_entries[sm_now].name), NULLTERM, 1, CENTER);
+
+		switch (sm_mode) {
+		case SM_NONE:
+			break;
+
+		case SM_2ROW:
+			//(void)memset(&lcd_buffer[0][6], ' ', 6);
+			//(void)memset(&lcd_buffer[0][11], ' ', 6);
+			lcd_put_P(pgm_read_ptr(&sm_entries[(sm_now
+				+ sm_n_entries - 1) % sm_n_entries].name),
+				NULLTERM, 0, LEFT);
+			lcd_put_P(pgm_read_ptr(
+				&sm_entries[(sm_now + 1)
+				% sm_n_entries].name), NULLTERM, 0, RIGHT);
+
+			fallthrough;
+			
+		case SM_1ROW:
+			(void)memset(&lcd_buffer[1][0], ' ', 2);
+			(void)memset(&lcd_buffer[1][14], ' ', 2);
+			lcd_put_uint(sm_now + 1, 2, 1, LEFT);
+			lcd_put_uint(sm_n_entries, 2, 1, RIGHT);
+
+			break;
+
+		default:
+			unreachable;
+		}
 
 		lcd_update();
 
-		submenu_old = submenu_now;
+		sm_old = sm_now;
 	}
 
-	CALLBACK(pgm_read_ptr(&entries[submenu_now].loop));
+	CALLBACK(pgm_read_ptr(&sm_entries[sm_now].loop));
 }
 
-void submenu_docb(const struct submenu_entry *entries, uint8_t cb)
+void submenu_docb(uint8_t cb)
 {
-	CALLBACK(pgm_read_ptr(&((callback_t *)&entries[entry_now].init)[cb]));
+	CALLBACK(pgm_read_ptr(
+		&((callback_t *)&sm_entries[sm_now].init)[cb]));
 }
 
-void submenu_text(const struct submenu_entry *entries)
+void submenu_text()
 {
 	lcd_put_P(pgm_read_ptr(
-			&entries[submenu_now].name), NULLTERM, 1, CENTER);
+		&sm_entries[sm_now].name), NULLTERM, 1, CENTER);
 }
 
 typedef bool (*click_t)(void *);
@@ -397,8 +453,11 @@ bool __yesno(const void *msg, uint8_t size,
 {
 	bool target;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 	user_select(&target, msg, size, *REF_PSTR_PTR(NO), *REF_PSTR_PTR(YS),
 		NULL, &yn_left, &yn_right, NULL, NULL, NULL, cpy, len);
+#pragma GCC diagnostic pop
 
 	return target;
 }
@@ -433,9 +492,12 @@ void __select_bool(const void *msg, uint8_t size, bool *target,
 	void *(*cpy)(void *, const void *, size_t),
 	size_t (*len)(const char *))
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 	user_select(target, msg, size, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_bool_value, &s_bool_left, &s_bool_right, &s_done,
 		NULL, NULL, cpy, len);
+#pragma GCC diagnostic pop
 }
 
 struct sfarg
@@ -444,19 +506,27 @@ struct sfarg
 	float min;
 	float max;
 	float step;
+	float sact;
+	float smul;
 };
 
-static void s_float_value(struct sfarg *target)
+static void __float_put_value(struct sfarg *target)
 {
 	lcd_put_float(target->value, 2, true, 6, 1, CENTER);
 	lcd_update();
+}
+
+static void s_float_value(struct sfarg *target)
+{
+	target->sact = target->step;
+	__float_put_value(target);
 }
 
 static bool s_float_left(struct sfarg *target)
 {
 	float tmp;
 
-	tmp = target->value - target->step;
+	tmp = target->value - target->sact;
 	target->value = MAX(tmp, target->min);
 
 	return false;
@@ -467,7 +537,7 @@ static bool s_float_right(struct sfarg *target)
 
 	float tmp;
 
-	tmp = target->value + target->step;
+	tmp = target->value + target->sact;
 	target->value = MIN(tmp, target->max);
 
 	return false;
@@ -477,14 +547,18 @@ static void s_float_hleft(struct sfarg *target)
 {
 	(void)s_float_left(target);
 	_delay_ms(HOLD_DELAY);
-	s_float_value(target);
+	__float_put_value(target);
+	target->sact = NEAREST(
+		target->sact*target->smul, target->step);
 }
 
 static void s_float_hright(struct sfarg *target)
 {
 	(void)s_float_right(target);
 	_delay_ms(HOLD_DELAY);
-	s_float_value(target);
+	__float_put_value(target);
+	target->sact = NEAREST(
+		target->sact*target->smul, target->step);
 }
 
 void __select_float(const void *msg, uint8_t size,
@@ -492,11 +566,14 @@ void __select_float(const void *msg, uint8_t size,
 	void *(*cpy)(void *, const void *, size_t),
 	size_t (*len)(const char *))
 {
-	struct sfarg arg = {*target, min, max, step};
+	struct sfarg arg = {*target, min, max, step, step, 1.01};
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 	user_select(&arg, msg, size, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_float_value, &s_float_left, &s_float_right, &s_done,
 		&s_float_hleft, &s_float_hright, cpy, len);
+#pragma GCC diagnostic pop
 
 	*target = arg.value;
 }
@@ -507,25 +584,34 @@ struct siarg
 	uint16_t min;
 	uint16_t max;
 	uint16_t step;
+	float sact;
+	float smul;
 };
 
-static void s_uint_value(struct siarg *target)
+static void __uint_put_value(struct siarg *target)
 {
 	lcd_put_P_const("      ", 1, CENTER);
 	lcd_put_uint(target->value, 6, 1, CENTER);
 	lcd_update();
 }
 
+static void s_uint_value(struct siarg *target)
+{
+	target->sact = target->step;
+	__uint_put_value(target);
+}
+
 static bool s_uint_left(struct siarg *target)
 {
 	uint16_t tmp;
 
-	/* tämä alivuotaa muuten */
-	if (target->value < 1)
-		return false;
+	tmp = target->value - ((uint16_t)target->sact & 0x7FFF);
 
-	tmp = target->value - (int16_t)(target->step & 0x7FFF);
-	target->value = MAX(tmp, target->min);
+	/* alivuoto */
+	if (tmp > target->value)
+		target->value = target->min;
+	else 
+		target->value = MAX(tmp, target->min);
 
 	return false;
 }
@@ -534,28 +620,33 @@ static bool s_uint_right(struct siarg *target)
 {
 	uint16_t tmp;
 
-	/* tämä ylivuotaa muuten */
-	if (target->value == 0xFFFF)
-		return false;
+	tmp = target->value + ((uint16_t)target->sact & 0x7FFF);
 
-	tmp = target->value + (int16_t)(target->step & 0x7FFF);
-	target->value = MIN(tmp, target->max);
+	/* ylivuoto */
+	if (tmp < target->value)
+		target->value = target->max;
+	else
+		target->value = MIN(tmp, target->max);
 
 	return false;
 }
 
-static void s_uint_hleft(struct sfarg *target)
+static void s_uint_hleft(struct siarg *target)
 {
 	(void)s_uint_left(target);
 	_delay_ms(HOLD_DELAY);
-	s_uint_value(target);
+	__uint_put_value(target);
+	target->sact = NEAREST(
+		((float)target->sact)*target->smul, (float)target->step);
 }
 
-static void s_uint_hright(struct sfarg *target)
+static void s_uint_hright(struct siarg *target)
 {
 	(void)s_uint_right(target);
 	_delay_ms(HOLD_DELAY);
-	s_uint_value(target);
+	__uint_put_value(target);
+	target->sact = NEAREST(
+		target->sact*target->smul, target->step);
 }
 
 void __select_uint(const void *msg, uint8_t size, uint16_t *target,
@@ -563,11 +654,73 @@ void __select_uint(const void *msg, uint8_t size, uint16_t *target,
 	void *(*cpy)(void *, const void *, size_t),
 	size_t (*len)(const char *))
 {
-	struct siarg arg = {*target, min, max, step};
+	struct siarg arg = {*target, min, max, step, step, 1.02};
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 	user_select(&arg, msg, size, *REF_PSTR_PTR(DC), *REF_PSTR_PTR(IN),
 		&s_uint_value, &s_uint_left, &s_uint_right, &s_done,
 		&s_uint_hleft, &s_uint_hright, cpy, len);
+#pragma GCC diagnostic pop
 
 	*target = arg.value;
+}
+
+void __msg(const void *msg, uint8_t size, enum text_align align,
+	void *(*cpy)(void *, const void *, size_t),
+	size_t (*len)(const char *))
+{
+	/* puskuri */
+	char tmp[LCD_ROWS][LCD_COLS];
+
+	/* onko merkkijono nollaterminoitu? */
+	if (size == NULLTERM)
+		size = len(msg);
+	
+	/* tallenna vanha näyttö */
+	(void)memcpy(tmp, lcd_buffer, LCD_ROWS*LCD_COLS);
+
+	/* tyhjennä näyttö */
+	LCD_CLEAR;
+
+	for (uint8_t row = 0; row < 2; row++)
+	{
+		uint8_t i = 0;
+
+		/* etsi rivin loppu */
+		for (; i < size; i++)
+		{
+			uint8_t c;
+
+			/* tämä koska ei tiedetä onko merkkijono
+			 * RAM vai ROM muistissa (hidas kuin mikäkin)
+			 */
+			(void)cpy(&c, &((const char *)msg)[i], 1);
+
+			/* uusi rivi */
+			if (c == '\n')
+				break;
+		}
+
+		/* kirjoita rivi (jos ei tyhjä) */
+		if (likely(i > 0))
+			__lcd_put(msg,
+				MIN(LCD_COLS, i), row, align, cpy, NULL);
+
+		/* koko ei saa alivuotaa */
+		if (likely(i < size))
+			i++;
+
+		msg += i;
+		size -= i;
+	}
+
+	lcd_update();
+
+	/* odota */
+	_delay_ms(MSG_WAIT);
+
+	/* palauta vanha näyttö */
+	(void)memcpy(lcd_buffer, tmp, LCD_ROWS*LCD_COLS);
+	lcd_update();
 }

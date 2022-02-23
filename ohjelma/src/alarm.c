@@ -72,30 +72,8 @@ uint16_t set_prescaler(volatile uint8_t *reg, uint16_t freq, uint16_t max)
 ISR(TIMER2_COMPA_vect)
 {
 	uint32_t now;
+	uint8_t off = 0;
 
-	now =  (!GET(state, BEEPENBL)) | (!GET(state, BLNKENBL) << 1);
-	if (unlikely(now)) {
-		switch (now) {
-		case 1:
-			WRITE(BUZZER, LOW);
-			break;
-		case 2:
-			WRITE(LCD_AN, HIGH);
-			break;
-		case 3:
-			WRITE(BUZZER, LOW);
-			WRITE(LCD_AN, HIGH);
-			break;
-		default:
-			unreachable;
-		}
-
-		// ajastin pois päältä
-		CLR(TIMSK2, OCIE2A);
-
-		return;
-	}
-	
 	now = millis();
 
 	/* äänimerkki */
@@ -117,13 +95,6 @@ ISR(TIMER2_COMPA_vect)
 			if (unlikely((now - ts_beep)
 				> (COMMON_PERIOD/2))) {
 				TGL(state, BEEPSTAT);
-
-				/* IO pinnin tila on LOW kun summeri ei ole
-				 * päällä jottei virtaa kulje turhaan.
-				 */
-				if (!GET(state, BEEPSTAT))
-					WRITE(BUZZER, LOW);
-
 				ts_beep = now;
 			}
 
@@ -150,6 +121,11 @@ ISR(TIMER2_COMPA_vect)
 			/* ääni */
 			TOGGLE(BUZZER);
 		}
+	
+	/* IO pinnin tila tunnetuksi */
+	} else {
+		WRITE(BUZZER, LOW);
+		off++;
 	}
 
 	/* välkytys */
@@ -190,7 +166,17 @@ ISR(TIMER2_COMPA_vect)
 				SET(state, BLNKSYNC);
 			}
 		}
+	
+	/* IO pinnin tila tunnetuksi */
+	} else {
+		WRITE(LCD_AN, HIGH);
+		off++;
 	}
+
+	/* molemmat pois päältä? */
+	if (off >= 2)
+		// ajastin pois päältä
+		CLR(TIMSK2, OCIE2A);
 }
 
 /* Alustus. */

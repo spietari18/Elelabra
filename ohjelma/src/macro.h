@@ -40,6 +40,10 @@
 #define INT_DIV_RND(A, B) \
 	((A) + (B) - 1)/(B)
 
+/* Pyöristä A lähimpään B:n kertaan. */
+#define NEAREST(A, B) \
+	(((A) / (B)) * (B))
+
 /* Bittimanipulaatio. */
 #define GET(NUM, N) \
 	(NUM & (1UL << (N)))
