@@ -52,6 +52,9 @@ bool get_data_points()
 		return true;
 	}
 
+	/* uudet PNS kertoimet */
+	compute_lss_coefs();
+
 	return false;
 }
 
@@ -527,85 +530,7 @@ int main()
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
 	CLR(PRR, PRTIM0); // TIMER0 päälle
-	CLR(PRR, PRTIM2); // TIMER2 päälle
-	CLR(PRR, PRSPI);  // SPI päälle
-	CLR(PRR, PRTWI);  // I2C päälle
-
-	/* alusta kaikki IO pinnit INPUT PULLUP tilaan
-	 * jotta käyttämättömät pinnit eivät kellu.
-	 * aseta myös kaikkien pinnien arvoksi LOW
-	 */
-	DDRB  = DDRC  = DDRD  =  0; // INPUT
-	PORTB = PORTC = PORTD = ~0; // PULLUP
-	PINB  = PINC  = PIND  =  0; // LOW
-
-	/* Alusta moduulit/tilat. */
-	lcd_init();
-	adc_init();
-	eeram_init();
-	timer_init();
-	alarm_init();
-	default_points();
-
-	/* käyttöliittymä alkaa splash näytöstä */
-	UI_SET_STATE(SPLH);
-
-main_loop:
-	/* valikkotilakohtaiset taskit */
-	interval_tasks(
-		pgm_read_ptr(&ui_tasks[UI_GET_STATE & UI_MASK_NOW]),
-		pgm_read_byte(&ui_task_count[UI_GET_STATE & UI_MASK_NOW]));
-
-	/* globaalit taskit */
-	INTERVAL_TASKS(global_tasks);
-
-	switch (UI_GET_STATE) {
-	case UI_SETUP(SPLH):
-
-#define SPLASH_1 "L\xE1mp\xEFmittari"
-#define SPLASH_2 "V. 1.0"
-#define SPLASH_WAIT 1000 // [ms]
-
-		/* splash */
-		lcd_put_P_const(SPLASH_1, 0, CENTER);
-		lcd_put_P_const(SPLASH_2, 1, CENTER);
-		lcd_update();
-
-		beep_slow();
-
-		/* näytä alarivi SPLASH_WAIT millisekuntia */
-		_delay_ms(SPLASH_WAIT);
-
-		/* alusta edistymispalkki */
-		prog_init(MAX_SAMPLES, 1);
-
-		UI_SETUP_END;     
-		break;
-
-	case UI_LOOP(SPLH):
-		/* alusta näytepuskuri täyteen */
-		INTERVAL(1000/SAMPLE_RATE) {
-			/* lue uusi näyte */
-			(void)read_sample();
-
-			/* päivitä edistymispalkki */
-			prog_inc();
-			lcd_update();
-		}
-
-		/* Aseta tila oletusnäkymään. */
-		if (prog_pos >= (MAX_SAMPLES - 1))
-			UI_SET_STATE(TEMP);
-
-		break;
-	
-	case UI_SETUP(MENU):
-		LCD_CLEAR;
-
-		/* Lue asetukset ja datapisteet EERAM:ista */
-		if (get_options())
-			msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
-		if (get_data_points())
+	CLR(PRR,data_points())
 			msg_P_const("READ DPTS FAIL\nFALLBACK TO DEFS");
 
 		menu_draw();
