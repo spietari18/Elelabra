@@ -23,7 +23,6 @@ void __error(const void *msg, bool (*cb)())
 		while (1);
 }
 
-
 #define PROG_SEGS 192
 
 noreturn bool __reboot()

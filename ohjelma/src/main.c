@@ -162,6 +162,10 @@ alarm_off:
 
 bool undervolt_recover()
 {
+	/* tässä kannattaisi ehkä mieluummin käynnistää koko
+	 * laite uudestaan reboot() komennolla, koska sisäinen
+	 * tila voi olla korruptoitunut alhaisesta jännitteestä
+	 */ 
 	_delay_ms(1000);
 	return undervolt();
 }
@@ -421,8 +425,6 @@ static void o_alarm_high()
 
 static void o_alarm_low()
 {
-	reboot("TESTI");
-
 	select_float_P_const("ALARM LOW",
 		&opts.alarm_low, -30.0, opts.alarm_high, 0.1);
 }
@@ -457,14 +459,14 @@ static void o_backlight()
 static void menu_commit_acts()
 {
 	if (put_data_points())
-		msg_P_const("DPOINTS FAILED\nNOT SAVED");
+		msg_P_const("WRITE OPTS FAIL\nNOT SAVED");
 	menu_enter();
 }
 
 static void menu_commit_opts()
 {
 	if (put_options())
-		msg_P_const("OPTIONS FAILED\nNOT SAVED");
+		msg_P_const("WRITE DPTS FAIL\nNOT SAVED");
 	menu_enter();
 }
 
@@ -602,9 +604,9 @@ main_loop:
 
 		/* Lue asetukset ja datapisteet EERAM:ista */
 		if (get_options())
-			msg_P_const("OPTIONS FAILED\nDEFAULT FALLBACK");
+			msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
 		if (get_data_points())
-			msg_P_const("DPOINTS FAILED\nDEFAULT FALLBACK");
+			msg_P_const("READ DPTS FAIL\nFALLBACK TO DEFS");
 
 		menu_draw();
 
@@ -650,6 +652,13 @@ main_loop:
 
 	case UI_SETUP(CLBR):
 		LCD_CLEAR;
+
+		/* mahdollinen hälytys pois päältä task_alarm()
+		 * laittaa sen takaisin jos tarvitsee kun tästä
+		 * näkymästä poistutaan
+		 */
+		blink_end();
+		beep_end();
 
 		S_change = true;
 
@@ -704,6 +713,7 @@ main_loop:
 
 	/* pääsilmukka on toteutettu goto komennolla, jotta säästytään
 	 * turhalta sisennykseltä, eikä silmukasta voi vahingossa poistua.
+	 * (tosin -mendup-at=main ei anna pääohjelman palata)
 	 */
 	goto main_loop;
 
