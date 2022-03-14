@@ -81,6 +81,10 @@ void eeram_init();
 /* Kun osoite on tämä, luetaan nykysestä osoitteesta. */
 #define EERAM_ADDR (uint16_t)(~0)
 
+/* Osoiterajat EERAM:ille */
+#define EERAM_MIN_ADDR 0
+#define EERAM_MAX_ADDR ((1 << 11) - 1)
+
 /* Lue dataa EERAM:ista. */
 bool eeram_read(uint16_t, uint8_t [], uint8_t);
 

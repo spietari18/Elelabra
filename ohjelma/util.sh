@@ -223,13 +223,14 @@ action_upload()
 	avrdude \
 		-Dv \
 		-p "$DEVICE" \
-		-c arduino \
+		-c 'stk500v1' \
+		-b 19200 \
 		-P "$1" \
-		-b 115200 \
 		-U "flash:w:${PRGOUT}:i" \
 		-C 'avrdude.conf' \
 		|| exit 1
 }
+
 
 # $1 = serial device
 action_monitor()

@@ -6,6 +6,9 @@
 
 #include <stdio.h>
 
+#define OPTS_ADDR EERAM_MIN_ADDR
+#define SPTS_ADDR (EERAM_MAX_ADDR - (1 + sizeof(data_points)))
+
 /* asetukset */
 struct {
 	float alarm_low;
@@ -20,6 +23,44 @@ struct {
 	-20.0, 20.0,
 	false, true, true
 };
+
+bool get_options()
+{
+	uint8_t buf[sizeof(opts)];
+	bool ret;
+
+	if ((ret = eeram_read(OPTS_ADDR, buf, sizeof(buf))))
+		(void)memcpy(&opts, buf, sizeof(buf));
+
+	return !ret;
+}
+
+bool put_options()
+{
+	return !eeram_write(OPTS_ADDR, (uint8_t *)&opts, sizeof(opts));
+}
+
+bool get_data_points()
+{
+	if (!eeram_read(SPTS_ADDR, &n_data_points, 1)
+		|| (n_data_points < MAX_POINTS))
+		return true;
+
+	if (!eeram_read(SPTS_ADDR + 1,
+		(uint8_t *)data_points, n_data_points)) {
+		default_points();
+		return true;
+	}
+
+	return false;
+}
+
+bool put_data_points()
+{
+	return !(eeram_write(SPTS_ADDR, &n_data_points, 1)
+		&& eeram_write(SPTS_ADDR + 1,
+			(uint8_t *)data_points, n_data_points));
+}
 
 /* main.c:n lokaali nappitila */
 static struct button_state s;
@@ -57,9 +98,6 @@ static bool S_change;
 
 static float T_obs_max = -INF;
 static float T_obs_min =  INF;
-
-//static float opts.alarm_high =  20.0;
-//static float opts.alarm_low = -20.0;
 
 static bool alarm_on;
 
@@ -418,15 +456,15 @@ static void o_backlight()
 
 static void menu_commit_acts()
 {
-	// uudet pisteet EERAM:iin
-
+	if (put_data_points())
+		msg_P_const("DPOINTS FAILED\nNOT SAVED");
 	menu_enter();
 }
 
 static void menu_commit_opts()
 {
-	// asetukset EERAM:iin
-	
+	if (put_options())
+		msg_P_const("OPTIONS FAILED\nNOT SAVED");
 	menu_enter();
 }
 
@@ -561,7 +599,15 @@ main_loop:
 	
 	case UI_SETUP(MENU):
 		LCD_CLEAR;
+
+		/* Lue asetukset ja datapisteet EERAM:ista */
+		if (get_options())
+			msg_P_const("OPTIONS FAILED\nDEFAULT FALLBACK");
+		if (get_data_points())
+			msg_P_const("DPOINTS FAILED\nDEFAULT FALLBACK");
+
 		menu_draw();
+
 		UI_SETUP_END;
 		break;
 	
