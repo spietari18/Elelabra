@@ -524,8 +524,6 @@ int main()
 	/* näppäimet lukittu */
 	bool is_locked = false;
 
-	bool do_update;
-
 	/* aseta käytetyt moduulit päälle ja muut pois päältä */
 	PRR = ~0;
 	CLR(PRR, PRTIM0); // TIMER0 päälle
@@ -552,6 +550,26 @@ int main()
 	/* käyttöliittymä alkaa splash näytöstä */
 	UI_SET_STATE(SPLH);
 
+	/* Lue asetukset ja datapisteet EERAM:ista */
+	//if (get_options())
+	//	msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
+	//if (get_data_points())
+	//	msg_P_const("READ DPTS FAIL\nFALLBACK TO DEFS");
+
+	char c;
+	for (int i = 0; i < 32; i++)
+	{
+		bool result = eeram_read(i, &c, 1);
+		LCD_CLEAR;
+		if (result)
+			lcd_put_P_const("READ OK", 0, CENTER);
+		else
+			lcd_put_P_const("READ FAIL", 0, CENTER);
+		lcd_put_P_const("    ", 1, CENTER);
+		lcd_put_uint(i, 4, 1, CENTER);
+		lcd_update();
+		_delay_ms(10);
+	}	
 main_loop:
 	/* valikkotilakohtaiset taskit */
 	interval_tasks(
@@ -603,12 +621,6 @@ main_loop:
 	
 	case UI_SETUP(MENU):
 		LCD_CLEAR;
-
-		/* Lue asetukset ja datapisteet EERAM:ista */
-		if (get_options())
-			msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
-		if (get_data_points())
-			msg_P_const("READ DPTS FAIL\nFALLBACK TO DEFS");
 
 		menu_draw();
 
@@ -672,26 +684,13 @@ main_loop:
 		break;
 
 	case UI_LOOP(CLBR):
-		do_update = false;
-
 		if (unlikely(S_change)) {
 			(void)memset(&lcd_buffer[0][0], ' ', 4);
 			lcd_put_uint(S, 4, 0, LEFT);
-
-			do_update = true;
-			S_change = false;
-		}
-
-		if (unlikely(T_change)) {
 			lcd_put_temp(T, 2, 6, 0, RIGHT);
-
-			do_update = true;
-			T_change = false;
-		}
-
-		if (unlikely(do_update)) {
 			lcd_update();
-			do_update = false;
+
+			S_change = false;
 		}
 
 		submenu_poll();

@@ -79,11 +79,11 @@ TMPDIR="/tmp/avr-build"
 PRGOUT="${TMPDIR}/program.hex"
 DEVICE="atmega328p"
 
-COMMON="-mmcu=${DEVICE} -O2 -mcall-prologues \
+COMMON="-mmcu=${DEVICE} -O1 -mcall-prologues \
 -ffunction-sections -fdata-sections"
 CFLAGS="${COMMON} -std=gnu99 -Wall -Wextra"
-LDFLAGS="${COMMON} -Wl,-s,-flto,-gc-sections \
--fuse-linker-plugin -mendup-at=main -lm"
+LDFLAGS="${COMMON} -Wl,-s,-gc-sections \
+-mendup-at=main -lm"
 
 action_clean()
 {
@@ -223,8 +223,7 @@ action_upload()
 	avrdude \
 		-Dv \
 		-p "$DEVICE" \
-		-c 'stk500v1' \
-		-b 19200 \
+		-c 'arduino' \
 		-P "$1" \
 		-U "flash:w:${PRGOUT}:i" \
 		-C 'avrdude.conf' \

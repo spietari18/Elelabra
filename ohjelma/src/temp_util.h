@@ -7,7 +7,7 @@
 #define MAX_POINTS 32
 
 /* Näytepuskurin koko. (mitä isompi, sen parempi suodatus) */
-#define MAX_SAMPLES 128
+#define MAX_SAMPLES 64
 
 /* AD muuntimen näytteistystaajuus. */
 #define SAMPLE_RATE 64 // [Hz]

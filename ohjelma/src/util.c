@@ -204,10 +204,8 @@ static void i2c_stop()
 	TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
 }
 
-uint8_t n_tx;
-
 /* Lähetä tavu I2C väylään. */
-static bool i2c_tx_byte(uint8_t src, bool ack)
+static int i2c_tx_byte(uint8_t src, bool ack)
 {
 	/* lähetä tavu */
 	TWDR = src;
@@ -215,19 +213,19 @@ static bool i2c_tx_byte(uint8_t src, bool ack)
 	//SET(TWCR, TWINT);
 	//SET(TWCR, TWEN);
 	//VAL(TWCR, TWEA, ack);
-	TWCR = (1 << TWINT) | (ack << TWEA) | (1 << TWEN);
+	TWCR = (1 << TWINT) | (1 << TWEN);
 
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* tarkista, että lähetys onnistui */
-	if (I2C_STAT != I2C_MT_DACK)
+	if (I2C_STAT != ((ack) ? I2C_MT_DACK : I2C_MT_DNCK))
 		return false;
 
 	return true;
 }
 
 /* Vastaanota tavu I2C väylästä. */
-static bool i2c_rx_byte(uint8_t *dst, bool ack)
+static int i2c_rx_byte(uint8_t *dst, bool ack)
 {
 	/* vastaanota tavu */
 	//TWCR = 0;
@@ -239,7 +237,7 @@ static bool i2c_rx_byte(uint8_t *dst, bool ack)
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* tarkista, että vastaanotto onnistui */
-	if (I2C_STAT != I2C_MR_DACK)
+	if (I2C_STAT != ((ack) ? I2C_MR_DACK : I2C_MR_DNCK))
 		return false;
 
 	*dst = TWDR;
@@ -307,17 +305,14 @@ static inline bool eeram_tx_addr(uint16_t addr)
 
 	/* aloita I2C */
 	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_W))
-		return false;	_delay_ms(1000);
-
-
+		return false;
 
 	/* lähetä osoite */
 	result = i2c_tx_byte(EERAM_HGH(addr), true)
 		&& i2c_tx_byte(EERAM_LOW(addr), true);
 
 	/* vapauta I2C väylä */
-	if (!result)
-		i2c_stop();
+	i2c_stop();
 
 	return result;
 }
@@ -330,10 +325,11 @@ bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
 	/* jos ei käytetä nykyistä osoitetta, lähetä osoite */
 	if ((addr != EERAM_ADDR) && !eeram_tx_addr(addr))
 		return false;
-	
+
 	/* aloita I2C */
-	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_R))
+	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_R)) {
 		return false;
+	}
 
 	len--;
 
@@ -341,7 +337,7 @@ bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
 	for (size_t i = 0; i < len; i++)
 		if (!i2c_rx_byte(&data[i], true))
 			goto fail;
-	
+
 	/* viimeinen tavu ei saa lähettää ACK bittiä */
 	if (!i2c_rx_byte(&data[len], false))
 		goto fail;
