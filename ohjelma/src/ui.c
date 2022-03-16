@@ -735,7 +735,7 @@ void user_wait()
 		case RT|HLUP:
 		case LT|HLUP:
 		case BOTH|HLUP:
-			beep_slow();
+			beep_fast();
 			_delay_ms(100);
 			return;
 		}
