@@ -775,7 +775,7 @@ main_loop:
 		if (unlikely(S_change)) {
 			(void)memset(&lcd_buffer[0][0], ' ', 4);
 			lcd_put_uint(S, 4, 0, LEFT);
-			lcd_put_temp(T, 2, 6, 0, RIGHT);
+			lcd_put_temp(calc_temp(S), 2, 6, 0, RIGHT);
 			lcd_update();
 
 			S_change = false;
