@@ -654,10 +654,10 @@ int main()
 	UI_SET_STATE(SPLH);
 
 	/* Lue asetukset ja datapisteet EERAM:ista */
-	//if (get_options())
-	//	msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
-	//if (get_data_points())
-	//	msg_P_const("READ DATA FAIL\nFALLBACK TO DEFS");
+	if (get_options())
+		msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
+	if (get_data_points())
+		msg_P_const("READ DATA FAIL\nFALLBACK TO DEFS");
 main_loop:
 	/* valikkotilakohtaiset taskit */
 	interval_tasks(
@@ -681,7 +681,6 @@ main_loop:
 		lcd_put_P_const(SPLASH_2, 1, CENTER);
 		lcd_update();
 
-		//beep_slow();
 		play_e1m1();
 
 		/* näytä alarivi SPLASH_WAIT millisekuntia */
