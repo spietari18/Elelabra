@@ -713,6 +713,8 @@ void __msg(const void *msg, uint8_t size, enum text_align align,
 
 	lcd_update();
 
+	beep_slow();
+
 	/* odota */
 	_delay_ms(MSG_WAIT);
 
