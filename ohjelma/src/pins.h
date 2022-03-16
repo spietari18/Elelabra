@@ -13,7 +13,7 @@ DEFINE_PIN(SPI_MISO, B, 4); // PB4
 DEFINE_PIN(I2C_SDA, C, 4); // PC4
 DEFINE_PIN(I2C_SCL, C, 5); // PC5
 
-#if 0
+#if 1
 /* LCD näyttö. */
 DEFINE_PIN(_LCD_RS, D, 6); // PD6
 DEFINE_PIN(_LCD_EN, D, 5); // PD5
