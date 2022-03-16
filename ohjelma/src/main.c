@@ -560,7 +560,7 @@ static void o_memtest()
 static void menu_commit_acts()
 {
 	if (put_data_points())
-		msg_P_const("SAVE DATE FAIL\nNOT SAVED");
+		msg_P_const("SAVE DATA FAIL\nNOT SAVED");
 	menu_enter();
 }
 
