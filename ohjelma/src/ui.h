@@ -234,4 +234,6 @@ void __msg(const void *, uint8_t, enum text_align,
 #define msg_P_const(msg) \
 	__msg(PSTR(msg), sizeof(msg) - 1, CENTER, &memcpy_P, NULL)
 
+void user_wait();
+
 #endif // !UI_H

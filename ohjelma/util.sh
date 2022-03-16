@@ -79,11 +79,11 @@ TMPDIR="/tmp/avr-build"
 PRGOUT="${TMPDIR}/program.hex"
 DEVICE="atmega328p"
 
-COMMON="-mmcu=${DEVICE} -O1 -mcall-prologues \
--ffunction-sections -fdata-sections"
-CFLAGS="${COMMON} -std=gnu99 -Wall -Wextra"
-LDFLAGS="${COMMON} -Wl,-s,-gc-sections \
--mendup-at=main -lm"
+COMMON="-mmcu=${DEVICE} -std=gnu99 -O2 -mcall-prologues \
+-ffunction-sections -fdata-sections -fdiagnostics-color=always"
+CFLAGS="${COMMON} -Wall -Wextra"
+LDFLAGS="${COMMON} -Wl,-s,-flto,-gc-sections \
+-fuse-linker-plugin -mendup-at=main -lm"
 
 action_clean()
 {

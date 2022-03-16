@@ -159,7 +159,7 @@ static uint8_t spi_byte(uint8_t v)
 static void i2c_stop();
 
 /* Varaa I2C väylä. */
-static bool i2c_start(uint8_t packet)
+static bool i2c_start(uint8_t src)
 {
 	/* lähetä START */
 	//TWCR = 0;
@@ -171,12 +171,12 @@ static bool i2c_start(uint8_t packet)
 	while (!GET(TWCR, TWINT)); // odota
 	
 	/* tarkista, että lähetys onnistui */
-	if (I2C_STAT != I2C_MR_STTX)
+	if ((I2C_STAT != I2C_MR_STTX) && (I2C_STAT != I2C_MR_RETX))
 		return false;
 	while (!GET(TWCR, TWINT)); // odota
 
 	/* lähetä osoitetavu */
-	TWDR = packet;
+	TWDR = src;
 	//TWCR = 0;
 	//SET(TWCR, TWINT);
 	//SET(TWCR, TWEN);
@@ -204,8 +204,8 @@ static void i2c_stop()
 	TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
 }
 
-/* Lähetä tavu I2C väylään. */
-static int i2c_tx_byte(uint8_t src, bool ack)
+/* Lähetä tavu I2C väylään. (master transmitter) */
+static bool i2c_tx_byte(uint8_t src, bool ack)
 {
 	/* lähetä tavu */
 	TWDR = src;
@@ -224,8 +224,8 @@ static int i2c_tx_byte(uint8_t src, bool ack)
 	return true;
 }
 
-/* Vastaanota tavu I2C väylästä. */
-static int i2c_rx_byte(uint8_t *dst, bool ack)
+/* Vastaanota tavu I2C väylästä. (master receiver) */
+static bool i2c_rx_byte(uint8_t *dst, bool ack)
 {
 	/* vastaanota tavu */
 	//TWCR = 0;
@@ -291,28 +291,28 @@ void eeram_init()
 #define EERAM_SRAM 0xA0
 #define EERAM_CREG 0x30
 
-#define EERAM_DEVA(A) (((A) >> 0x9) & 0xC)
-
 #define EERAM_R 1
 #define EERAM_W 0
 
-#define EERAM_HGH(A) (((A) >> 0x8) & 0x7)
-#define EERAM_LOW(A) ((A) & 0xFF)
+#define EERAM_ADDR_DEV(A) (((A) >> 0x9) & 0xC)
+#define EERAM_ADDR_HGH(A) (((A) >> 0x8) & 0x7)
+#define EERAM_ADDR_LOW(A) ((A) & 0xFF)
 
-static inline bool eeram_tx_addr(uint16_t addr)
+static bool eeram_tx_addr(uint16_t addr)
 {
 	bool result;
 
 	/* aloita I2C */
-	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_W))
+	if (!i2c_start(EERAM_SRAM | EERAM_ADDR_DEV(addr) | EERAM_W))
 		return false;
 
 	/* lähetä osoite */
-	result = i2c_tx_byte(EERAM_HGH(addr), true)
-		&& i2c_tx_byte(EERAM_LOW(addr), true);
+	result = i2c_tx_byte(EERAM_ADDR_HGH(addr), true)
+		&& i2c_tx_byte(EERAM_ADDR_LOW(addr), true);
 
 	/* vapauta I2C väylä */
-	i2c_stop();
+	if (!result)
+		i2c_stop();
 
 	return result;
 }
@@ -326,10 +326,11 @@ bool eeram_read(uint16_t addr, uint8_t data[], uint8_t len)
 	if ((addr != EERAM_ADDR) && !eeram_tx_addr(addr))
 		return false;
 
-	/* aloita I2C */
-	if (!i2c_start(EERAM_SRAM | EERAM_DEVA(addr) | EERAM_R)) {
+	/* aloita I2C, tämän pitäisi lähettää REPEATED START
+	 * koska eeram_tx_addr() ei vapauta väylää kun se onnistuu
+	 */
+	if (!i2c_start(EERAM_SRAM | EERAM_ADDR_DEV(addr) | EERAM_R))
 		return false;
-	}
 
 	len--;
 

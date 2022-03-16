@@ -720,3 +720,18 @@ void __msg(const void *msg, uint8_t size, enum text_align align,
 	(void)memcpy(lcd_buffer, tmp, LCD_ROWS*LCD_COLS);
 	lcd_update();
 }
+
+void user_wait()
+{
+	while (1)
+	{
+		switch (button_update(&s))
+		{
+		case RT|DOWN:
+		case LT|DOWN:
+		case BOTH|DOWN:
+			goto _break;
+		}
+	}
+_break:
+}

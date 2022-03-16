@@ -46,8 +46,10 @@ bool get_data_points()
 		|| (n_data_points < MAX_POINTS))
 		return true;
 
-	if (!eeram_read(SPTS_ADDR + 1,
-		(uint8_t *)data_points, n_data_points)) {
+	/* tämä käyttää 47C16:n sisäistä muistiosoitinta */
+	if (!eeram_read(EERAM_ADDR,
+		(uint8_t *)data_points,
+			n_data_points*sizeof(*data_points))) {
 		default_points();
 		return true;
 	}
@@ -61,7 +63,8 @@ bool put_data_points()
 {
 	return !(eeram_write(SPTS_ADDR, &n_data_points, 1)
 		&& eeram_write(SPTS_ADDR + 1,
-			(uint8_t *)data_points, n_data_points));
+			(uint8_t *)data_points,
+				n_data_points*sizeof(*data_points)));
 }
 
 /* main.c:n lokaali nappitila */
@@ -105,16 +108,19 @@ static bool alarm_on;
 
 void task_temperature()
 {
-	float old = T; 
+	float old_T = T; 
+	uint16_t old_S = S;
 
 	/* PNS sovitus tarvitsee vähintään 2 pistettä */
 	if (unlikely(n_data_points < 2)) {
 		/* tämän voi tarkastaa isfinite():llä */
+		S = read_sample();
 		T = INF;
 
 	} else {
-		/* päivitä lämpötila */
-		T = read_temp();
+		/* päivitä lämpötila ja näyte */
+		S = read_sample();
+		T = calc_temp(S);
 
 		/* päivitä nähdyt maksimi ja minimi */
 		if (unlikely(T > T_obs_max))
@@ -123,8 +129,11 @@ void task_temperature()
 			T_obs_min = T;
 	}
 
-	if (T != old)
+	if (unlikely(T != old_T))
 		T_change = true;
+	
+	if (unlikely(S != old_S))
+		S_change = true;
 }
 
 void task_sample()
@@ -132,7 +141,7 @@ void task_sample()
 	uint16_t old = S;
 
 	/* lue näyte AD-muuntimelta */
-	S = adc_sample(ADC_CH0);
+	S = read_sample();
 
 	if (S != old)
 		S_change = true;
@@ -305,9 +314,32 @@ static void v_alarm_init()
 
 static void v_menu_loop() { menu_loop(); }
 
+static float *select_point()
+{
+	float *target = NULL;
+	uint16_t point;
+	char msg[13]; // sprintf() kirjoittaa nollaterminaattorin
+
+	if (n_data_points < 1) {
+		msg_P_const("CAN'T SELECT\nNO POINTS");
+		goto exit;
+	}
+
+	(void)snprintf_P(msg, sizeof(msg),
+		PSTR("WHICH (1-%-2u)"), n_data_points);
+	
+	point = 0;
+	select_uint_const(msg, &point, 0, n_data_points, 1);
+
+	if (point > 0)
+		target = (float *)&data_points[point - 1];
+exit:
+	return target;
+}
+
 static void a_create()
 {
-	float (*target)[2];
+	float *target;
 	uint16_t tmp;
 
 	if (n_data_points >= MAX_POINTS) {
@@ -318,46 +350,37 @@ static void a_create()
 	if (!yesno_P_const("CREATE POINT?"))
 		return;
 
-	target = &data_points[n_data_points++];
+	target = (float *)&data_points[n_data_points++];
 
 	/* käytä nykyisiä arvoja alkuarvoina */
-	(*target)[0] = S;
-	(*target)[1] = T;
+	target[0] = S;
+	target[1] = T;
 
 	select_float_P_const("TEMPERATURE",
-		&((*target)[0]), T_ABS_MIN, T_ABS_MAX, 0.01);	
-	tmp = (*target)[0];
+		&target[1], T_ABS_MIN, T_ABS_MAX, 0.01);	
+	tmp = target[0];
 	select_uint_P_const("SAMPLE",
 		&tmp, S_ABS_MIN, S_ABS_MAX, 1);
-	(*target)[0] = tmp;
+	target[0] = tmp;
 
 	compute_lss_coefs();
 }
 
 static void a_delete()
 {
-	uint16_t point;
-	char msg[13]; // sprintf() kirjoittaa nollaterminaattorin
+	float *target;
+	uint8_t index;
 
-	if (n_data_points < 1) {
-		msg_P_const("CAN'T DELETE\nNO POINTS");
-		return;
-	}
-
-	if (!yesno_P_const("REMOVE POINT?"))
+	if (!(target = select_point()))
 		return;
 
-	(void)snprintf_P(msg, sizeof(msg),
-		PSTR("WHICH (1-%-2u)"), n_data_points);
+	index = target - (float *)data_points;
 
-	point = 1;
-	select_uint_const(msg, &point, 1, n_data_points, 1);
-
-	if (point == n_data_points) {
+	if (index == (n_data_points - 1)) {
 		n_data_points--;
 	} else {
-		(void)memcpy(&data_points[point - 1], &data_points[point],
-			(n_data_points - point)*sizeof(*data_points));
+		(void)memcpy(target, target + 1,
+			(n_data_points - index)*sizeof(*data_points));
 	}
 
 	compute_lss_coefs();
@@ -365,33 +388,45 @@ static void a_delete()
 
 static void a_edit()
 {
-	float (*target)[2];
-	uint16_t point;
-	char msg[13]; // sprintf() kirjoittaa nollaterminaattorin
+	float *target;
+	uint16_t sample;
 
-	if (n_data_points < 1) {
-		msg_P_const("CAN'T MODIFY\nNO POINTS");
+	if (!(target = select_point()))
 		return;
-	}
-
-	if (!yesno_P_const("MODIFY POINT?"))
-		return;
-
-	point = 1;
-	(void)snprintf_P(msg, sizeof(msg), PSTR("WHICH (1-%-2u)"), n_data_points);
-
-	select_uint_const(msg, &point, 1, n_data_points, 1);
-
-	target = &data_points[point - 1];
 
 	select_float_P_const("TEMPERATURE",
-		&((*target)[1]), T_ABS_MIN, T_ABS_MAX, 0.01);
-	point = (*target)[0];
+		&target[1], T_ABS_MIN, T_ABS_MAX, 0.01);
+	sample = target[0];
 	select_uint_P_const("SAMPLE",
-		&point, S_ABS_MIN, S_ABS_MAX, 1);
-	(*target)[0] = point;
+		&sample, S_ABS_MIN, S_ABS_MAX, 1);
+	target[0] = sample;
 
 	compute_lss_coefs();
+}
+
+static void a_show()
+{
+	float *target;
+	char buf[LCD_ROWS*LCD_COLS];
+
+	if (!(target = select_point()))
+		return;
+	
+	(void)memcpy(buf, lcd_buffer, LCD_ROWS*LCD_COLS);
+	LCD_CLEAR;
+
+	/* tulosta lämpötila ja näyte */
+	lcd_put_P_const("SAMP ->", 0, LEFT);
+	lcd_put_P_const("TEMP ->", 1, LEFT);
+	lcd_put_uint(target[0], 4, 0, RIGHT);
+	lcd_put_temp(target[1], 2, 6, 1, RIGHT);
+
+	lcd_update();
+
+	user_wait();
+
+	(void)memcpy(lcd_buffer, buf, LCD_ROWS*LCD_COLS);
+	lcd_update();
 }
 
 static void a_empty()
@@ -422,13 +457,13 @@ static void a_restore()
 static void o_alarm_high()
 {
 	select_float_P_const("ALARM HIGH",
-		&opts.alarm_high, opts.alarm_low, 30.0, 0.1);
+		&opts.alarm_high, opts.alarm_low, T_ABS_MAX, 0.1);
 }
 
 static void o_alarm_low()
 {
 	select_float_P_const("ALARM LOW",
-		&opts.alarm_low, -30.0, opts.alarm_high, 0.1);
+		&opts.alarm_low, T_ABS_MIN, opts.alarm_high, 0.1);
 }
 
 static void o_alarm_enable()
@@ -458,23 +493,88 @@ static void o_backlight()
 	select_bool_P_const("FLASH BACKLIGHT", &opts.flash_backlight);
 }
 
+static void o_memtest()
+{
+	uint8_t screen[LCD_ROWS*LCD_COLS];
+	uint8_t buf[32];
+	uint8_t read;
+	uint16_t addr;
+
+	if (!yesno_P_const("MEMTEST?"))
+		return;
+	
+	(void)memcpy(screen, lcd_buffer, LCD_ROWS*LCD_COLS);
+	LCD_CLEAR;
+
+	addr = EERAM_MIN_ADDR;
+	while (addr < EERAM_MAX_ADDR)
+	{
+		read = MIN(sizeof(buf), EERAM_MAX_ADDR - addr);
+
+		lcd_put_P_const("           ", 0, RIGHT);
+		lcd_put_fmt(11, 0, RIGHT, "%u-%u", addr, addr + read);
+
+		lcd_put_P_const("READ ", 0, LEFT);
+		lcd_put_P_const("....", 1, CENTER);
+		lcd_update();
+
+		if (!eeram_read(addr, buf, sizeof(buf))) {
+			lcd_put_P_const("FAIL", 1, CENTER);
+			lcd_update();
+
+			_delay_ms(1000);
+
+			break;
+		}
+
+		lcd_put_P_const(" OK ", 1, CENTER);
+		lcd_update();
+
+		_delay_ms(500);
+
+		lcd_put_P_const("WRITE", 0, LEFT);
+		lcd_put_P_const("....", 1, CENTER);
+		lcd_update();
+
+		if (!eeram_write(addr, buf, sizeof(buf))) {
+			lcd_put_P_const("FAIL", 1, CENTER);
+			lcd_update();
+
+			_delay_ms(1000);
+
+			break;
+		}
+
+		lcd_put_P_const(" OK ", 1, CENTER);
+		lcd_update();
+
+		_delay_ms(500);
+
+		addr += read;
+	}
+
+	(void)memcpy(lcd_buffer, screen, LCD_ROWS*LCD_COLS);
+	lcd_update();
+}
+
 static void menu_commit_acts()
 {
 	if (put_data_points())
-		msg_P_const("WRITE OPTS FAIL\nNOT SAVED");
+		msg_P_const("SAVE DATE FAIL\nNOT SAVED");
 	menu_enter();
 }
 
 static void menu_commit_opts()
 {
 	if (put_options())
-		msg_P_const("WRITE DPTS FAIL\nNOT SAVED");
+		msg_P_const("SAVE OPTS FAIL\nNOT SAVED");
 	menu_enter();
 }
 
 DEF_PSTR_PTR(CREA, "CREATE");
 DEF_PSTR_PTR(DELE, "DELETE");
 DEF_PSTR_PTR(EDIT, "MODIFY");
+DEF_PSTR_PTR(SHOW, " SHOW ");
 DEF_PSTR_PTR(EMPT, "REMALL");
 DEF_PSTR_PTR(REST, "BLTINS");
 DEF_PSTR_PTR(AHGH, "ALARM+");
@@ -482,6 +582,7 @@ DEF_PSTR_PTR(ALOW, "ALARM-");
 DEF_PSTR_PTR(ALEN, "ALRMEN");
 DEF_PSTR_PTR(BEEP, "BUZZER");
 DEF_PSTR_PTR(BKLT, "BACKLT");
+DEF_PSTR_PTR(MTST, "MEMTST");
 DEF_PSTR_PTR(MENU, " MENU ");
 DEF_PSTR_PTR(LIMT, " LIMT ");
 DEF_PSTR_PTR(ALRM, " ALRM ");
@@ -498,6 +599,7 @@ DEF_SUBMENU(actions) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(CREA), NULL, NULL, &a_create),
 	SUBMENU_ENTRY(REF_PSTR_PTR(DELE), NULL, NULL, &a_delete),
 	SUBMENU_ENTRY(REF_PSTR_PTR(EDIT), NULL, NULL, &a_edit),
+	SUBMENU_ENTRY(REF_PSTR_PTR(SHOW), NULL, NULL, &a_show),
 	SUBMENU_ENTRY(REF_PSTR_PTR(EMPT), NULL, NULL, &a_empty),
 	SUBMENU_ENTRY(REF_PSTR_PTR(REST), NULL, NULL, &a_restore),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_commit_acts),
@@ -509,6 +611,7 @@ DEF_SUBMENU(options) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(ALEN), NULL, NULL, &o_alarm_enable),
 	SUBMENU_ENTRY(REF_PSTR_PTR(BEEP), NULL, NULL, &o_buzzer),
 	SUBMENU_ENTRY(REF_PSTR_PTR(BKLT), NULL, NULL, &o_backlight),
+	SUBMENU_ENTRY(REF_PSTR_PTR(MTST), NULL, NULL, &o_memtest),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_commit_opts)
 };
 #pragma GCC diagnostic pop
@@ -551,25 +654,10 @@ int main()
 	UI_SET_STATE(SPLH);
 
 	/* Lue asetukset ja datapisteet EERAM:ista */
-	//if (get_options())
-	//	msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
-	//if (get_data_points())
-	//	msg_P_const("READ DPTS FAIL\nFALLBACK TO DEFS");
-
-	char c;
-	for (int i = 0; i < 32; i++)
-	{
-		bool result = eeram_read(i, &c, 1);
-		LCD_CLEAR;
-		if (result)
-			lcd_put_P_const("READ OK", 0, CENTER);
-		else
-			lcd_put_P_const("READ FAIL", 0, CENTER);
-		lcd_put_P_const("    ", 1, CENTER);
-		lcd_put_uint(i, 4, 1, CENTER);
-		lcd_update();
-		_delay_ms(10);
-	}	
+	if (get_options())
+		msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
+	if (get_data_points())
+		msg_P_const("READ DATA FAIL\nFALLBACK TO DEFS");
 main_loop:
 	/* valikkotilakohtaiset taskit */
 	interval_tasks(
