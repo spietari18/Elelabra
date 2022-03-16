@@ -507,7 +507,7 @@ static void o_memtest()
 	LCD_CLEAR;
 
 	addr = EERAM_MIN_ADDR;
-	while (addr < EERAM_MAX_ADDR)
+	while (addr <= EERAM_MAX_ADDR)
 	{
 		count = MIN(sizeof(buf), EERAM_MAX_ADDR - addr);
 
