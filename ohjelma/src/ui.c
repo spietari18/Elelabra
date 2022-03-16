@@ -729,11 +729,15 @@ void user_wait()
 	{
 		switch (button_update(&s))
 		{
-		case RT|DOWN:
-		case LT|DOWN:
-		case BOTH|DOWN:
-			goto _break;
+		case RT|UP:
+		case LT|UP:
+		case BOTH|UP:
+		case RT|HLUP:
+		case LT|HLUP:
+		case BOTH|HLUP:
+			beep_slow();
+			_delay_ms(100);
+			return;
 		}
 	}
-_break:
 }
