@@ -497,7 +497,7 @@ static void o_memtest()
 {
 	uint8_t screen[LCD_ROWS*LCD_COLS];
 	uint8_t buf[32];
-	uint8_t read;
+	uint8_t count;
 	uint16_t addr;
 
 	if (!yesno_P_const("MEMTEST?"))
@@ -509,16 +509,16 @@ static void o_memtest()
 	addr = EERAM_MIN_ADDR;
 	while (addr < EERAM_MAX_ADDR)
 	{
-		read = MIN(sizeof(buf), EERAM_MAX_ADDR - addr);
+		count = MIN(sizeof(buf), EERAM_MAX_ADDR - addr);
 
 		lcd_put_P_const("           ", 0, RIGHT);
-		lcd_put_fmt(11, 0, RIGHT, "%u-%u", addr, addr + read);
+		lcd_put_fmt(11, 0, RIGHT, "%u-%u", addr, addr + count);
 
 		lcd_put_P_const("READ ", 0, LEFT);
 		lcd_put_P_const("....", 1, CENTER);
 		lcd_update();
 
-		if (!eeram_read(addr, buf, sizeof(buf))) {
+		if (!eeram_read(addr, buf, count)) {
 			lcd_put_P_const("FAIL", 1, CENTER);
 			lcd_update();
 
@@ -536,7 +536,7 @@ static void o_memtest()
 		lcd_put_P_const("....", 1, CENTER);
 		lcd_update();
 
-		if (!eeram_write(addr, buf, sizeof(buf))) {
+		if (!eeram_write(addr, buf, count)) {
 			lcd_put_P_const("FAIL", 1, CENTER);
 			lcd_update();
 
@@ -550,7 +550,7 @@ static void o_memtest()
 
 		_delay_ms(500);
 
-		addr += read;
+		addr += count;
 	}
 
 	(void)memcpy(lcd_buffer, screen, LCD_ROWS*LCD_COLS);
