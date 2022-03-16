@@ -66,7 +66,7 @@ find_device()
 function round()
 {
 	# round to nearest power of 2
-	echo "tmp=l(${1}/(0.01*${2}))/l(2)+0.5;" \
+	echo "tmp=l(100*${1}/${2})/l(2)+0.5;" \
 		"scale=0;" \
 		"tmp=tmp/1;" \
 		"2^tmp" | bc -l
@@ -79,9 +79,9 @@ TMPDIR="/tmp/avr-build"
 PRGOUT="${TMPDIR}/program.hex"
 DEVICE="atmega328p"
 
-COMMON="-mmcu=${DEVICE} -std=gnu99 -O2 -mcall-prologues \
+COMMON="-mmcu=${DEVICE} -std=gnu99 -mcall-prologues \
 -ffunction-sections -fdata-sections -fdiagnostics-color=always"
-CFLAGS="${COMMON} -Wall -Wextra"
+CFLAGS="${COMMON} -Wall -Wextra -O2"
 LDFLAGS="${COMMON} -Wl,-s,-flto,-gc-sections \
 -fuse-linker-plugin -mendup-at=main -lm"
 
@@ -194,7 +194,7 @@ action_compile()
 	ram_per=`echo "$ram" | grep -o '[0-9.]\+%' | head -c -2`
 
 	# guess total memory (nearest power of 2 based on percentage)
-	ram_tot=`round "$ram_abs" "$rom_per"`
+	ram_tot=`round "$ram_abs" "$ram_per"`
 	rom_tot=`round "$rom_abs" "$rom_per"`
 
 	# output alignment

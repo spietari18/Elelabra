@@ -3,24 +3,10 @@
 #include "macro.h"
 #include "alarm.h"
 
+#include <stddef.h>
+
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-
-#define BEEPENBL 0 // äänimerkki päälle
-#define BLNKENBL 1 // välkytys päälle
-#define BEEPCONT 2 // jatkuva äänimerkki
-#define BLNKCONT 3 // jatkuva välkytys
-#define SYNCENBL 4 // synkronoi (ei käytetty)
-#define BEEPSYNC 5 // äänimerkki synkronoitu
-#define BLNKSYNC 6 // välkytys synkronoitu
-#define BEEPSTAT 7 // jatkuvan äänimerkin tila
-
-/* Tilakone. */
-static volatile uint8_t state;
-
-/* millis() aikaleimat joilla kestoja ohjataan. */
-static volatile uint32_t ts_beep;
-static volatile uint32_t ts_blink;
 
 /* TIMER2 skaalaimet ja niiden bitit TCCR2B:ssä. */
 static const struct {
@@ -45,7 +31,7 @@ static const struct {
 /* Valitse sopiva skaalain ja OCR arvo
  * ajastimelle halutun taajuuden perusteella.
  */
-uint16_t set_prescaler(volatile uint8_t *reg, uint16_t freq, uint16_t max)
+static uint16_t set_prescaler(volatile uint8_t *reg, uint16_t freq, uint16_t max)
 {
 	uint32_t now, old;
 	uint8_t i;
@@ -68,114 +54,16 @@ uint16_t set_prescaler(volatile uint8_t *reg, uint16_t freq, uint16_t max)
 	return old;
 }
 
-/* Ajastimen keskeytys. */
+callback_t timer_callback;
+
 ISR(TIMER2_COMPA_vect)
 {
-	uint32_t now;
-	uint8_t off = 0;
-
-	now = millis();
-
-	/* äänimerkki */
-	if (likely(GET(state, BEEPENBL))) {
-		/* jatkuva */
-		if (GET(state, BEEPCONT)) {
-			/* synkronoi */
-			if (unlikely(!GET(state, BEEPSYNC))) {
-				/* synkronoi välkytyksen kanssa */
-				if (unlikely(GET(state, BLNKCONT)
-					&& GET(state, BLNKSYNC)))
-					ts_beep = ts_blink;
-
-				/* ei välkytystä -> synkronoitu */
-				SET(state, BEEPSYNC);
-			}
-
-			/* päälle/pois jaksonajan mukaan */
-			if (unlikely((now - ts_beep)
-				> (COMMON_PERIOD/2))) {
-				TGL(state, BEEPSTAT);
-				ts_beep = now;
-			}
-
-			/* ääni */
-			if (GET(state, BEEPSTAT))
-				TOGGLE(BUZZER);
-
-		/* yksittäinen */
-		} else {
-			/* alustettu */
-			if (likely(GET(state, BEEPSYNC))) {
-				/* aika kulunut */
-				if (now >= ts_beep) {
-					WRITE(BUZZER, LOW);
-					CLR(state, BEEPENBL);
-				}
-
-			/* alusta */
-			} else {
-				ts_beep += now;
-				SET(state, BEEPSYNC);
-			}
-
-			/* ääni */
-			TOGGLE(BUZZER);
-		}
-	
-	/* IO pinnin tila tunnetuksi */
-	} else {
-		WRITE(BUZZER, LOW);
-		off++;
-	}
-
-	/* välkytys */
-	if (likely(GET(state, BLNKENBL))) {
-		/* jatkuva */
-		if (GET(state, BLNKCONT)) {
-			/* synkronoi */
-			if (unlikely(!GET(state, BLNKSYNC))) {
-				/* synkronoi äänimerkin kanssa */
-				if (unlikely(GET(state, BEEPCONT)))
-					ts_blink = ts_beep;
-
-				/* ei äänimerkkiä -> synkronoitu */
-				SET(state, BLNKSYNC);
-			}
-
-			/* päälle/pois jaksonajan mukaan */
-			if (unlikely((now - ts_blink)
-				> (COMMON_PERIOD/2))) {
-				TOGGLE(LCD_AN);
-				ts_blink = now;
-			}
-
-		/* yksittäinen */
-		} else {
-			/* alustettu */
-			if (likely(GET(state, BLNKSYNC))) {
-				/* aika kulunut */
-				if (now >= ts_blink) {
-					WRITE(LCD_AN, HIGH);
-					CLR(state, BLNKENBL);
-				}
-
-			/* alusta */
-			} else {
-				ts_blink += now;
-				WRITE(LCD_AN, LOW);
-				SET(state, BLNKSYNC);
-			}
-		}
-	
-	/* IO pinnin tila tunnetuksi */
-	} else {
-		WRITE(LCD_AN, HIGH);
-		off++;
-	}
-
-	/* molemmat pois päältä? */
-	if (off >= 2)
-		// ajastin pois päältä
+	/* kutsu takaisinkutsua tai laita pois
+	 * päältä jos takaisinkutsua ei ole
+	 */
+	if (likely(timer_callback != NULL))
+		timer_callback();
+	else
 		CLR(TIMSK2, OCIE2A);
 }
 
@@ -193,9 +81,157 @@ void alarm_init()
 	/* Alusta ajastin. */
 	TCCR2A = TCCR2B = TIMSK2 = 0;
 	SET(TCCR2A, WGM21); // CTC
-	OCR2A = set_prescaler(&TCCR2B, 2*BEEP_FREQUENCY, (uint8_t)~0);
 
 	sei();
+}
+
+#define BEEPENBL 0 // äänimerkki päälle
+#define BLNKENBL 1 // välkytys päälle
+#define BEEPCONT 2 // jatkuva äänimerkki
+#define BLNKCONT 3 // jatkuva välkytys
+#define SYNCENBL 4 // synkronoi (ei käytössä)
+#define BEEPSYNC 5 // äänimerkki synkronoitu
+#define BLNKSYNC 6 // välkytys synkronoitu
+#define BEEPSTAT 7 // jatkuvan äänimerkin tila
+
+/* Tilakone timer_bb_* funktioille. */
+static volatile uint8_t state;
+
+/* Aikaleimat, joilla ajastuksia ohjataan.
+ * (myös timer_notes() käyttää näitä)
+ */
+static volatile uint32_t ts_1;
+static volatile uint32_t ts_2;
+
+static void timer_bb_single()
+{
+	uint32_t now;
+	uint8_t off = 0;
+
+	now = millis();
+
+	now = millis();
+
+	/* äänimerkki */
+	if (likely(GET(state, BEEPENBL))) {
+		/* alustettu */
+		if (likely(GET(state, BEEPSYNC))) {
+			/* aika kulunut */
+			if (now >= ts_1) {
+				WRITE(BUZZER, LOW);
+				CLR(state, BEEPENBL);
+			}
+
+		/* alusta */
+		} else {
+			ts_1 += now;
+			SET(state, BEEPSYNC);
+		}
+
+		/* ääni */
+		TOGGLE(BUZZER);
+	
+	/* IO pinnin tila tunnetuksi */
+	} else {
+		WRITE(BUZZER, LOW);
+		off++;
+	}
+
+	/* välkytys */
+	if (likely(GET(state, BLNKENBL))) {
+		/* alustettu */
+		if (likely(GET(state, BLNKSYNC))) {
+			/* aika kulunut */
+			if (now >= ts_2) {
+				WRITE(LCD_AN, HIGH);
+				CLR(state, BLNKENBL);
+			}
+
+		/* alusta */
+		} else {
+			ts_2 += now;
+			WRITE(LCD_AN, LOW);
+			SET(state, BLNKSYNC);
+		}
+	
+	/* IO pinnin tila tunnetuksi */
+	} else {
+		WRITE(LCD_AN, HIGH);
+		off++;
+	}
+
+	/* molemmat pois päältä? */
+	if (off >= 2)
+		/* ajastin pois päältä */
+		CLR(TIMSK2, OCIE2A);
+}
+
+static void timer_bb_continous()
+{
+	uint32_t now;
+	uint8_t off = 0;
+
+	now = millis();
+
+	/* äänimerkki */
+	if (likely(GET(state, BEEPENBL))) {
+		/* synkronoi */
+		if (unlikely(!GET(state, BEEPSYNC))) {
+			/* synkronoi välkytyksen kanssa */
+			if (unlikely(GET(state, BLNKCONT)
+				&& GET(state, BLNKSYNC)))
+				ts_1 = ts_2;
+
+			/* ei välkytystä -> synkronoitu */
+			SET(state, BEEPSYNC);
+		}
+
+		/* päälle/pois jaksonajan mukaan */
+		if (unlikely((now - ts_1)
+			> (COMMON_PERIOD/2))) {
+			TGL(state, BEEPSTAT);
+			ts_1 = now;
+		}
+
+		/* ääni */
+		if (GET(state, BEEPSTAT))
+			TOGGLE(BUZZER);
+	
+	/* IO pinnin tila tunnetuksi */
+	} else {
+		WRITE(BUZZER, LOW);
+		off++;
+	}
+
+	/* välkytys */
+	if (likely(GET(state, BLNKENBL))) {
+		/* synkronoi */
+		if (unlikely(!GET(state, BLNKSYNC))) {
+			/* synkronoi äänimerkin kanssa */
+			if (unlikely(GET(state, BEEPCONT)))
+				ts_2 = ts_1;
+
+			/* ei äänimerkkiä -> synkronoitu */
+			SET(state, BLNKSYNC);
+		}
+
+		/* päälle/pois jaksonajan mukaan */
+		if (unlikely((now - ts_2)
+			> (COMMON_PERIOD/2))) {
+			TOGGLE(LCD_AN);
+			ts_2 = now;
+		}
+	
+	/* IO pinnin tila tunnetuksi */
+	} else {
+		WRITE(LCD_AN, HIGH);
+		off++;
+	}
+
+	/* molemmat pois päältä? */
+	if (off >= 2)
+		/* ajastin pois päältä */
+		CLR(TIMSK2, OCIE2A);
 }
 
 /* Nopea äänimerkki. */
@@ -203,12 +239,23 @@ void beep_fast()
 {
 	cli();
 
-	/* onko äänimerkki päällä */
-	if (GET(state, BEEPENBL))
-		goto exit;
+	/* onko ajastin päällä */
+	if (GET(TIMSK2, OCIE2A)) {
+		/* jos on, takaisinkutsun tulee olla oikea
+		 * ja äänimerkki ei saa olla päällä
+		 */
+		if ((timer_callback != &timer_bb_single)
+			|| GET(state, BEEPENBL))
+			goto exit;
+	
+	/* ajastin ei päällä, aseta takaisinkutsu ja taajuus */
+	} else {
+		timer_callback = &timer_bb_single;
+		OCR2A = set_prescaler(&TCCR2B, 2*BEEP_FREQUENCY, (uint8_t)~0);
+	}
 
 	/* äänimerkki päälle */
-	ts_beep = BEEP_FAST_DURATION;
+	ts_1 = BEEP_FAST_DURATION;
 	SET(state, BEEPENBL);
 	CLR(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
@@ -222,12 +269,23 @@ void beep_slow()
 {
 	cli();
 
-	/* onko äänimerkki päällä */
-	if (GET(state, BEEPENBL))
-		goto exit;
+	/* onko ajastin päällä */
+	if (GET(TIMSK2, OCIE2A)) {
+		/* jos on, takaisinkutsun tulee olla oikea
+		 * ja äänimerkki ei saa olla päällä
+		 */
+		if ((timer_callback != &timer_bb_single)
+			|| GET(state, BEEPENBL))
+			goto exit;
+	
+	/* ajastin ei päällä, aseta takaisinkutsu ja taajuus */
+	} else {
+		timer_callback = &timer_bb_single;
+		OCR2A = set_prescaler(&TCCR2B, 2*BEEP_FREQUENCY, (uint8_t)~0);
+	}
 	
 	/* äänimerkki päälle */
-	ts_beep = BEEP_SLOW_DURATION;
+	ts_1 = BEEP_SLOW_DURATION;
 	SET(state, BEEPENBL);
 	CLR(state, SYNCENBL);
 	CLR(state, BEEPSYNC);
@@ -241,12 +299,23 @@ void beep_begin()
 {
 	cli();
 
-	/* onko äänimerkki päällä */
-	if (GET(state, BEEPENBL))
-		goto exit;
+	/* onko ajastin päällä */
+	if (GET(TIMSK2, OCIE2A)) {
+		/* jos on, takaisinkutsun tulee olla oikea
+		 * ja äänimerkki ei saa olla päällä
+		 */
+		if ((timer_callback != &timer_bb_continous)
+			|| GET(state, BEEPCONT))
+			goto exit;
+	
+	/* ajastin ei päällä, aseta takaisinkutsu ja taajuus */
+	} else {
+		timer_callback = &timer_bb_continous;
+		OCR2A = set_prescaler(&TCCR2B, 2*BEEP_FREQUENCY, (uint8_t)~0);
+	}
 	
 	/* äänimerkki päälle */
-	ts_beep = 0;
+	ts_1 = 0;
 	SET(state, BEEPENBL);
 	SET(state, BEEPCONT);
 	SET(state, SYNCENBL);
@@ -262,13 +331,17 @@ void beep_end()
 {
 	cli();
 
-	/* onko toistuva äänimerkki päällä */
-	if (!GET(state, BEEPCONT))
+	/* onko ajastin päällä, onko takaisinkutsu
+	 * oikea ja onko äänimerkki päällä
+	 */
+	if (!GET(TIMSK2, OCIE2A) || (timer_callback != 
+		&timer_bb_continous) || !GET(state, BEEPCONT))
 		goto exit;
 	
 	/* äänimerkki pois päältä */
 	CLR(state, BEEPENBL);
 	CLR(state, BEEPCONT);
+	CLR(TIMSK2, OCIE2A);
 exit:
 	sei();
 }
@@ -278,12 +351,23 @@ void blink()
 {
 	cli();
 
-	/* onko välkytys päällä */
-	if (GET(state, BLNKENBL))
-		goto exit;
+	/* onko ajastin päällä */
+	if (GET(TIMSK2, OCIE2A)) {
+		/* jos on, takaisinkutsun tulee olla oikea
+		 * ja välkytys ei saa olla päällä
+		 */
+		if ((timer_callback != &timer_bb_single)
+			|| GET(state, BLNKENBL))
+			goto exit;
+	
+	/* ajastin ei päällä, aseta takaisinkutsu ja taajuus */
+	} else {
+		timer_callback = &timer_bb_single;
+		OCR2A = set_prescaler(&TCCR2B, 2*BEEP_FREQUENCY, (uint8_t)~0);
+	}
 	
 	/* väläytys päälle */
-	ts_blink = BLINK_DURATION;
+	ts_2 = BLINK_DURATION;
 	SET(state, BLNKENBL);
 	CLR(state, SYNCENBL);
 	CLR(state, BLNKSYNC);
@@ -297,12 +381,23 @@ void blink_begin()
 {
 	cli();
 
-	/* onko välkytys päällä */
-	if (GET(state, BLNKENBL))
-		goto exit;
+	/* onko ajastin päällä */
+	if (GET(TIMSK2, OCIE2A)) {
+		/* jos on, takaisinkutsun tulee olla oikea
+		 * ja välkytys ei saa olla päällä
+		 */
+		if ((timer_callback != &timer_bb_continous)
+			|| GET(state, BLNKCONT))
+			goto exit;
+	
+	/* ajastin ei päällä, aseta takaisinkutsu ja taajuus */
+	} else {
+		timer_callback = &timer_bb_continous;
+		OCR2A = set_prescaler(&TCCR2B, 2*BEEP_FREQUENCY, (uint8_t)~0);
+	}
 
 	/* välkytys päälle */
-	ts_blink = 0;
+	ts_2 = 0;
 	SET(state, BLNKENBL);
 	SET(state, BLNKCONT);
 	SET(state, SYNCENBL);
@@ -317,8 +412,11 @@ void blink_end()
 {
 	cli();
 
-	/* onko toistuva välkytys päällä */
-	if (!GET(state, BLNKCONT))
+	/* onko ajastin päällä, onko takaisinkutsu
+	 * oikea ja onko äänimerkki päällä
+	 */
+	if (!GET(TIMSK2, OCIE2A) || (timer_callback != 
+		&timer_bb_continous) || !GET(state, BLNKCONT))
 		goto exit;
 
 	/* välkytys pois päältä */
@@ -327,3 +425,138 @@ void blink_end()
 exit:
 	sei();
 }
+
+static inline uint16_t note_freq(uint16_t note)
+{
+	uint16_t f;
+	int8_t key;
+
+	key = N_PITCH(note);
+
+	//if (key < 3)
+	//	key += 12;
+	
+	key += ((N_OCT(note) - 1)*12) + 1;
+	f = 440.0 * pow(2.0, (float)(key - 49)/12.0);
+
+	return f;
+}
+
+static volatile uint16_t note_index;
+static volatile uint16_t durnow;
+
+static uint16_t note_count;
+static uint16_t gap;
+static uint16_t dur4th;
+static uint16_t *notes;
+
+#include "ui.h"
+
+static void timer_notes()
+{
+	uint32_t now;
+	uint16_t note;
+
+	now = millis();
+
+	/* nuotti ei vielä valmis */
+	if (likely((now - ts_1) < durnow))
+		goto play;
+
+	/* jos nuotit loppu, ajastin pois päältä */
+	if (note_index >= note_count) { 
+		WRITE(BUZZER, LOW);
+		CLR(TIMSK2, OCIE2A);
+		return;
+	}
+
+	/* väliä ei ole vielä odotettu */
+	if (likely((now - ts_2) < gap)) {
+		WRITE(BUZZER, LOW);
+		return;
+	}
+
+	note = pgm_read_word(&notes[note_index++]);
+
+	/* laske nuotin kesto */
+	durnow = 4*dur4th;
+	if (N_INV(note))
+		durnow *= N_DUR(note);
+	else
+		durnow /= N_DUR(note);
+
+	/* aseta uusi taajuus */
+	OCR2A = set_prescaler(&TCCR2B, 2*note_freq(note), (uint8_t)~0);
+
+	ts_1 = now;
+	ts_2 = ts_1 + durnow;
+play:
+	/* toista nuottia */
+	TOGGLE(BUZZER);
+}
+
+void play_notes(const struct sheet *s)
+{
+	cli();
+
+	/* ajastin on päällä */
+	if (GET(TIMSK2, OCIE2A))
+		goto end;
+
+	/* aseta ajastimen takaisinkutsu */
+	timer_callback = &timer_notes;
+
+	/* laske neljännesosanuotin kesto */
+	dur4th = 60000/pgm_read_byte(&s->tempo);
+
+	/* nuottien väli (tähän ei ole oikeaa arvoa) */
+	gap = dur4th/64;
+
+	/* aseta nuotit ja nuottien määrä */
+	notes = pgm_read_ptr(&s->notes);
+	note_count = pgm_read_byte(&s->count);
+	ts_1 = ts_2 = note_index = durnow = 0;
+
+	/* ei nuotteja */
+	if (note_count < 1)
+		return;
+
+	/* aseta ajastimen taajuus ensimmäisen nuotin
+	 * taajuudeksi. (2x koska ajastimen yksi jakso
+	 * vastaa puolikasta kanttiaallon jaksoa)
+	 */
+	OCR2A = set_prescaler(&TCCR2B,
+		2*note_freq(pgm_read_word(&notes[0])), (uint8_t)~0);
+
+	/* aloita ajastin */
+	SET(TIMSK2, OCIE2A);
+end:
+	sei();
+}
+
+NOTES(e1m1_notes) = {
+	N8(E, 3), N8(E, 3), N8(E, 4), N8(E, 3),
+	N8(E, 3), N8(D, 4), N8(E, 3), N8(E, 3),
+
+	N8(C, 4), N8(E, 3), N8(E, 3), N8(As, 3),
+	N8(E, 3), N8(E, 3), N8(B, 4), N8(C, 4),
+#if 0
+	N8(E, 3), N8(E, 3), N8(E, 4), N8(E, 3),
+	N8(E, 3), N8(D, 4), N8(E, 3), N8(E, 3),
+
+	N8(C, 4), N8(E, 3), N8(E, 3), N2(As, 3), // (puuttuu 1/8)
+
+	
+	N8(E, 3), N8(E, 3), N8(E, 4), N8(E, 3),
+	N8(E, 3), N8(D, 4), N8(E, 3), N8(E, 3),
+
+	N16(G, 5), N16(F, 5), N16(E, 5), N16(F, 5),
+	N16(G, 5), N16(F, 5), N16(F, 5), N16(G, 5),
+	N16(F, 5), N16(E, 5), N16(D, 5), N16(B, 5),
+	N16(E, 4), N16(C, 4), N4(B, 4) // (1/8 liikaa)
+#endif
+};
+
+SHEET(e1m1_sheet, 150, e1m1_notes);
+
+void play_e1m1() { play_notes(&e1m1_sheet); }

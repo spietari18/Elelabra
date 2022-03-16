@@ -654,10 +654,10 @@ int main()
 	UI_SET_STATE(SPLH);
 
 	/* Lue asetukset ja datapisteet EERAM:ista */
-	if (get_options())
-		msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
-	if (get_data_points())
-		msg_P_const("READ DATA FAIL\nFALLBACK TO DEFS");
+	//if (get_options())
+	//	msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
+	//if (get_data_points())
+	//	msg_P_const("READ DATA FAIL\nFALLBACK TO DEFS");
 main_loop:
 	/* valikkotilakohtaiset taskit */
 	interval_tasks(
@@ -671,20 +671,30 @@ main_loop:
 	case UI_SETUP(SPLH):
 
 #define SPLASH_1 "L\xE1mp\xEFmittari"
-#define SPLASH_2 "V. 1.0"
-#define SPLASH_WAIT 1000 // [ms]
+#define SPLASH_2 "MegaKelvin"
+#define SPLASH_3 "v. 1.0"
+
+#define SPLASH_WAIT 600 // [ms]
 
 		/* splash */
 		lcd_put_P_const(SPLASH_1, 0, CENTER);
 		lcd_put_P_const(SPLASH_2, 1, CENTER);
 		lcd_update();
 
-		beep_slow();
+		//beep_slow();
+		play_e1m1();
 
 		/* näytä alarivi SPLASH_WAIT millisekuntia */
 		_delay_ms(SPLASH_WAIT);
 
+		(void)memset(&lcd_buffer[1][0], ' ', LCD_COLS);
+		lcd_put_P_const(SPLASH_3, 1, CENTER);
+		lcd_update();
+
+		_delay_ms(SPLASH_WAIT);
+
 		/* alusta edistymispalkki */
+		lcd_buffer[1][0] = lcd_buffer[1][15] = ' ';
 		prog_init(MAX_SAMPLES, 1);
 
 		UI_SETUP_END;     
