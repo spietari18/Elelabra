@@ -530,7 +530,6 @@ static bool s_float_left(struct sfarg *target)
 
 static bool s_float_right(struct sfarg *target)
 {
-
 	float tmp;
 
 	tmp = target->value + target->sact;

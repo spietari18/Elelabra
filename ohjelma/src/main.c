@@ -7,7 +7,8 @@
 #include <stdio.h>
 
 #define OPTS_ADDR EERAM_MIN_ADDR
-#define SPTS_ADDR (EERAM_MAX_ADDR - (1 + sizeof(data_points)))
+//#define SPTS_ADDR (EERAM_MAX_ADDR - (1 + sizeof(data_points)))
+#define SPTS_ADDR 128
 
 /* asetukset */
 struct {
@@ -43,11 +44,11 @@ bool put_options()
 bool get_data_points()
 {
 	if (!eeram_read(SPTS_ADDR, &n_data_points, 1)
-		|| (n_data_points < MAX_POINTS))
+		|| (n_data_points > MAX_POINTS))
 		return true;
 
 	/* tämä käyttää 47C16:n sisäistä muistiosoitinta */
-	if (!eeram_read(EERAM_ADDR,
+	if (!eeram_read(SPTS_ADDR + 1,
 		(uint8_t *)data_points,
 			n_data_points*sizeof(*data_points))) {
 		default_points();
@@ -104,8 +105,6 @@ static bool S_change;
 static float T_obs_max = -INF;
 static float T_obs_min =  INF;
 
-static bool alarm_on;
-
 void task_temperature()
 {
 	float old_T = T; 
@@ -147,27 +146,52 @@ void task_sample()
 		S_change = true;
 }
 
+#define ALARM_ON      0
+#define ALARM_OK      1
+#define ALARM_DISABLE 2
+
+static uint8_t alarm_state;
+
 void task_alarm()
 {
 	if (!opts.alarm_enabled) {
-		if (unlikely(alarm_on))
-			goto alarm_off;
+		if (unlikely(GET(alarm_state, ALARM_ON))) {
+			alarm_state = 0;
+
+			beep_end();
+			blink_end();
+		}
 
 		return;
 	}
 
-	if (unlikely(((T < opts.alarm_low) ||
-		(T > opts.alarm_high)) && isfinite(T))) {
-		blink_begin();
-		beep_begin();
 
-		alarm_on = true;
+	if (GET(alarm_state, ALARM_ON)) {
+		if (unlikely((T < opts.alarm_high) 
+			&& (T > opts.alarm_low))) {
+			CLR(alarm_state, ALARM_ON);
+			SET(alarm_state, ALARM_OK);
+		}
+
+		if (GET(alarm_state, ALARM_OK)
+			&& !GET(alarm_state, ALARM_DISABLE)) {
+			SET(alarm_state, ALARM_DISABLE);
+
+			blink_end();
+			beep_end();
+		}
 	} else {
-alarm_off:
-		blink_end();
-		beep_end();
+		if (unlikely(isfinite(T)
+			&& ((T > opts.alarm_high)
+				|| (T < opts.alarm_low)))) {
+			SET(alarm_state, ALARM_ON);
+			CLR(alarm_state, ALARM_DISABLE);
 
-		alarm_on = false;
+			blink_begin();
+			beep_begin();
+		}
+
+		SET(alarm_state, ALARM_OK);
 	}
 }
 
@@ -376,12 +400,12 @@ static void a_delete()
 
 	index = target - (float *)data_points;
 
-	if (index == (n_data_points - 1)) {
-		n_data_points--;
-	} else {
+	if (index < (n_data_points - 1)) {
 		(void)memcpy(target, target + 1,
 			(n_data_points - index)*sizeof(*data_points));
 	}
+
+	n_data_points--;
 
 	compute_lss_coefs();
 }
@@ -557,6 +581,40 @@ static void o_memtest()
 	lcd_update();
 }
 
+void o_adctest()
+{
+	uint8_t screen[LCD_ROWS*LCD_COLS];
+
+	(void)memcpy(screen, lcd_buffer, LCD_ROWS*LCD_COLS);
+	LCD_CLEAR;
+
+	lcd_put_P_const("CH0 ->", 0, LEFT);
+	lcd_put_P_const("CH1 ->", 1, LEFT);
+
+	while (1)
+	{
+		INTERVAL(1000/SAMPLE_RATE) {
+			(void)memset(&lcd_buffer[0][6], ' ', 12);
+			(void)memset(&lcd_buffer[1][6], ' ', 12);
+			lcd_put_uint(adc_sample(ADC_CH0), 4, 0, RIGHT);
+			lcd_put_uint(adc_sample(ADC_CH1), 4, 1, RIGHT);
+		}
+
+		switch (button_update(&s)) {
+		case RT|UP:
+		case LT|UP:
+		case BOTH|UP:
+		case RT|HLUP:
+		case LT|HLUP:
+		case BOTH|HLUP:
+			goto _break;
+		}
+	}
+_break:
+	(void)memcpy(lcd_buffer, screen, LCD_ROWS*LCD_COLS);
+	lcd_update();
+}
+
 static void menu_commit_acts()
 {
 	if (put_data_points())
@@ -571,6 +629,8 @@ static void menu_commit_opts()
 	menu_enter();
 }
 
+static void set_alarm_ok() { SET(alarm_state, ALARM_OK); }
+
 DEF_PSTR_PTR(CREA, "CREATE");
 DEF_PSTR_PTR(DELE, "DELETE");
 DEF_PSTR_PTR(EDIT, "MODIFY");
@@ -583,6 +643,7 @@ DEF_PSTR_PTR(ALEN, "ALRMEN");
 DEF_PSTR_PTR(BEEP, "BUZZER");
 DEF_PSTR_PTR(BKLT, "BACKLT");
 DEF_PSTR_PTR(MTST, "MEMTST");
+DEF_PSTR_PTR(ADCT, "ADCTST");
 DEF_PSTR_PTR(MENU, " MENU ");
 DEF_PSTR_PTR(LIMT, " LIMT ");
 DEF_PSTR_PTR(ALRM, " ALRM ");
@@ -590,8 +651,10 @@ DEF_PSTR_PTR(ALRM, " ALRM ");
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 DEF_SUBMENU(views) = {
-	SUBMENU_ENTRY(REF_PSTR_PTR(LIMT), &v_limit_init, &v_limit_loop, NULL),
-	SUBMENU_ENTRY(REF_PSTR_PTR(ALRM), &v_alarm_init, &v_common_loop, NULL),
+	SUBMENU_ENTRY(REF_PSTR_PTR(LIMT), &v_limit_init,
+				&v_limit_loop, &set_alarm_ok),
+	SUBMENU_ENTRY(REF_PSTR_PTR(ALRM), &v_alarm_init,
+				&v_common_loop, &set_alarm_ok),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, &v_menu_loop, &menu_enter)
 };
 
@@ -612,6 +675,7 @@ DEF_SUBMENU(options) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(BEEP), NULL, NULL, &o_buzzer),
 	SUBMENU_ENTRY(REF_PSTR_PTR(BKLT), NULL, NULL, &o_backlight),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MTST), NULL, NULL, &o_memtest),
+	SUBMENU_ENTRY(REF_PSTR_PTR(ADCT), NULL, NULL, &o_adctest),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, NULL, &menu_commit_opts)
 };
 #pragma GCC diagnostic pop
@@ -649,6 +713,10 @@ int main()
 	timer_init();
 	alarm_init();
 	default_points();
+
+	/* EERAM auto store päälle. */
+	if (!eeram_reg_write(0, EERAM_REG_STA, EERAM_ASE))
+		msg_P_const("EERAM INIT FAIL");
 
 	/* käyttöliittymä alkaa splash näytöstä */
 	UI_SET_STATE(SPLH);

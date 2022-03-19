@@ -173,7 +173,6 @@ static bool i2c_start(uint8_t src)
 	/* tarkista, että lähetys onnistui */
 	if ((I2C_STAT != I2C_MR_STTX) && (I2C_STAT != I2C_MR_RETX))
 		return false;
-	while (!GET(TWCR, TWINT)); // odota
 
 	/* lähetä osoitetavu */
 	TWDR = src;
