@@ -561,7 +561,7 @@ void __select_float(const void *msg, uint8_t size,
 	void *(*cpy)(void *, const void *, size_t),
 	size_t (*len)(const char *))
 {
-	struct sfarg arg = {*target, min, max, step, step, 1.01};
+	struct sfarg arg = {*target, min, max, step, step, 1.05};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"

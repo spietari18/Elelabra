@@ -22,7 +22,7 @@ struct {
 /* tähän oletukset, kun EERAM ei toimi */
 } opts = {
 	-20.0, 20.0,
-	false, true, true
+	true, true, true
 };
 
 bool get_options()
@@ -146,20 +146,24 @@ void task_sample()
 		S_change = true;
 }
 
-#define ALARM_ON      0
-#define ALARM_OK      1
-#define ALARM_DISABLE 2
+#define ALARM_ON 0
+#define ALARM_OK 1
+#define ALARM_DB 2
+#define ALARM_CL 3
 
 static uint8_t alarm_state;
 
 void task_alarm()
 {
-	if (!opts.alarm_enabled) {
-		if (unlikely(GET(alarm_state, ALARM_ON))) {
-			alarm_state = 0;
-
+	if (!opts.alarm_enabled
+		|| (T > T_ABS_MAX)
+			|| (T < T_ABS_MIN)) {
+		if (unlikely(!GET(alarm_state, ALARM_CL))) {
 			beep_end();
 			blink_end();
+
+			alarm_state = 0;
+			SET(alarm_state, ALARM_CL);
 		}
 
 		return;
@@ -167,32 +171,33 @@ void task_alarm()
 
 
 	if (GET(alarm_state, ALARM_ON)) {
-		if (unlikely((T < opts.alarm_high) 
-			&& (T > opts.alarm_low))) {
+		if ((T < opts.alarm_high) 
+			&& (T > opts.alarm_low)) {
 			CLR(alarm_state, ALARM_ON);
 			SET(alarm_state, ALARM_OK);
 		}
 
 		if (GET(alarm_state, ALARM_OK)
-			&& !GET(alarm_state, ALARM_DISABLE)) {
-			SET(alarm_state, ALARM_DISABLE);
+			&& !GET(alarm_state, ALARM_DB)) {
+			SET(alarm_state, ALARM_DB);
 
 			blink_end();
 			beep_end();
 		}
 	} else {
-		if (unlikely(isfinite(T)
-			&& ((T > opts.alarm_high)
-				|| (T < opts.alarm_low)))) {
+		if ((T > opts.alarm_high)
+				|| (T < opts.alarm_low)) {
 			SET(alarm_state, ALARM_ON);
-			CLR(alarm_state, ALARM_DISABLE);
+			CLR(alarm_state, ALARM_DB);
 
 			blink_begin();
 			beep_begin();
 		}
 
-		SET(alarm_state, ALARM_OK);
+		CLR(alarm_state, ALARM_OK);
 	}
+
+	CLR(alarm_state, ALARM_CL);
 }
 
 bool undervolt_recover()
@@ -481,13 +486,13 @@ static void a_restore()
 static void o_alarm_high()
 {
 	select_float_P_const("ALARM HIGH",
-		&opts.alarm_high, opts.alarm_low, T_ABS_MAX, 0.1);
+		&opts.alarm_high, opts.alarm_low, T_ABS_MAX, 0.01);
 }
 
 static void o_alarm_low()
 {
 	select_float_P_const("ALARM LOW",
-		&opts.alarm_low, T_ABS_MIN, opts.alarm_high, 0.1);
+		&opts.alarm_low, T_ABS_MIN, opts.alarm_high, 0.01);
 }
 
 static void o_alarm_enable()
@@ -533,7 +538,7 @@ static void o_memtest()
 	addr = EERAM_MIN_ADDR;
 	while (addr <= EERAM_MAX_ADDR)
 	{
-		count = MIN(sizeof(buf), EERAM_MAX_ADDR - addr);
+		count = MIN(sizeof(buf), EERAM_MAX_ADDR - addr + 1);
 
 		lcd_put_P_const("           ", 0, RIGHT);
 		lcd_put_fmt(11, 0, RIGHT, "%u-%u", addr, addr + count);
@@ -590,14 +595,16 @@ void o_adctest()
 
 	lcd_put_P_const("CH0 ->", 0, LEFT);
 	lcd_put_P_const("CH1 ->", 1, LEFT);
+	lcd_update();
 
 	while (1)
 	{
 		INTERVAL(1000/SAMPLE_RATE) {
-			(void)memset(&lcd_buffer[0][6], ' ', 12);
-			(void)memset(&lcd_buffer[1][6], ' ', 12);
+			(void)memset(&lcd_buffer[0][11], ' ', 4);
+			(void)memset(&lcd_buffer[1][11], ' ', 4);
 			lcd_put_uint(adc_sample(ADC_CH0), 4, 0, RIGHT);
 			lcd_put_uint(adc_sample(ADC_CH1), 4, 1, RIGHT);
+			lcd_update();
 		}
 
 		switch (button_update(&s)) {
@@ -607,6 +614,8 @@ void o_adctest()
 		case RT|HLUP:
 		case LT|HLUP:
 		case BOTH|HLUP:
+			beep_fast();
+			_delay_ms(100);
 			goto _break;
 		}
 	}
@@ -629,7 +638,17 @@ static void menu_commit_opts()
 	menu_enter();
 }
 
-static void set_alarm_ok() { SET(alarm_state, ALARM_OK); }
+static void clear_obs_temp()
+{
+	T_obs_min =  INF;
+	T_obs_max = -INF;
+}
+
+static void set_alarm_ok()
+{
+	if (GET(alarm_state, ALARM_ON))
+		SET(alarm_state, ALARM_OK);
+}
 
 DEF_PSTR_PTR(CREA, "CREATE");
 DEF_PSTR_PTR(DELE, "DELETE");
@@ -652,7 +671,7 @@ DEF_PSTR_PTR(ALRM, " ALRM ");
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 DEF_SUBMENU(views) = {
 	SUBMENU_ENTRY(REF_PSTR_PTR(LIMT), &v_limit_init,
-				&v_limit_loop, &set_alarm_ok),
+				&v_limit_loop, &clear_obs_temp),
 	SUBMENU_ENTRY(REF_PSTR_PTR(ALRM), &v_alarm_init,
 				&v_common_loop, &set_alarm_ok),
 	SUBMENU_ENTRY(REF_PSTR_PTR(MENU), NULL, &v_menu_loop, &menu_enter)
@@ -715,17 +734,22 @@ int main()
 	default_points();
 
 	/* EERAM auto store päälle. */
-	if (!eeram_reg_write(0, EERAM_REG_STA, EERAM_ASE))
-		msg_P_const("EERAM INIT FAIL");
+	if (eeram_reg_write(0, EERAM_REG_STA, EERAM_ASE)) {
+		/* Lue asetukset */
+		if (get_options())
+			msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
+
+		/* Lue PNS pisteet */
+		if (get_data_points())
+			msg_P_const("READ DATA FAIL\nFALLBACK TO DEFS");
+
+	} else {
+		msg_P_const("EERAM\nINIT FAILURE");
+	}
 
 	/* käyttöliittymä alkaa splash näytöstä */
 	UI_SET_STATE(SPLH);
 
-	/* Lue asetukset ja datapisteet EERAM:ista */
-	if (get_options())
-		msg_P_const("READ OPTS FAIL\nFALLBACK TO DEFS");
-	if (get_data_points())
-		msg_P_const("READ DATA FAIL\nFALLBACK TO DEFS");
 main_loop:
 	/* valikkotilakohtaiset taskit */
 	interval_tasks(
@@ -836,6 +860,7 @@ main_loop:
 		 * laittaa sen takaisin jos tarvitsee kun tästä
 		 * näkymästä poistutaan
 		 */
+		CLR(alarm_state, ALARM_ON);
 		blink_end();
 		beep_end();
 

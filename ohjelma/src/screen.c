@@ -171,17 +171,14 @@ static const char sgn[2] PROGMEM = {'+', '-'};
 void lcd_put_float(float V, uint8_t p, bool fill,
 	uint8_t lim, uint8_t row, enum text_align align)
 {
+
+	uint16_t v;
 	uint8_t i = 1, j;
-	int16_t v;
 	float rnd = 0.5;
 	char buf[lim];
 
-	/* erota kokonais ja desimaaliosa */
-	v = (int16_t)V;
-	V -= v;
-
 	/* kirjoita etumerkki */
-	buf[0] = pgm_read_byte(&sgn[v < 0]);
+	buf[0] = pgm_read_byte(&sgn[V < 0]);
 
 	/* ääretön */
 	if (unlikely(!isfinite(V))) {
@@ -196,10 +193,14 @@ void lcd_put_float(float V, uint8_t p, bool fill,
 		/* Poista V:n etumerkkibitti. (V = abs(V)) */
 		uint32_t *const may_alias tmp = (uint32_t *)&V;
 		CLR(*tmp, 31);
+
+		/* erota kokonais- ja desimaaliosat */
+		v = (uint16_t)V;
+		V -= v;
 	}
 
 	/* kokonaisosa */
-	i += custom_itoa(&buf[1], abs(v), lim - 1, 10, false);
+	i += custom_itoa(&buf[1], v, lim - 1, 10, false);
 	if (unlikely(i == lim))
 		goto print;
 
@@ -214,24 +215,20 @@ void lcd_put_float(float V, uint8_t p, bool fill,
 		rnd *= 0.1;
 	V += rnd;	
 
-	/* muuta kokonaisluvuksi */
+	/* desimaaliosa */
 	j = p;
 	while (j--)
+	{
 		V *= 10.0;
 
-	/* desimaaliosa */
-	j = custom_itoa(&buf[i], (uint16_t)V, lim - i, 10, true);
-	i += j;
-	if (unlikely(i == lim))
-		goto print;
-	
+		(void)custom_itoa(&buf[i++], (uint16_t)V, 1, 10, false);
+
+		if (unlikely(i == lim))
+			goto print;
+	}
+
 	/* lisää nollia, jotta numeron pituus on lim */
 	if (fill) {
-		i += (p - j);
-		while (j < p)
-			buf[i - j++] = '0';
-		if (likely(i == lim))
-			goto print;
 		j = lim - i + 1;
 		(void)memmove(&buf[j], &buf[1], i);
 		i = 1;

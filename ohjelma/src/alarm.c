@@ -103,12 +103,12 @@ static volatile uint8_t state;
 static volatile uint32_t ts_1;
 static volatile uint32_t ts_2;
 
+#include "ui.h"
+
 static void timer_bb_single()
 {
 	uint32_t now;
 	uint8_t off = 0;
-
-	now = millis();
 
 	now = millis();
 
@@ -117,7 +117,7 @@ static void timer_bb_single()
 		/* alustettu */
 		if (likely(GET(state, BEEPSYNC))) {
 			/* aika kulunut */
-			if (now >= ts_1) {
+			if (unlikely(now >= ts_1)) {
 				WRITE(BUZZER, LOW);
 				CLR(state, BEEPENBL);
 			}
@@ -142,7 +142,7 @@ static void timer_bb_single()
 		/* alustettu */
 		if (likely(GET(state, BLNKSYNC))) {
 			/* aika kulunut */
-			if (now >= ts_2) {
+			if (unlikely(now >= ts_2)) {
 				WRITE(LCD_AN, HIGH);
 				CLR(state, BLNKENBL);
 			}
@@ -341,7 +341,6 @@ void beep_end()
 	/* äänimerkki pois päältä */
 	CLR(state, BEEPENBL);
 	CLR(state, BEEPCONT);
-	CLR(TIMSK2, OCIE2A);
 exit:
 	sei();
 }
