@@ -103,8 +103,6 @@ static volatile uint8_t state;
 static volatile uint32_t ts_1;
 static volatile uint32_t ts_2;
 
-#include "ui.h"
-
 static void timer_bb_single()
 {
 	uint32_t now;
